@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-03-18T11:04:35.973Z</updated>
+    <updated>2022-03-18T11:07:30.363Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,46 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[RocketMQ4.9.1源码分析(HA模块) Master读写处理]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/">
+        </link>
+        <updated>2021-10-07T17:06:31.000Z</updated>
+        <summary type="html"><![CDATA[<p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
+<ol>
+<li>master启动</li>
+<li>slave的启动</li>
+<li>m/s 数据同步</li>
+</ol>
+]]></summary>
+        <content type="html"><![CDATA[<p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
+<ol>
+<li>master启动</li>
+<li>slave的启动</li>
+<li>m/s 数据同步</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[RocketMQ4.9.1源码分析_(事务) Half半消息处理]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/">
+        </link>
+        <updated>2021-10-05T12:04:53.000Z</updated>
+        <summary type="html"><![CDATA[<p>half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：</p>
+<ol>
+<li>producer -&gt; broker 发送half消息</li>
+<li>broker 处理half消息</li>
+</ol>
+]]></summary>
+        <content type="html"><![CDATA[<p>half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：</p>
+<ol>
+<li>producer -&gt; broker 发送half消息</li>
+<li>broker 处理half消息</li>
+</ol>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[RocketMQ4.9.1源码分析_(事务)broker定时回查]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-broker-ding-shi-hui-cha/</id>
@@ -129,19 +169,5 @@
         <link href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/">
         </link>
         <updated>2021-02-17T03:19:49.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[JVM 方法调用与执行]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/">
-        </link>
-        <updated>2021-02-02T14:31:28.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[参考Spring实现 IOC（下）]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/ioc_2/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/">
-        </link>
-        <updated>2020-10-30T11:36:08.000Z</updated>
     </entry>
 </feed>

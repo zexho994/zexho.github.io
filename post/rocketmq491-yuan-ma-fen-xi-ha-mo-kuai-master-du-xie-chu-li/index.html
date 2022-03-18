@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>RocketMQ4.9.1源码分析(HA模块) Master读写处理 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601639754">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="从最抽象的角度看，主从同步流程可以分为3个步骤:
+
+master启动
+slave的启动
+m/s 数据同步
+
+
+
+针对上述步骤，结合rocketmq的设计，可以先提一些问题。
+疑问点
+Master
+
+master如何接受slave的请求？
+m..." />
+    <meta name="keywords" content="RocketMQ,源码" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601639754" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">RocketMQ4.9.1源码分析(HA模块) Master读写处理</h2>
+            <div class="post-date">2021-10-08</div>
+            
+            <div class="post-content" v-pre>
+              <p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
+<ol>
+<li>master启动</li>
+<li>slave的启动</li>
+<li>m/s 数据同步</li>
+</ol>
+<!-- more -->
+<figure data-type="image" tabindex="1"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0f4040fe9fe04d9b877449592aaa9770~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<p>针对上述步骤，结合rocketmq的设计，可以先提一些问题。</p>
+<h1 id="疑问点">疑问点</h1>
+<h2 id="master">Master</h2>
+<ol>
+<li><code>master</code>如何接受<code>slave</code>的请求？</li>
+<li><code>master</code>处理<code>slave</code>请求时，如何判断哪些数据需要同步？</li>
+<li><code>master</code>如何保证发送的数据同步成功的？</li>
+</ol>
+<h2 id="slave">Slave</h2>
+<ol>
+<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
+<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
+<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
+</ol>
+<h2 id="高级">高级</h2>
+<ol>
+<li><strong>同步通知</strong>和<strong>异步通知</strong>是如何实现的？</li>
+<li>RocketMQ的<strong>读写分离</strong>是如何实现的？</li>
+</ol>
+<p>本文先对Master的部分进行解析：</p>
+<h1 id="ha类">HA类</h1>
+<p>主从相关的代码位于 <code>store/src/main/java/org/apache/rocketmq/store/ha/</code>路径下，其中主要为两个类<code>HAService</code>和<code>HAConnection</code>。</p>
+<h2 id="ha类说明">HA类说明</h2>
+<ul>
+<li>HAService: RocketMQ 主从同步核心实现类</li>
+<li>HAService$AcceptSocketService: Master 监听客户端连接</li>
+<li>HAService$GroupTransferService: 主从同步通知</li>
+<li>HAService$HAClient: Client 端</li>
+<li>HAConnection: M/S间Channel的封装，同时负责MS数据同步逻辑。</li>
+<li>HAConnection$ReadSocketService： Master 网络读实现类</li>
+<li>HAConnection$WriteSocketService：Master 网络写实现类</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f9f4b11e8cac44a3940e929af0f2f839~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<h1 id="源码部分">源码部分</h1>
+<h2 id="haservice-模块启动">HAService 模块启动</h2>
+<p>HA模块的启动路径在<code>store/src/main/java/org/apache/rocketmq/store/ha/HAService#start()</code>下</p>
+<pre><code class="language-java">// HAService 启动
+public void start() throws Exception {
+    // master相关
+    this.acceptSocketService.beginAccept();
+    this.acceptSocketService.start();
+    this.groupTransferService.start();  // 同步模式的实现
+    
+    //slave相关
+    this.haClient.start();
+}
+</code></pre>
+<ul>
+<li>acceptSocketService.beginAccept() : 启动slave的监听服务</li>
+<li>acceptSocketService.start(): 处理slave的连接事件</li>
+</ul>
+<h3 id="acceptsocketservicebeginaccept">acceptSocketService.beginAccept()</h3>
+<pre><code class="language-java">public void beginAccept() throws Exception {
+    // 创建 channel
+    this.serverSocketChannel = ServerSocketChannel.open();
+    // 创建 selector
+    this.selector = RemotingUtil.openSelector();
+    // 设置 TCP reuseAddress
+    this.serverSocketChannel.socket().setReuseAddress(true);
+    // 绑定监听端口,默认10912
+    this.serverSocketChannel.socket().bind(this.socketAddressListen);
+    // 设置为非阻塞模式
+    this.serverSocketChannel.configureBlocking(false);
+    // 注册OP_ACCEPT(连接事件)
+    this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
+}
+</code></pre>
+<h3 id="acceptsocketservicestart">acceptSocketService.start()</h3>
+<pre><code class="language-java">@Override
+public void run() {
+    log.info(this.getServiceName() + &quot; service started&quot;);
+
+    while (!this.isStopped()) {
+        try {
+            // 每1s钟处理一次slave连接事件
+            this.selector.select(1000);
+            Set&lt;SelectionKey&gt; selected = this.selector.selectedKeys();
+
+            if (selected != null) {
+                for (SelectionKey k : selected) {
+                    if ((k.readyOps() &amp; SelectionKey.OP_ACCEPT) != 0) {
+                        // slave的连接channel
+                        SocketChannel sc = ((ServerSocketChannel) k.channel()).accept();
+
+                        if (sc != null) {
+                            HAService.log.info(&quot;HAService receive new connection, &quot; + sc.socket().getRemoteSocketAddress());
+
+                            try {
+                                // 创建一个HAConnection对象，保存slave的Channel
+                                HAConnection conn = new HAConnection(HAService.this, sc);
+                                // 启动HAConnection
+                                conn.start();
+                                // 保存HAConnection到connectionList中
+                                HAService.this.addConnection(conn);
+                            } catch (Exception e) {
+                                log.error(&quot;new HAConnection exception&quot;, e);
+                                sc.close();
+                            }
+                        }
+                    } else {
+                        log.warn(&quot;Unexpected ops in select &quot; + k.readyOps());
+                    }
+                }
+
+                selected.clear();
+            }
+        } catch (Exception e) {
+            log.error(this.getServiceName() + &quot; service has exception.&quot;, e);
+        }
+    }
+
+    log.info(this.getServiceName() + &quot; service end&quot;);
+}
+</code></pre>
+<p>当有新的连接时，会将该连接封装成一个<code>HAConnection</code>对象，调用<code>HAConnection.start()</code>方法，然后将连接保存到连接列表中。</p>
+<p>master如何处理slave的请求以及如何向slave发送消息的逻辑全部在<code>HAConnection</code>对象里，继续追踪<code>HAConnection#start()</code>。</p>
+<h2 id="haconnection启动">HAConnection启动</h2>
+<pre><code class="language-java">public void start() {
+    // master处理slave的消息部分
+    this.readSocketService.start();
+    // mastger向slave发送消息部分
+    this.writeSocketService.start();
+}
+</code></pre>
+<p>这里分为<code>readSocketService</code>和<code>writeSocketService</code>，顾名思义，一个处理slave的读事件，一个处理写事件</p>
+<ul>
+<li>readSocketService : 处理接收到的slave的请求</li>
+<li>writeSocketService: 负责master向slave同步数据的逻辑</li>
+</ul>
+<h3 id="master处理slave请求">Master处理slave请求</h3>
+<p>在 <code>store/src/main/java/org/apache/rocketmq/store/ha/HAConnection.run()</code>中，主要关注这部分逻辑:</p>
+<pre><code class="language-java">while (!this.isStopped()) {
+    try {
+        // 1s检查一次读请求
+        this.selector.select(1000);
+        // 处理读事件
+        boolean ok = this.processReadEvent();
+        if (!ok) {
+            HAConnection.log.error(&quot;processReadEvent error&quot;);
+            break;
+        }
+
+        // 两次读事件的间隔超过了既定的值，则master和slave的连接失效，跳出循环。
+        long interval = HAConnection.this.haService.getDefaultMessageStore().getSystemClock().now() - this.lastReadTimestamp;
+        if (interval &gt; HAConnection.this.haService.getDefaultMessageStore().getMessageStoreConfig().getHaHousekeepingInterval()) {
+            log.warn(&quot;ha housekeeping, found this connection[&quot; + HAConnection.this.clientAddr + &quot;] expired, &quot; + interval);
+            break;
+        }
+    } catch (Exception e) {
+        HAConnection.log.error(this.getServiceName() + &quot; service has exception.&quot;, e);
+        break;
+    }
+}
+</code></pre>
+<p>处理读事件的代码：</p>
+<p>slave发送的消息内容为要拉取的数据的offset，而master接收要这个offset后，含义有两层</p>
+<ol>
+<li>这个offset表示slave这次要拉取的位置，给master提供参考。</li>
+<li>这个offset也表示slave以及同步到的位置，可以当作一个ack包的作用。</li>
+</ol>
+<pre><code class="language-java">private boolean processReadEvent() {
+    int readSizeZeroTimes = 0;
+
+    // 若byteBufferRead没有剩余
+    if (!this.byteBufferRead.hasRemaining()) {
+        this.byteBufferRead.flip();
+        this.processPosition = 0;
+    }
+
+    while (this.byteBufferRead.hasRemaining()) {
+        try {
+            int readSize = this.socketChannel.read(this.byteBufferRead);
+            if (readSize &gt; 0) {
+                readSizeZeroTimes = 0;
+                this.lastReadTimestamp = HAConnection.this.haService.getDefaultMessageStore().getSystemClock().now();
+                // 超过8字节就处理,因为slave发送的心跳包就是8字节的offset
+                if ((this.byteBufferRead.position() - this.processPosition) &gt;= 8) {
+                    // 获取离byteBufferRead.position()最近的8的整数
+                    int pos = this.byteBufferRead.position() - (this.byteBufferRead.position() % 8);
+                    long readOffset = this.byteBufferRead.getLong(pos - 8);
+                    this.processPosition = pos;
+                    // 更新slave 已拉取的 offset
+                    HAConnection.this.slaveAckOffset = readOffset;
+                    // 假如是第一次拉取的情况
+                    if (HAConnection.this.slaveRequestOffset &lt; 0) {
+                        HAConnection.this.slaveRequestOffset = readOffset;
+                        log.info(&quot;slave[&quot; + HAConnection.this.clientAddr + &quot;] request offset &quot; + readOffset);
+                    }
+                    // 通知slave已经更新，更新push2SlaveMaxOffset字段
+                    HAConnection.this.haService.notifyTransferSome(HAConnection.this.slaveAckOffset);
+                }
+            } else if (readSize == 0) {
+                if (++readSizeZeroTimes &gt;= 3) {
+                    break;
+                }
+            } else {
+                log.error(&quot;read socket[&quot; + HAConnection.this.clientAddr + &quot;] &lt; 0&quot;);
+                return false;
+            }
+        } catch (IOException e) {
+            log.error(&quot;processReadEvent exception&quot;, e);
+            return false;
+        }
+    }
+
+    return true;
+}
+</code></pre>
+<p>master获取到offset后，更新<code>push2SlavemaxOffset</code>字段，这个字段的作用是表示当前M/S之间已成功同步的位置，在master向slave发送数据时需要。</p>
+<h2 id="master传输数据">Master传输数据</h2>
+<pre><code class="language-java">while (!this.isStopped()) {
+    try {
+        this.selector.select(1000);
+
+        if (-1 == HAConnection.this.slaveRequestOffset) {
+            Thread.sleep(10);
+            continue;
+        }
+
+        // 是否第一次进行传输
+        if (-1 == this.nextTransferFromWhere) {
+            // request为0
+            if (0 == HAConnection.this.slaveRequestOffset) {
+                long masterOffset = HAConnection.this.haService.getDefaultMessageStore().getCommitLog().getMaxOffset();
+                masterOffset = masterOffset - (masterOffset % HAConnection.this.haService.getDefaultMessageStore().getMessageStoreConfig().getMappedFileSizeCommitLog());
+
+                if (masterOffset &lt; 0) {
+                    masterOffset = 0;
+                }
+
+                this.nextTransferFromWhere = masterOffset;
+            } else {
+                // slaveRequestOffset != 0
+                this.nextTransferFromWhere = HAConnection.this.slaveRequestOffset;
+            }
+
+            log.info(&quot;master transfer data from &quot; + this.nextTransferFromWhere + &quot; to slave[&quot; + HAConnection.this.clientAddr + &quot;], and slave request &quot; + HAConnection.this.slaveRequestOffset);
+        }
+
+        // 上次传输是否成功
+        if (this.lastWriteOver) {
+            // 距离上次写的时间间隔
+            long interval = HAConnection.this.haService.getDefaultMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
+            // 如果等待时间间隔 &gt; ha心跳时间间隔
+            if (interval &gt; HAConnection.this.haService.getDefaultMessageStore().getMessageStoreConfig().getHaSendHeartbeatInterval()) {
+                // Build Header
+                this.byteBufferHeader.position(0);
+                this.byteBufferHeader.limit(headerSize);
+                this.byteBufferHeader.putLong(this.nextTransferFromWhere);
+                this.byteBufferHeader.putInt(0);
+                this.byteBufferHeader.flip();
+                this.lastWriteOver = this.transferData();
+                if (!this.lastWriteOver) continue;
+            }
+        } else {
+            //上次失败，需要进行重新传输
+            this.lastWriteOver = this.transferData();
+            if (!this.lastWriteOver) continue;
+        }
+
+        // 根据nextTransferFromWhere获取commitlog数据
+        SelectMappedBufferResult selectResult = HAConnection.this.haService.getDefaultMessageStore().getCommitLogData(this.nextTransferFromWhere);
+        if (selectResult != null) {
+            int size = selectResult.getSize();
+            if (size &gt; HAConnection.this.haService.getDefaultMessageStore().getMessageStoreConfig().getHaTransferBatchSize()) {
+                size = HAConnection.this.haService.getDefaultMessageStore().getMessageStoreConfig().getHaTransferBatchSize();
+            }
+
+            long thisOffset = this.nextTransferFromWhere;
+            this.nextTransferFromWhere += size;
+
+            selectResult.getByteBuffer().limit(size);
+            this.selectMappedBufferResult = selectResult;
+
+            // Build Header
+            this.byteBufferHeader.position(0);
+            this.byteBufferHeader.limit(headerSize);
+            this.byteBufferHeader.putLong(thisOffset);
+            this.byteBufferHeader.putInt(size);
+            this.byteBufferHeader.flip();
+
+            this.lastWriteOver = this.transferData();
+        } else {
+
+            HAConnection.this.haService.getWaitNotifyObject().allWaitForRunning(100);
+        }
+    } catch (Exception e) {
+
+        HAConnection.log.error(this.getServiceName() + &quot; service has exception.&quot;, e);
+        break;
+    }
+}
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/438c5aae0acf4ea3b06b92a35b010648~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<h1 id="总结">总结</h1>
+<ol>
+<li><code>master</code>如何接受<code>slave</code>的请求？</li>
+</ol>
+<p>答：在readSocketService类中进行OP_READ事件处理。master收到slave发送的的offset，表示slave当前同步的位置，master保存该offset。</p>
+<ol start="2">
+<li><code>master</code>处理<code>slave</code>请求时，如何判断哪些数据需要同步？</li>
+</ol>
+<p>答：slave的请求会携带同步完的offset，master在readSocketService中保存了该offset，后续writeSocketService在执行OP_WRITE事件时，会与 master的offset进行比较，如果有新的数据则发送给slave。</p>
+<ol start="3">
+<li><code>master</code>如何保证发送的数据同步成功的？</li>
+</ol>
+<p>答：ack机制，slave -&gt; master 发送的请求中的offset即代表slave已同步完成的进度，假如slave在同步操作时发送异常，那么未同步成功的数据下一次master会再发送过来。</p>
+<blockquote>
+<p>关于slave于高级部分在后续文章中更新。</p>
+</blockquote>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
+                    RocketMQ
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/">
+                  <h3 class="post-title">
+                    RocketMQ4.9.1源码分析_(事务) Half半消息处理
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>

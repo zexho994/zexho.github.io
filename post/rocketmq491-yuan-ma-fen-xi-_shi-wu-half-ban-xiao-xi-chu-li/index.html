@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>RocketMQ4.9.1源码分析_(事务) Half半消息处理 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601639754">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：
+
+producer -&gt; broker 发送half消息
+broker 处理half消息
+
+
+对应图中的步骤1、2。
+
+带着问题看源码, 先提几个问题：
+
+pro..." />
+    <meta name="keywords" content="RocketMQ,源码" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601639754" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">RocketMQ4.9.1源码分析_(事务) Half半消息处理</h2>
+            <div class="post-date">2021-10-05</div>
+            
+            <div class="post-content" v-pre>
+              <p>half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：</p>
+<ol>
+<li>producer -&gt; broker 发送half消息</li>
+<li>broker 处理half消息</li>
+</ol>
+<!-- more -->
+<p>对应图中的步骤1、2。</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7bd34b7c086149a298df6672e9c5dda2~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>带着问题看源码, 先提几个问题：</p>
+<ol>
+<li>producer 如何发送 half 消息的？</li>
+<li>broker 又是如何区分普通消息和事务消息的</li>
+</ol>
+<!---->
+<ol start="3">
+<li>half消息不会被Consumer消费，是如何实现的？</li>
+</ol>
+<p>看完就有答案了。</p>
+<h1 id="producer-half-消息发送">Producer Half 消息发送</h1>
+<p>首先生产者的使用代码如下，要使用事务消息的功能，生产者对象要使用<code>TransactionMQProducer</code>进行声明。</p>
+<pre><code class="language-java">public static void main(String[] args) throws MQClientException {
+    // 创建 TransactionMQProducer 实例，并设置生产者组名
+    TransactionMQProducer producer = new TransactionMQProducer(&quot;transactionGroup&quot;);
+    // 设置 NameServer 地址
+    producer.setNamesrvAddr(&quot;127.0.0.1:9876&quot;);
+
+    // 添加事务监听器
+    producer.setTransactionListener(new TransactionListener() {
+        /**
+         * 执行本地事务的方法
+         */
+        @Override
+        public LocalTransactionState executeLocalTransaction(Message message, Object o) {
+            // 执行本地事务
+            doXXX();
+            // 返回执行结果
+            return LocalTransactionState.xxx;
+        }
+
+        /**
+         * 消息回查执行的方法
+         */
+        @Override
+        public LocalTransactionState checkLocalTransaction(MessageExt messageExt) {
+			// 回查事务状态
+            findxxx();
+            // 消息来回查的时候，进行提交事务
+            return LocalTransactionState.xxx;
+        }
+    });
+
+    // 启动producer
+    producer.start();
+}
+
+// 发送消息
+SendResult result = producer.sendMessageInTransaction(msg, null);
+</code></pre>
+<p>和普通消息不同，在37行中使用<code>sendMessageIntransaction()</code>方法发送事务方法，那么发送的逻辑肯定都在这个方法下：</p>
+<pre><code class="language-java">@Override
+public TransactionSendResult sendMessageInTransaction(final Message msg, final Object arg) throws MQClientException {
+    // 本地事务处理逻辑必须要先定义好
+    if (null == this.transactionListener) {
+        throw new MQClientException(&quot;TransactionListener is null&quot;, null);
+    }
+
+    // 对topic进行包装,附带延迟、重试标记
+    msg.setTopic(NamespaceUtil.wrapNamespace(this.getNamespace(), msg.getTopic()));
+    return this.defaultMQProducerImpl.sendMessageInTransaction(msg, null, arg);
+}
+</code></pre>
+<p>进入<code>sendMessageInTransaction()</code>方法, 我们主要关注方法的前半部分：</p>
+<pre><code class="language-java">public TransactionSendResult sendMessageInTransaction(final Message msg, final LocalTransactionExecuter localTransactionExecuter, final Object arg) throws MQClientException {
+    TransactionListener transactionListener = getCheckListener();
+    if (null == localTransactionExecuter &amp;&amp; null == transactionListener) {
+        throw new MQClientException(&quot;tranExecutor is null&quot;, null);
+    }
+
+    // ignore DelayTimeLevel parameter
+    if (msg.getDelayTimeLevel() != 0) {
+        MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_DELAY_TIME_LEVEL);
+    }
+    Validators.checkMessage(msg, this.defaultMQProducer);
+
+    SendResult sendResult;
+    // 给消息打上TRAN_MSG标记,标记为事务消息
+    MessageAccessor.putProperty(msg, MessageConst.PROPERTY_TRANSACTION_PREPARED, &quot;true&quot;);
+    // 标记生产者组的目的是broker进行回查时需要
+    MessageAccessor.putProperty(msg, MessageConst.PROPERTY_PRODUCER_GROUP, this.defaultMQProducer.getProducerGroup());
+    try {
+        // 发送half消息
+        sendResult = this.send(msg);
+    } catch (Exception e) {
+        throw new MQClientException(&quot;send message Exception&quot;, e);
+    }
+    
+    // 略
+}
+</code></pre>
+<p>可以看到代码里给消息添加了两个属性：</p>
+<ul>
+<li>PROPERTY_TRANSACTION_PREPARED : 标记为事务消息，broker可以根据msg是否有该字段来判断是否是事务消息。</li>
+<li>PROPERTY_PRODUCER_GROUP : 生产者组，这个在broker进行事务结果回查时候需要。</li>
+</ul>
+<p>在对消息进行特殊包装变成事务消息后，调用的<code>send()</code>方法就是通用的消息发送方法了，所有消息都是通过这个方法进行发送的。</p>
+<h1 id="broker-处理-half-消息">Broker 处理 Half 消息</h1>
+<p>在 broker/src/main/java/org/apache/rocketmq/broker/processor/SendMessageProcessor.java 类中，<code>asyncSendMessage()</code>方法中有一段代码：</p>
+<pre><code class="language-java">...
+// 获取事务属性字段
+String transFlag = origProps.get(MessageConst.PROPERTY_TRANSACTION_PREPARED);
+// 判断是否为空 &amp;&amp; 值为true
+if (transFlag != null &amp;&amp; Boolean.parseBoolean(transFlag)) {
+  if (this.brokerController.getBrokerConfig().isRejectTransactionMessage()) {
+    response.setCode(ResponseCode.NO_PERMISSION);
+    response.setRemark(&quot;the broker[&quot; + this.brokerController.getBrokerConfig().getBrokerIP1() + &quot;] sending transaction message is forbidden&quot;);
+    return CompletableFuture.completedFuture(response);
+  }
+  // 存储prepare消息
+  putMessageResult = this.brokerController.getTransactionalMessageService().asyncPrepareMessage(msgInner);
+} else {
+  // 存储普通消息
+  putMessageResult = this.brokerController.getMessageStore().asyncPutMessage(msgInner);
+}
+...
+</code></pre>
+<p>看看如果处理prepare消息的。</p>
+<pre><code class="language-java">@Override
+public CompletableFuture&lt;PutMessageResult&gt; asyncPrepareMessage(MessageExtBrokerInner messageInner) {
+    return transactionalMessageBridge.asyncPutHalfMessage(messageInner);  //1 调用asyncPutHalfMessage()方法
+}
+</code></pre>
+<p><code>asyncPrepareMessage()</code>调用<code>asyncPutHalfMessage()</code>方法</p>
+<pre><code class="language-java">public CompletableFuture&lt;PutMessageResult&gt; asyncPutHalfMessage(MessageExtBrokerInner messageInner) {
+    return store.asyncPutMessage(parseHalfMessageInner(messageInner));
+}
+</code></pre>
+<p><code>store.asyncPutMessage()</code>就是通用的方法，普通消息的存储也是使用这个方法，所以half消息的特殊处理在<code>parseHalfMessageInner()</code>中</p>
+<pre><code class="language-java">private MessageExtBrokerInner parseHalfMessageInner(MessageExtBrokerInner msgInner) {
+    // 备份消息的原主题和原队列ID
+    MessageAccessor.putProperty(msgInner, MessageConst.PROPERTY_REAL_TOPIC, msgInner.getTopic());
+    MessageAccessor.putProperty(msgInner, MessageConst.PROPERTY_REAL_QUEUE_ID, String.valueOf(msgInner.getQueueId()));
+    msgInner.setSysFlag(MessageSysFlag.resetTransactionValue(msgInner.getSysFlag(), MessageSysFlag.TRANSACTION_NOT_TYPE));
+    // 事务消息的topic和queueID是写死固定的
+    msgInner.setTopic(TransactionalMessageUtil.buildHalfTopic());
+    msgInner.setQueueId(0);
+    msgInner.setPropertiesString(MessageDecoder.messageProperties2String(msgInner.getProperties()));
+    return msgInner;
+}
+</code></pre>
+<p>分为两部分逻辑</p>
+<ol>
+<li>备份原有的topic和queueId，将消息真正的topic放在<code>REAL_TOPIC</code>属性中，queueId放在<code>REAL_QID</code>属性中</li>
+<li>使用事务专用的topic和queueId覆盖旧值，topic = <code>RMQ_SYS_TRANS_HALF_TOPIC</code>,queueId = 0。这样意味着所有的half消息都会存在同一个topic队列中。</li>
+</ol>
+<h1 id="疑问解答">疑问解答</h1>
+<p>现在可以回答之前的疑惑了</p>
+<ol>
+<li>producer 如何发送 half 消息的？</li>
+</ol>
+<p>答：RocketMQ对于事务消息，使用了专门的Producer对象<code>TransactionMQProducer</code>，这个producer的发送消息的方法把消息包装成事务消息。</p>
+<ol start="2">
+<li>broker 又是如何区分普通消息和事务消息的</li>
+</ol>
+<p>答：在消息发送的时候，在消息的 <code>property</code>里添加<code>PROPERTY_TRANSACTION_PREPARED</code>标记，broker根据和这个标记来区分普通消息和事务消息。</p>
+<ol start="3">
+<li>half消息不会被Consumer消费，是如何实现的？</li>
+</ol>
+<p>答：消息经过特殊处理，都被分配到特有的topic队列中，被隔离了。这样消费者就无法获取到这些消息了。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
+                    RocketMQ
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-broker-ding-shi-hui-cha/">
+                  <h3 class="post-title">
+                    RocketMQ4.9.1源码分析_(事务)broker定时回查
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
