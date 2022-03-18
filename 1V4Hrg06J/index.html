@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>深入解析Java Stream源码（上）：初始化 Sink | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647594749921">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647594749921" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">深入解析Java Stream源码（上）：初始化 Sink</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-07-09</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="类图">类图</h2>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1fccb594381b4b488f58abd47d935f06~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h2 id="概念解释">概念解释</h2>
+<h3 id="pipline和stage">Pipline和Stage</h3>
+<p>Pipline是流水线，表示一整个流程。Stage表示流水线的其中一个阶段。是一个比较抽象层面的描述，因为stage主要表示一种逻辑上的顺序关系，而具体每一个阶段要干嘛、怎么干，使用Sink来进行描述。</p>
+<pre><code class="language-java">new stream          //stage 0
+    .filter()       //stage 1
+    .sort()         //stage 2
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/37dd9b847b014b8c9ae5710c0be1907c~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="sink">Sink</h3>
+<p>直译为水槽，生活中水槽的作用无非</p>
+<ul>
+<li>打开水龙头，知道有水要来</li>
+<li>水在水槽里, 可以进行一些操作</li>
+<li>打开水闸，放水<br>
+Java中的Sink核心功能为：</li>
+<li>begin(): 告诉该水槽水流要来了，可以进行一些初始化操作</li>
+<li>accept()：接受水流，然后进行操作</li>
+<li>end()：水流全部处理完了。<br>
+看一个sort()的示例,sort这个stage的目的就是对所有水流进行排序，然后再流到下游。</li>
+</ul>
+<pre><code class="language-java">private static final class SizedRefSortingSink&lt;T&gt; extends AbstractRefSortingSink&lt;T&gt; {
+        private T[] array;  //要进行排序，需要一个数组进行缓存
+        private int offset; 
+
+        SizedRefSortingSink(Sink&lt;? super T&gt; sink, Comparator&lt;? super T&gt; comparator) {
+            super(sink, comparator);
+        }
+
+        @Override
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public void begin(long size) {
+            if (size &gt;= Nodes.MAX_ARRAY_SIZE)
+                throw new IllegalArgumentException(Nodes.BAD_SIZE);
+            //上游调用begin(),通知sort进行初始化操作，生产一个数组
+            array = (T[]) new Object[(int) size];
+        }
+
+    	//上游调用end()方法，告诉sort水已经全部流过来了。sort开始执行操作
+        @Override
+        public void end() {
+            //操作
+            Arrays.sort(array, 0, offset, comparator);
+            //告诉sort的下游准备接受水流
+            downstream.begin(offset);
+            //一个个元素的传递给下游
+            if (!cancellationWasRequested) {
+                for (int i = 0; i &lt; offset; i++)
+                    downstream.accept(array[i]);
+            }
+            else {
+                for (int i = 0; i &lt; offset &amp;&amp; !downstream.cancellationRequested(); i++)
+                    downstream.accept(array[i]);
+            }
+            //告诉下游水流传递结束
+            downstream.end();
+            //缓存清空
+            array = null;
+        }
+
+    	//上游调用accept()方法，将水流存储到到sort的缓存数组中
+        @Override
+        public void accept(T t) {
+            array[offset++] = t;
+        }
+    }
+</code></pre>
+<h2 id="创建head">创建Head</h2>
+<h3 id="疑问">疑问</h3>
+<ul>
+<li>官方说Stream不存储数据，那么数据保存在那里呢？<br>
+解答在后面。</li>
+</ul>
+<h3 id="使用方式">使用方式</h3>
+<p>可以使用Stream.of()创建一个流，例如</p>
+<pre><code class="language-java">//创建方式 of()
+Stream&lt;Integer&gt; stream = Stream.of(1, 2, 3);
+</code></pre>
+<h3 id="源码分析">源码分析</h3>
+<p>of()方法调用</p>
+<pre><code class="language-java">StreamSupport.stream(Arrays.spliterator(arr, 0, arr.length), false);
+</code></pre>
+<p>stream()方法逻辑：</p>
+<pre><code class="language-java">public static &lt;T&gt; Stream&lt;T&gt; stream(Spliterator&lt;T&gt; spliterator, boolean parallel) {
+    Objects.requireNonNull(spliterator);
+    return new ReferencePipeline.Head&lt;&gt;(spliterator,
+                                        StreamOpFlag.fromCharacteristics(spliterator),
+                                        parallel);
+}
+</code></pre>
+<p>调用了<code>ReferencePipeline.Head&lt;&gt;</code>，返回一个Head对象。Head是ReferencePipeline的子类。可以理解为Head是流水线的第一个stage。<br>
+构造方法的主要了逻辑要一直super()到<code>AbstractPipeline</code>类</p>
+<pre><code class="language-java">    /**
+     * The source spliterator. Only valid for the head pipeline.
+     * Before the pipeline is consumed if non-null then {@code sourceSupplier}
+     * must be null. After the pipeline is consumed if non-null then is set to
+     * null.
+     */
+    private Spliterator&lt;?&gt; sourceSpliterator;
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Spliterator} describing the stream source
+     * @param sourceFlags the source flags for the stream source, described in
+     * {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    AbstractPipeline(Spliterator&lt;?&gt; source,
+                     int sourceFlags, boolean parallel) {
+        this.previousStage = null;
+        //使用一个字段指向数据集合的Spliterator,后续终结操作的时候，引用的方式操作数据
+        this.sourceSpliterator = source;
+        this.sourceStage = this;
+        this.sourceOrOpFlags = sourceFlags &amp; StreamOpFlag.STREAM_MASK;
+        // The following is an optimization of:
+        // StreamOpFlag.combineOpFlags(sourceOrOpFlags, StreamOpFlag.INITIAL_OPS_VALUE);
+        this.combinedFlags = (~(sourceOrOpFlags &lt;&lt; 1)) &amp; StreamOpFlag.INITIAL_OPS_VALUE;
+        this.depth = 0;
+        this.parallel = parallel;
+    }
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0e6bb4ba6d9042e3a1f6b4547b68edec~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="疑问解答">疑问解答</h3>
+<ol>
+<li><strong>官方说Stream不存储数据，那么数据保存在那里呢？</strong>
+<ul>
+<li>Head中保存数据源的Spliterator对象，后续操作Spliterator的方式操作数据</li>
+</ul>
+</li>
+</ol>
+<p>参考引用：</p>
+<ul>
+<li><a href="https://colobu.com/2014/11/18/Java-8-Stream/">Java 8 Stream探秘 (colobu.com)</a></li>
+<li><a href="">原来你是这样的 Stream：浅析 Java Stream 实现原理 (https_toutiao.io)</a></li>
+</ul>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/nL7teffDj/">
+              <h3 class="post-title">
+                下一篇：从字节码剖析泛型
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
