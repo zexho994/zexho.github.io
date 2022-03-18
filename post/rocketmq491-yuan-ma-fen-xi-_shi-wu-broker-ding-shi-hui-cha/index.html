@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>RocketMQ4.9.1源码分析_(事务)broker定时回查 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601471607">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="启动任务
+broker/src/main/java/org/apache/rocketmq/broker/transaction/queue/TransactionalMessageServiceImpl.java类中。
+
+@Overrid..." />
+    <meta name="keywords" content="RocketMQ,源码" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601471607" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">RocketMQ4.9.1源码分析_(事务)broker定时回查</h2>
+            <div class="post-date">2021-10-01</div>
+            
+            <div class="post-content" v-pre>
+              <h1 id="启动任务">启动任务</h1>
+<p>broker/src/main/java/org/apache/rocketmq/broker/transaction/queue/TransactionalMessageServiceImpl.java类中。</p>
+<!-- more -->
+<pre><code class="language-java">@Override
+public void run() {
+    log.info(&quot;Start transaction check service thread!&quot;);
+    long checkInterval = brokerController.getBrokerConfig().getTransactionCheckInterval();  // 默认值为60000，即60s
+    while (!this.isStopped()) {
+        this.waitForRunning(checkInterval);
+    }
+    log.info(&quot;End transaction check service thread!&quot;);
+}
+
+@Override
+protected void onWaitEnd() {
+    long timeout = brokerController.getBrokerConfig().getTransactionTimeOut();
+    int checkMax = brokerController.getBrokerConfig().getTransactionCheckMax();
+    long begin = System.currentTimeMillis();
+    log.info(&quot;Begin to check prepare message, begin time:{}&quot;, begin);
+    // 调用chekc方法
+    this.brokerController.getTransactionalMessageService().check(timeout, checkMax, this.brokerController.getTransactionalMessageCheckListener());
+    log.info(&quot;End to check prepare message, consumed time:{}&quot;, System.currentTimeMillis() - begin);
+}
+</code></pre>
+<p>这里采用了模板设计模式，重写了<code>run()</code>和<code>onWaitEnd()</code>两个方法，其中可以看到<code>onWaitEnd()</code>方法中调用了<code>check()</code>方法，那么在哪里调用了这个onWaitEnd()方法呢？看下<code>waitForRunning()</code>方法，在<code>src/main/java/org/apache/rocketmq/common/ServiceThread.java</code>中。</p>
+<pre><code class="language-java">protected void waitForRunning(long interval) {
+    if (hasNotified.compareAndSet(true, false)) {
+        // 调用子类重写的逻辑
+        this.onWaitEnd();
+        return;
+    }
+
+    //entry to wait
+    waitPoint.reset();
+
+    try {
+        // 等待
+        waitPoint.await(interval, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+        log.error(&quot;Interrupted&quot;, e);
+    } finally {
+        hasNotified.set(false);
+        this.onWaitEnd();
+    }
+}
+</code></pre>
+<p>总结就是以默认60s的间隔执行一次check()方法，check()方法就是定时回查方法，下面看下。</p>
+<h1 id="check-流程">check 流程</h1>
+<p>broker/src/main/java/org/apache/rocketmq/broker/transaction/queue/TransactionalMessageServiceImpl.java类中,先看下全部的代码：</p>
+<pre><code class="language-java">@Override
+    public void check(long transactionTimeout, int transactionCheckMax, AbstractTransactionalMessageCheckListener listener) {
+        try {
+            // 定义topic为&quot;RMQ_SYS_TRANS_HALF_TOPIC&quot;
+            String topic = TopicValidator.RMQ_SYS_TRANS_HALF_TOPIC;
+            // 获取half队列
+            Set&lt;MessageQueue&gt; msgQueues = transactionalMessageBridge.fetchMessageQueues(topic);
+            if (msgQueues == null || msgQueues.size() == 0) {
+                log.warn(&quot;The queue of topic is empty :&quot; + topic);
+                return;
+            }
+            log.debug(&quot;Check topic={}, queues={}&quot;, topic, msgQueues);
+            for (MessageQueue messageQueue : msgQueues) {
+                long startTime = System.currentTimeMillis();
+                // 获取opQueue
+                MessageQueue opQueue = getOpQueue(messageQueue);
+                // 获取half队列的消费offset
+                long halfOffset = transactionalMessageBridge.fetchConsumeOffset(messageQueue);
+                // 获取op队列的offset
+                long opOffset = transactionalMessageBridge.fetchConsumeOffset(opQueue);
+                log.info(&quot;Before check, the queue={} msgOffset={} opOffset={}&quot;, messageQueue, halfOffset, opOffset);
+                if (halfOffset &lt; 0 || opOffset &lt; 0) {
+                    log.error(&quot;MessageQueue: {} illegal offset read: {}, op offset: {},skip this queue&quot;, messageQueue, halfOffset, opOffset);
+                    continue;
+                }
+
+                List&lt;Long/*处理过得opQueue的offset*/&gt; doneOpOffset = new ArrayList&lt;&gt;();
+                HashMap&lt;Long/*halfQueue offset*/, Long/*opQueue offset*/&gt; removeMap = new HashMap&lt;&gt;();  //存储已经处理过,但还未添加到doneOpOffset中的消息
+                // 将已处理但未更新的消息保存到removeMap中，后续进行判断时需要
+                PullResult pullResult = fillOpRemoveMap(removeMap, opQueue, opOffset, halfOffset, doneOpOffset);
+                if (null == pullResult) {
+                    log.error(&quot;The queue={} check msgOffset={} with opOffset={} failed, pullResult is null&quot;, messageQueue, halfOffset, opOffset);
+                    continue;
+                }
+                int getMessageNullCount = 1;  //获取空消息的次数
+                long newOffset = halfOffset;  //当前处理half队列的最新进度
+                long i = halfOffset; //当前处理消息的half队列偏移量
+                while (true) {
+                    // 检查当前任务的时间片是否用完
+                    if (System.currentTimeMillis() - startTime &gt; MAX_PROCESS_TIME_LIMIT) {
+                        log.info(&quot;Queue={} process time reach max={}&quot;, messageQueue, MAX_PROCESS_TIME_LIMIT);
+                        break;
+                    }
+                    // 如果half消息已经被处理过,继续处理下一条消息
+                    if (removeMap.containsKey(i)) {
+                        log.debug(&quot;Half offset {} has been committed/rolled back&quot;, i);
+                        Long removedOpOffset = removeMap.remove(i);
+                        doneOpOffset.add(removedOpOffset);
+                    } else {
+                        // 根据half队列消费offset获取消息
+                        GetResult getResult = getHalfMsg(messageQueue, i);
+                        MessageExt msgExt = getResult.getMsg();
+                        if (msgExt == null) {
+                            // 是否最大重试次数
+                            if (getMessageNullCount++ &gt; MAX_RETRY_COUNT_WHEN_HALF_NULL) {
+                                break;
+                            }
+                            if (getResult.getPullResult().getPullStatus() == PullStatus.NO_NEW_MSG) {
+                                log.debug(&quot;No new msg, the miss offset={} in={}, continue check={}, pull result={}&quot;, i, messageQueue, getMessageNullCount, getResult.getPullResult());
+                                break;
+                            } else {
+                                log.info(&quot;Illegal offset, the miss offset={} in={}, continue check={}, pull result={}&quot;, i, messageQueue, getMessageNullCount, getResult.getPullResult());
+                                i = getResult.getPullResult().getNextBeginOffset();
+                                newOffset = i;
+                                continue;
+                            }
+                        }
+
+                        // 如果超过存储时间(默认3天)或者超过回查时间(默认15次)
+                        if (needDiscard(msgExt, transactionCheckMax) || needSkip(msgExt)) {
+                            listener.resolveDiscardMsg(msgExt);
+                            newOffset = i + 1;
+                            i++;
+                            continue;
+                        }
+
+                        // 如果存储时间大于开始时间，不处理
+                        if (msgExt.getStoreTimestamp() &gt;= startTime) {
+                            log.debug(&quot;Fresh stored. the miss offset={}, check it later, store={}&quot;, i, new Date(msgExt.getStoreTimestamp()));
+                            break;
+                        }
+
+                        long valueOfCurrentMinusBorn = System.currentTimeMillis() - msgExt.getBornTimestamp();  //消息已存储时间
+                        long checkImmunityTime = transactionTimeout; //立即检测事务消息的时间
+                        String checkImmunityTimeStr = msgExt.getUserProperty(MessageConst.PROPERTY_CHECK_IMMUNITY_TIME_IN_SECONDS); //获取消息的最晚回查时间
+                        if (null != checkImmunityTimeStr) {
+                            checkImmunityTime = getImmunityTime(checkImmunityTimeStr, transactionTimeout);
+                            // 如果未到回查时间，不处理
+                            if (valueOfCurrentMinusBorn &lt; checkImmunityTime) {
+                                if (checkPrepareQueueOffset(removeMap, doneOpOffset, msgExt)) {
+                                    newOffset = i + 1;
+                                    i++;
+                                    continue;
+                                }
+                            }
+                        } else {
+                            if ((0 &lt;= valueOfCurrentMinusBorn) &amp;&amp; (valueOfCurrentMinusBorn &lt; checkImmunityTime)) {
+                                log.debug(&quot;New arrived, the miss offset={}, check it later checkImmunity={}, born={}&quot;, i, checkImmunityTime, new Date(msgExt.getBornTimestamp()));
+                                break;
+                            }
+                        }
+
+                        // 获取消息列表
+                        List&lt;MessageExt&gt; opMsg = pullResult.getMsgFoundList();
+                        // 判断是否需要进行回查
+                        boolean isNeedCheck = (opMsg == null &amp;&amp; valueOfCurrentMinusBorn &gt; checkImmunityTime) || (opMsg != null &amp;&amp; (opMsg.get(opMsg.size() - 1).getBornTimestamp() - startTime &gt; transactionTimeout)) || (valueOfCurrentMinusBorn &lt;= -1);
+                        if (isNeedCheck) {
+                            // 消息重新put到halfQueue中
+                            if (!putBackHalfMsgQueue(msgExt, i)) {
+                                continue;
+                            }
+                            // 执行回查
+                            listener.resolveHalfMsg(msgExt);
+                        } else {
+                            pullResult = fillOpRemoveMap(removeMap, opQueue, pullResult.getNextBeginOffset(), halfOffset, doneOpOffset);
+                            log.debug(&quot;The miss offset:{} in messageQueue:{} need to get more opMsg, result is:{}&quot;, i, messageQueue, pullResult);
+                            continue;
+                        }
+                    }
+                    newOffset = i + 1;
+                    i++;
+                }
+                if (newOffset != halfOffset) {
+                    // 更新halfQueue消费进度
+                    transactionalMessageBridge.updateConsumeOffset(messageQueue, newOffset);
+                }
+                long newOpOffset = calculateOpOffset(doneOpOffset, opOffset);
+                if (newOpOffset != opOffset) {
+                    // 更新opQueue消费进度
+                    transactionalMessageBridge.updateConsumeOffset(opQueue, newOpOffset);
+                }
+            }
+        } catch (Throwable e) {
+            log.error(&quot;Check error&quot;, e);
+        }
+
+    }
+</code></pre>
+<p>代码太多了，一个个拆解分析：</p>
+<h2 id="获取half队列">获取half队列</h2>
+<pre><code class="language-java">// 定义topic为&quot;RMQ_SYS_TRANS_HALF_TOPIC&quot;
+String topic = TopicValidator.RMQ_SYS_TRANS_HALF_TOPIC;
+// 获取half队列
+Set&lt;MessageQueue&gt; msgQueues = transactionalMessageBridge.fetchMessageQueues(topic);
+if (msgQueues == null || msgQueues.size() == 0) {
+    log.warn(&quot;The queue of topic is empty :&quot; + topic);
+    return;
+}
+</code></pre>
+<p>在rocketmq中，所有事务消息会保存在两个topic队列中，分别是<code>RMQ_SYS_TRANS_HALF_TOPIC</code>（简称halfQueue）和<code>RMQ_SYS_TRANS_OP _HALF _TOPIC</code>（简称opQueue）</p>
+<ul>
+<li>RMQ_SYS_TRANS _HALF _TOPIC : 保存 half 消息</li>
+<li>RMQ_SYS_TRANS_OP _HALF _TOPIC : 当 half消息收到 commit/rollback 后，会保存到opQueue中</li>
+</ul>
+<h2 id="定义偏移量">定义偏移量</h2>
+<pre><code class="language-java">// 开始时间
+long startTime = System.currentTimeMillis();
+// 获取opQueue
+MessageQueue opQueue = getOpQueue(messageQueue);
+// 获取half队列的消费offset
+long halfOffset = transactionalMessageBridge.fetchConsumeOffset(messageQueue);
+// 获取op队列的offset
+long opOffset = transactionalMessageBridge.fetchConsumeOffset(opQueue);
+</code></pre>
+<ul>
+<li>startTime : 作用是记录当前时间，后续在判断任务的执行时间时需要</li>
+<li>opQueue : 即<code>RMQ_SYS_TRANS_OP_HALF_TOPIC</code>队列，保存已处理过的消息。</li>
+<li>halfOffset ： halfQueue 中的消费记录位置，可以保证的halfOffset之后的消息才需要进行回查操作</li>
+<li>opOffset : opQueue中的消费记录，大于opOffset的消息就是距离上次定时回查任务结束后，这段时间新增的消息。</li>
+</ul>
+<h2 id="标记已处理消息">标记已处理消息</h2>
+<pre><code class="language-java">List&lt;Long/*处理过得opQueue的offset*/&gt; doneOpOffset = new ArrayList&lt;&gt;();
+HashMap&lt;Long/*halfQueue offset*/, Long/*opQueue offset*/&gt; removeMap = new HashMap&lt;&gt;();  //存储已经处理过,但还未添加到doneOpOffset中的消息
+// 将已处理但未更新的消息保存到removeMap中，后续进行判断时需要
+PullResult pullResult = fillOpRemoveMap(removeMap, opQueue, opOffset, halfOffset, doneOpOffset);
+</code></pre>
+<ul>
+<li>doneOpOffset: 保存opQueue中已经处理过得消息的offset，后续更新opQueue的offset时候要使用</li>
+<li>removeMap : 保存已经保存到opQueue中，但仍在halfQueue中的消息，后续判断消息是否需要回查时的依据之一。</li>
+</ul>
+<h3 id="fillopremove">fillOpRemove()</h3>
+<p>方法的目的就是填充已处理的消息到 removeMap</p>
+<pre><code class="language-java">private PullResult fillOpRemoveMap(HashMap&lt;Long, Long&gt; removeMap, MessageQueue opQueue, long pullOffsetOfOp, long miniOffset, List&lt;Long&gt; doneOpOffset) {
+    // step1 : 获取op消息,拉取32条消息
+    PullResult pullResult = pullOpMsg(opQueue, pullOffsetOfOp, 32);
+    if (null == pullResult) {
+        return null;
+    }
+    // step2 : 判断状态
+    if (pullResult.getPullStatus() == PullStatus.OFFSET_ILLEGAL || pullResult.getPullStatus() == PullStatus.NO_MATCHED_MSG) {
+        log.warn(&quot;The miss op offset={} in queue={} is illegal, pullResult={}&quot;, pullOffsetOfOp, opQueue, pullResult);
+        transactionalMessageBridge.updateConsumeOffset(opQueue, pullResult.getNextBeginOffset());
+        return pullResult;
+    } else if (pullResult.getPullStatus() == PullStatus.NO_NEW_MSG) { //没有新消息
+        log.warn(&quot;The miss op offset={} in queue={} is NO_NEW_MSG, pullResult={}&quot;, pullOffsetOfOp, opQueue, pullResult);
+        return pullResult;
+    }
+    List&lt;MessageExt&gt; opMsg = pullResult.getMsgFoundList();
+    if (opMsg == null) {
+        log.warn(&quot;The miss op offset={} in queue={} is empty, pullResult={}&quot;, pullOffsetOfOp, opQueue, pullResult);
+        return pullResult;
+    }
+    // step3 : 遍历所有消息
+    for (MessageExt opMessageExt : opMsg) {
+        // 获取opQueue的offset
+        Long queueOffset = getLong(new String(opMessageExt.getBody(), TransactionalMessageUtil.charset));
+        log.debug(&quot;Topic: {} tags: {}, OpOffset: {}, HalfOffset: {}&quot;, opMessageExt.getTopic(), opMessageExt.getTags(), opMessageExt.getQueueOffset(), queueOffset);
+        if (TransactionalMessageUtil.REMOVETAG.equals(opMessageExt.getTags())) {
+            if (queueOffset &lt; miniOffset) {
+                // 正常情况，opQueue里的消息在halfQueue中offset要小于当前halfQueue的offset
+                doneOpOffset.add(opMessageExt.getQueueOffset());
+            } else {
+                // 消息已经存储到opQueue中，但是halfQueue中的offset还没有更新
+                // 保存到removeMap中，防止后续重复进行回查操作
+                removeMap.put(queueOffset, opMessageExt.getQueueOffset());
+            }
+        } else {
+            log.error(&quot;Found a illegal tag in opMessageExt= {} &quot;, opMessageExt);
+        }
+    }
+    log.debug(&quot;Remove map: {}&quot;, removeMap);
+    log.debug(&quot;Done op list: {}&quot;, doneOpOffset);
+    return pullResult;
+}
+</code></pre>
+<h2 id="定义变量">定义变量</h2>
+<pre><code class="language-java">int getMessageNullCount = 1;  //获取空消息的次数
+long newOffset = halfOffset;  //当前处理half队列的最新进度
+long i = halfOffset; //当前处理消息的half队列偏移量
+</code></pre>
+<ul>
+<li>getMessageNullCount : rocketMQ允许进行重试，该字段是重试次数判断的依据</li>
+</ul>
+<h2 id="判断是否满足回查条件">判断是否满足回查条件</h2>
+<pre><code class="language-java">// 检查当前任务的时间片是否用完
+if (System.currentTimeMillis() - startTime &gt; MAX_PROCESS_TIME_LIMIT) {
+    log.info(&quot;Queue={} process time reach max={}&quot;, messageQueue, MAX_PROCESS_TIME_LIMIT);
+    break;
+}
+// 如果half消息已经被处理过,继续处理下一条消息
+if (removeMap.containsKey(i)) {
+    log.debug(&quot;Half offset {} has been committed/rolled back&quot;, i);
+    Long removedOpOffset = removeMap.remove(i);
+    doneOpOffset.add(removedOpOffset);
+} else {
+    // 根据half队列消费offset获取消息
+    GetResult getResult = getHalfMsg(messageQueue, i);
+    MessageExt msgExt = getResult.getMsg();
+    if (msgExt == null) {
+        // 是否最大重试次数
+        if (getMessageNullCount++ &gt; MAX_RETRY_COUNT_WHEN_HALF_NULL) {
+            break;
+        }
+        if (getResult.getPullResult().getPullStatus() == PullStatus.NO_NEW_MSG) {
+            log.debug(&quot;No new msg, the miss offset={} in={}, continue check={}, pull result={}&quot;, i, messageQueue, getMessageNullCount, getResult.getPullResult());
+            break;
+        } else {
+            log.info(&quot;Illegal offset, the miss offset={} in={}, continue check={}, pull result={}&quot;, i, messageQueue, getMessageNullCount, getResult.getPullResult());
+            i = getResult.getPullResult().getNextBeginOffset();
+            newOffset = i;
+            continue;
+        }
+    }
+
+    // 如果超过存储时间(默认3天)或者超过回查时间(默认15次)
+    if (needDiscard(msgExt, transactionCheckMax) || needSkip(msgExt)) {
+        listener.resolveDiscardMsg(msgExt);
+        newOffset = i + 1;
+        i++;
+        continue;
+    }
+
+    // 如果存储时间大于开始时间，不处理
+    if (msgExt.getStoreTimestamp() &gt;= startTime) {
+        log.debug(&quot;Fresh stored. the miss offset={}, check it later, store={}&quot;, i, new Date(msgExt.getStoreTimestamp()));
+        break;
+    }
+
+    long valueOfCurrentMinusBorn = System.currentTimeMillis() - msgExt.getBornTimestamp();  //消息已存储时间
+    long checkImmunityTime = transactionTimeout; //立即检测事务消息的时间
+    String checkImmunityTimeStr = msgExt.getUserProperty(MessageConst.PROPERTY_CHECK_IMMUNITY_TIME_IN_SECONDS); //获取消息的最晚回查时间
+    if (null != checkImmunityTimeStr) {
+        checkImmunityTime = getImmunityTime(checkImmunityTimeStr, transactionTimeout);
+        // 如果未到回查时间，不处理
+        if (valueOfCurrentMinusBorn &lt; checkImmunityTime) {
+            if (checkPrepareQueueOffset(removeMap, doneOpOffset, msgExt)) {
+                newOffset = i + 1;
+                i++;
+                continue;
+            }
+        }
+    } else {
+        if ((0 &lt;= valueOfCurrentMinusBorn) &amp;&amp; (valueOfCurrentMinusBorn &lt; checkImmunityTime)) {
+            log.debug(&quot;New arrived, the miss offset={}, check it later checkImmunity={}, born={}&quot;, i, checkImmunityTime, new Date(msgExt.getBornTimestamp()));
+            break;
+        }
+    }
+</code></pre>
+<p>任务时间片机制：在rocketmq中，有一种通用的设计方案就是给任务分配时间片， 如果时间片用完则直接退出。</p>
+<h2 id="执行回查">执行回查</h2>
+<pre><code class="language-java">// 获取消息列表
+List&lt;MessageExt&gt; opMsg = pullResult.getMsgFoundList();
+// 判断是否需要进行回查
+boolean isNeedCheck = (opMsg == null &amp;&amp; valueOfCurrentMinusBorn &gt; checkImmunityTime) || (opMsg != null &amp;&amp; (opMsg.get(opMsg.size() - 1).getBornTimestamp() - startTime &gt; transactionTimeout)) || (valueOfCurrentMinusBorn &lt;= -1);
+if (isNeedCheck) {
+    // 消息重新put到halfQueue中
+    if (!putBackHalfMsgQueue(msgExt, i)) {
+        continue;
+    }
+    // 执行回查
+    listener.resolveHalfMsg(msgExt);
+} else {
+    pullResult = fillOpRemoveMap(removeMap, opQueue, pullResult.getNextBeginOffset(), halfOffset, doneOpOffset);
+    log.debug(&quot;The miss offset:{} in messageQueue:{} need to get more opMsg, result is:{}&quot;, i, messageQueue, pullResult);
+    continue;
+}
+</code></pre>
+<p>其中比较重要的两个部分，<code>putBackHalfMsgQueue()</code>和<code>resolveHalfMsg()</code></p>
+<h3 id="putbackhalfmsgqueue">putBackHalfMsgQueue()</h3>
+<p>这里消息会重写追加到commitlog中，设计巧妙之处：</p>
+<ol>
+<li>发送回查的接口是异步的，将消息重写追加到队列中，下一次回查的时候还能获取到该消息。如果回查有结果，消息就会保存到opQueue中，这样也会在fillOpRemove()中被过滤掉，不影响。</li>
+<li>每次进行回查消息都要修改消息的回查次数属性，使用顺序写的性能要高于修改已存储消息的性能。</li>
+</ol>
+<pre><code class="language-java">private boolean putBackHalfMsgQueue(MessageExt msgExt, long offset) {
+    // 再次将消息存储到commitlog中
+    PutMessageResult putMessageResult = putBackToHalfQueueReturnResult(msgExt);
+    // 存储成功修改消息的属性
+    if (putMessageResult != null &amp;&amp; putMessageResult.getPutMessageStatus() == PutMessageStatus.PUT_OK) {
+        // 设置新的消费队列逻辑offset
+        msgExt.setQueueOffset(putMessageResult.getAppendMessageResult().getLogicsOffset());
+        // 设置新的commitlog的offset
+        msgExt.setCommitLogOffset(putMessageResult.getAppendMessageResult().getWroteOffset());
+        // 设置新的msgId
+        msgExt.setMsgId(putMessageResult.getAppendMessageResult().getMsgId());
+        log.debug(&quot;Send check message, the offset={} restored in queueOffset={} &quot; + &quot;commitLogOffset={} &quot; + &quot;newMsgId={} realMsgId={} topic={}&quot;, offset, msgExt.getQueueOffset(), msgExt.getCommitLogOffset(), msgExt.getMsgId(), msgExt.getUserProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX), msgExt.getTopic());
+        return true;
+    } else {
+        log.error(&quot;PutBackToHalfQueueReturnResult write failed, topic: {}, queueId: {}, &quot; + &quot;msgId: {}&quot;, msgExt.getTopic(), msgExt.getQueueId(), msgExt.getMsgId());
+        return false;
+    }
+}
+</code></pre>
+<h2 id="更新索引">更新索引</h2>
+<pre><code class="language-java">if (newOffset != halfOffset) {
+    // 更新halfQueue消费进度
+    transactionalMessageBridge.updateConsumeOffset(messageQueue, newOffset);
+}
+// 根据doneOpOffset 列表获取opQueue的offset
+long newOpOffset = calculateOpOffset(doneOpOffset, opOffset);
+if (newOpOffset != opOffset) {
+    // 更新opQueue消费进度
+    transactionalMessageBridge.updateConsumeOffset(opQueue, newOpOffset);
+}
+</code></pre>
+<p><code>calculateOpOffset()</code>方法简单说返回就是doneOffset列表中最后一个值。</p>
+<pre><code class="language-java">private long calculateOpOffset(List&lt;Long&gt; doneOffset, long oldOffset) {
+    Collections.sort(doneOffset);
+    long newOffset = oldOffset;
+    for (int i = 0; i &lt; doneOffset.size(); i++) {
+        if (doneOffset.get(i) == newOffset) {
+            newOffset++;
+        } else {
+            break;
+        }
+    }
+    return newOffset;
+
+}
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c075a3fc1d8440d5abf8ad13e2622179~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
+                    RocketMQ
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/">
+                  <h3 class="post-title">
+                    手写实现 Java Stream
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>

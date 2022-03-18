@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>手写实现 Java Stream | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601471607">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="项目地址：https://github.com/zexho994/River
+实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。
+
+
+
+
+类型
+方法
+
+
+
+
+创建操作
+of(T....." />
+    <meta name="keywords" content="造轮子" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601471607" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">手写实现 Java Stream</h2>
+            <div class="post-date">2021-09-10</div>
+            
+            <div class="post-content" v-pre>
+              <p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
+实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。</p>
+<!-- more -->
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>创建操作</td>
+<td>of(T...t)</td>
+</tr>
+<tr>
+<td>中间操作</td>
+<td>map()limit()sort()peek()skip()filter()distinct()</td>
+</tr>
+<tr>
+<td>终结操作</td>
+<td>toArray()reduce()collect()max()anyMatch()findFirst()等</td>
+</tr>
+</tbody>
+</table>
+<p>同时River还需要具备延迟处理（遇到终结操作才触发）的特性。</p>
+<h2 id="顶层接口-river">顶层接口-River</h2>
+<p>在river接口中定义好所有需要支持的方法api</p>
+<pre><code class="language-java">public interface River&lt;E&gt; {
+
+    //===============================创建操作=====================================
+
+    @SafeVarargs
+    static &lt;T&gt; River&lt;T&gt; of(T... t) {
+        return RiverGenerator.create(t);
+    }
+
+    static &lt;T&gt; River&lt;T&gt; of(Collection&lt;T&gt; collection) {
+        return RiverGenerator.create(collection);
+    }
+
+    //===============================中间操作=====================================
+
+    /**
+     * 将流转换为并行流
+     *
+     * @return River
+     */
+    River&lt;E&gt; parallel();
+
+    /**
+     * 将流转换为串行流
+     *
+     * @return River
+     */
+    River&lt;E&gt; sequential();
+
+    /**
+     * 过滤操作
+     *
+     * @param predicate 过滤的表达式
+     * @return 过滤后的River
+     */
+    River&lt;E&gt; filter(Predicate&lt;E&gt; predicate);
+
+    /**
+     * 元素去重操作
+     *
+     * @return 去重后的River
+     */
+    River&lt;E&gt; distinct();
+
+    /**
+     * 限制River的元素数量
+     *
+     * @param size 元素的最大数量
+     * @return River
+     */
+    River&lt;E&gt; limit(int size);
+
+    /**
+     * 排序
+     *
+     * @param comparable 比较器
+     * @return 添加排序后的River
+     */
+    River&lt;E&gt; sort(Comparator&lt;E&gt; comparable);
+
+    /**
+     * 对元素进行预操作
+     *
+     * @param consumer 执行的操作
+     * @return 新River
+     */
+    River&lt;E&gt; peek(Consumer&lt;E&gt; consumer);
+
+    /**
+     * 跳过指定数量的元素
+     *
+     * @param size 要跳过的元素数
+     * @return new River
+     */
+    River&lt;E&gt; skip(int size);
+
+    /**
+     * 元素转换映射
+     *
+     * @param function 映射执行逻辑
+     * @return new River
+     */
+    &lt;E_OUT&gt; River&lt;E_OUT&gt; map(Function&lt;? super E, ? extends E_OUT&gt; function);
+
+    //===============================终结操作=====================================
+
+    /**
+     * 遍历River所有元素
+     *
+     * @param consumer 表达式
+     */
+    void forEach(Consumer&lt;E&gt; consumer);
+
+    /**
+     * 输出一个数组
+     *
+     * @return E类型的数组
+     */
+    Object[] toArray();
+
+    /**
+     * 输出元素到参数数组中
+     *
+     * @param e 承载元素的数组
+     */
+    void toArray(E[] e);
+
+    /**
+     * 计算元素的数量
+     *
+     * @return River中元素的数量
+     */
+    long count();
+
+    /**
+     * 操作
+     *
+     * @param identity    初始值
+     * @param accumulator 操作函数
+     * @return reduce result
+     */
+    E reduce(E identity, BinaryOperator&lt;E&gt; accumulator);
+
+    /**
+     * 执行操作
+     *
+     * @param collector 执行操作的收集器
+     * @param &lt;R&gt;       结果类型
+     * @param &lt;A&gt;       中间累加类型
+     * @return 执行结果
+     */
+    &lt;R, A&gt; R collect(Collector&lt;? super E, A, R&gt; collector);
+
+    /**
+     * 获取比较后，最小的元素
+     *
+     * @param comparator 比较器
+     * @return 最小的元素
+     */
+    Optional&lt;E&gt; min(Comparator&lt;? super E&gt; comparator);
+
+    /**
+     * 获取比较后，最大的元素
+     *
+     * @param comparator 比较器
+     * @return 最大的元素
+     */
+    Optional&lt;E&gt; max(Comparator&lt;? super E&gt; comparator);
+
+    /**
+     * 判断匹配，任意即可
+     *
+     * @param predicate
+     * @return true:match success
+     */
+    boolean anyMatch(Predicate&lt;? super E&gt; predicate);
+
+    /**
+     * 判断匹配，所有都要匹配
+     *
+     * @param predicate
+     * @return
+     */
+    boolean allMatch(Predicate&lt;? super E&gt; predicate);
+
+    /**
+     * 判断匹配，都不要匹配上
+     *
+     * @param predicate
+     * @return
+     */
+    boolean noneMatch(Predicate&lt;? super E&gt; predicate);
+
+    /**
+     * 获取第一个元素
+     *
+     * @return
+     */
+    Optional&lt;E&gt; findFirst();
+
+}
+</code></pre>
+<h2 id="river实现类-abstractriverpipeline">River实现类 - AbstractRiverPipeline</h2>
+<p>River接口的实现主要都在<code>AbstractRiverPipeline</code>类中, 以<code>filter()</code>为例，返回了一个新的River对象，典型的流式编程的实现方式。</p>
+<p>方法事情主要两个：</p>
+<ol>
+<li>new一个新的River的实现类。</li>
+<li>在<code>accept()</code>方法中实现<code>wrapSink()</code>,这个方法在后续构建<code>SinkChain</code>时候需要调用。</li>
+</ol>
+<pre><code class="language-java">public class AbstractRiverPipeline&lt;I, O&gt;
+        extends Pipeline&lt;I, O&gt; implements River&lt;O&gt; {
+    
+    //存储元素的spliterator对象引用
+    protected Spliterator sourceSpliterator;
+
+    ...
+        
+    /**
+     * 追加filter操作
+     * 创建一个filter的{@link PipelineStage},然后将该stage追到到Pipeline的尾部
+     *
+     * @param predicate 过滤的表达式
+     * @return 新增的filter对象
+     */
+    @Override
+    public River&lt;O&gt; filter(Predicate&lt;O&gt; predicate) {
+        return new PipelineStage&lt;O, O&gt;(this) {
+            @Override
+            public SinkChain&lt;O, O&gt; wrapSink(SinkChain&lt;O, ?&gt; sink) {
+                SinkChain&lt;O, O&gt; sinkChain = new SinkChain&lt;O, O&gt;() {
+                    @Override
+                    public void accept(O t) {
+                        if (!predicate.test(t)) {
+                            return;
+                        }
+                        getNext().accept(t);
+                    }
+                };
+                sinkChain.setNext(sink);
+                return sinkChain;
+            }
+        };
+    }
+    
+    ...
+        
+}
+</code></pre>
+<p>返回的对象是<code>PipelineStage</code>，是River的子类，扩展了一些于Sink相关的方法。</p>
+<h2 id="阶段封装-pipelinestage">阶段封装-PipelineStage</h2>
+<p><code>PipelineStage</code>表示一个阶段，什么是阶段？调用filter()后，就相当整个链中添加了一个阶段，可以理解为链表中的节点。</p>
+<pre><code class="language-java">public class PipelineStage&lt;I, O&gt; extends AbstractRiverPipeline&lt;I, O&gt; {
+
+    public PipelineStage(Spliterator&lt;I&gt; spliterator) {
+        this.setSourceSpliterator(spliterator);
+        this.isParallel = false;
+    }
+
+    /**
+     * @param river 上一个stage
+     */
+    public PipelineStage(AbstractRiverPipeline&lt;?, I&gt; river) {
+        previous = river;
+        isParallel = river.isParallel;
+        sourceSpliterator = river.sourceSpliterator;
+    }
+
+    public Object[] getArray() {
+        throw new UnsupportedOperationException(&quot;to override&quot;);
+    }
+
+    public Object getState() {
+        throw new UnsupportedOperationException(&quot;to override&quot;);
+    }
+
+    public void setState(O s) {
+    }
+
+    @Override
+    public PipelineStage&lt;I, O&gt; clone() {
+        throw new UnsupportedOperationException(&quot;to override&quot;);
+    }
+}
+</code></pre>
+<p>不过stage中基于前驱指针previous链接的，所以后续wrapSink时候也是，也是从尾到头的方式。</p>
+<p>假设我们的代码是这样</p>
+<pre><code class="language-java">River.of(1,2,3).filter().distinct()
+</code></pre>
+<p>of()操作生成第一个stage，filter()操作生成第二个stage，distinct()操作生成第三个stage。整体看下来就是这样：</p>
+<figure data-type="image" tabindex="1"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f92d0302e7b640c9a65d8ad5b70fdaab~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<h2 id="head阶段生成-rivergenerator">Head阶段生成-RiverGenerator</h2>
+<p>head是指第一个River对象，也可以表示为stage0。River接口中默认实现了of()方法，调用的就是<code>RiverGenerator.create()</code></p>
+<pre><code class="language-java">public static &lt;E&gt; River&lt;E&gt; create(E... e) {
+    Spliterator&lt;E&gt; spliterator = Arrays.spliterator(e);
+    PipelineStage&lt;E, E&gt; head = new PipelineStage&lt;E, E&gt;(spliterator) {
+        @Override
+        public SinkChain&lt;E, E&gt; wrapSink(SinkChain&lt;E, ?&gt; sink) {
+            SinkChain&lt;E, E&gt; sinkChain = new SinkChain&lt;E, E&gt;() {
+                @Override
+                public void accept(E t) {
+                    next.accept(t);
+                }
+            };
+            sinkChain.setNext(sink);
+            return sinkChain;
+        }
+    };
+    head.setSourceSpliterator(spliterator);
+    return head;
+}
+</code></pre>
+<h2 id="流的处理链-sinkchain">流的处理链-SinkChain</h2>
+<p>任何时候，在调用终结操作之前，一切操作都只是通过stage链连接在一起，并没有进行任何实际的处理操作，这就需要一个开关来启动流，这个开关放在了所有终结操作中,看下<code>AbstractRiverPipeline.forEach()</code>方法</p>
+<pre><code class="language-java">@Override
+    public void forEach(Consumer&lt;O&gt; consumer) {
+        PipelineStage&lt;O, O&gt; stage = new PipelineStage&lt;O, O&gt;(this) {
+            @Override
+            public SinkChain&lt;O, O&gt; wrapSink(SinkChain&lt;O, ?&gt; sink) {
+                return new SinkChain&lt;O, O&gt;() {
+                    @Override
+                    public void accept(O t) {
+                        consumer.accept(t);
+                    }
+                };
+            }
+        };
+        // 启动流的开关
+        evaluate(stage);
+    }
+</code></pre>
+<p><code>evaluate()</code>主要做两件事：</p>
+<ol>
+<li>将所有stage包装成<code>SinkChain</code>。（对相关名词概念不清楚的可以看之前的Stream源码解析文章）</li>
+<li>启动流，对所有元素进行处理。</li>
+</ol>
+<pre><code class="language-java">private void evaluate(PipelineStage&lt;?, O&gt; stage) {
+    //构建处理链
+    SinkChain&lt;O, O&gt; sinkHead = warpPipeline(stage);
+
+    //开始处理
+    sinkHead.begin(-1);
+    //遍历元素
+    sinkHead.getSourceSpliterator().forEachRemaining(sinkHead);
+    sinkHead.end();
+}
+</code></pre>
+<h3 id="包装-wrappipeline">包装 - wrapPipeline</h3>
+<p>顺序是从尾到头进行的，返回的sink是第一个阶段。</p>
+<pre><code class="language-java">private SinkChain&lt;O, O&gt; warpPipeline(AbstractRiverPipeline river) {
+    SinkChain&lt;O, O&gt; sink = null;
+    for (; river != null; river = river.previous) {
+        sink = river.wrapSink(sink);
+    }
+    return sink;
+}
+</code></pre>
+<p>这里的<code>wrapSink()</code>的逻辑对应的就是<code>AbstractRiverPipeline</code>中重写的逻辑</p>
+<p>这样返回的对象就是一条sink链了，并且链中每一个sink都有自己的<code>begin()</code>、<code>accept()</code>、<code>end()</code>方法。</p>
+<h3 id="流的运行流程">流的运行流程</h3>
+<p>evaluate第二部分的工作是运行流</p>
+<ul>
+<li>首先调用<code>begin()</code>方法，从头到尾执行一遍所有对象的<code>begin()</code>方法，主要作用是进行初始化。</li>
+<li><code>forEachRemaining</code>的作用就是对数据源spliterator元素执行<code>accept()</code>方法，可以从头倒尾一个个执行。</li>
+<li>最后调用<code>end()</code>方法，从头到尾执行一遍，主要目的是数据的情况，字段设为null等。</li>
+</ul>
+<p>依然用上面的<code>filter()</code>方法和<code>distinct()</code>为例:</p>
+<pre><code class="language-java">@Override
+public River&lt;O&gt; filter(Predicate&lt;O&gt; predicate) {
+    return new PipelineStage&lt;O, O&gt;(this) {
+        @Override
+        public SinkChain&lt;O, O&gt; wrapSink(SinkChain&lt;O, ?&gt; sink) {
+            SinkChain&lt;O, O&gt; sinkChain = new SinkChain&lt;O, O&gt;() {
+                @Override
+                public void accept(O t) {
+                    // 如果不符合要求，不再向后传递该元素，该元素的处理到此为止
+                    if (!predicate.test(t)) {
+                        return;
+                    }
+                    //如何要求则调用下一个sink的accept()方法
+                    getNext().accept(t);
+                }
+            };
+            sinkChain.setNext(sink);
+            return sinkChain;
+        }
+    };
+}
+
+@Override
+public River&lt;O&gt; distinct() {
+    return new PipelineStage&lt;O, O&gt;(this) {
+        @Override
+        public SinkChain&lt;O, O&gt; wrapSink(SinkChain&lt;O, ?&gt; sink) {
+            SinkChain&lt;O, O&gt; sinkChain = new SinkChain&lt;O, O&gt;() {
+                private HashSet&lt;O&gt; set;
+
+                @Override
+                public void begin(int n) {
+                    //执行初始化工作
+                    this.set = new HashSet&lt;&gt;(n &gt; 0 ? n : 16);
+                    //调用下一个sink的begin()方法
+                    super.begin(n);
+                }
+
+                @Override
+                public void end() {
+                    this.set = null;
+                    super.end();
+                }
+
+                @Override
+                public void accept(O t) {
+                    if (!set.add(t)) {
+                        return;
+                    }
+                    getNext().accept(t);
+                }
+            };
+            sinkChain.setNext(sink);
+            return sinkChain;
+        }
+    };
+}
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>文章只是列举了一些关键步骤的设计与实现，设计的思路大多数来源于JDK Stream的源码，如何实现一个Stream，主要的目的是可以更好的理解Stream一些地方为什么要那么设计，因为只有在自己开发的时候才能体会到设计的精妙。</p>
+<p>项目的源码在github，测试代码在test包下，目前只支持串行流，后续会添加并行流的支持，并且提供更多的API，让River可以进行更多更强大的操作。</p>
+<p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="tag">
+                    造轮子
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
+                  <h3 class="post-title">
+                    深入解析 Java Parallel Stream
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
