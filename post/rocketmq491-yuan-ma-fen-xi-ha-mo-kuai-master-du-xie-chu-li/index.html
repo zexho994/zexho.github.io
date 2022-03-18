@@ -1,20 +1,13 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" >
-
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RocketMQ4.9.1源码分析(HA模块) Master读写处理 | Zexho&#39; blog</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647609112336">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-
-
-
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<link rel="alternate" type="application/atom+xml" title="RocketMQ4.9.1源码分析(HA模块) Master读写处理 | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
@@ -33,81 +26,94 @@ Master
 master如何接受slave的请求？
 m..." />
     <meta name="keywords" content="RocketMQ,源码" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
   <body>
-    <div id="app" class="main">
-
-      <div class="sidebar" :class="{ 'full-height': menuVisible }">
-  <div class="top-container" data-aos="fade-right">
-    <div class="top-header-container">
-      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
-        <h1 class="site-title">Zexho&#39; blog</h1>
-      </a>
-      <div class="menu-btn" @click="menuVisible = !menuVisible">
-        <div class="line"></div>
-      </div>
-    </div>
-    <div>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647609112336" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    日积跬步，以致千里
+  </p>
+  <div class="menu-container">
+    
       
-        
-          <a href="/" class="site-nav">
-            首页
-          </a>
-        
+        <a href="/" class="menu">
+          首页
+        </a>
       
-        
-          <a href="/archives" class="site-nav">
-            归档
-          </a>
-        
+    
       
-        
-          <a href="/tags" class="site-nav">
-            标签
-          </a>
-        
+        <a href="/archives" class="menu">
+          归档
+        </a>
       
-        
-          <a href="/post/about" class="site-nav">
-            关于
-          </a>
-        
+    
       
-    </div>
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
   </div>
-  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
-    <div class="social-container">
+  <div class="social-container">
+    
       
-        
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
       
-        
+    
       
-        
+    
       
-        
+    
       
-        
+    
       
-    </div>
-    <div class="site-description">
-      日积跬步，以致千里
-    </div>
-    <div class="site-footer">
-       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-    </div>
+    
   </div>
 </div>
 
-
-      <div class="main-container">
-        <div class="content-container" data-aos="fade-up">
-          <div class="post-detail">
-            <h2 class="post-title">RocketMQ4.9.1源码分析(HA模块) Master读写处理</h2>
-            <div class="post-date">2021-10-08</div>
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              RocketMQ4.9.1源码分析(HA模块) Master读写处理
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-10-08
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="post-tag">
+                  # RocketMQ
+                </a>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
+                  # 源码
+                </a>
+              
+            </div>
             
-            <div class="post-content" v-pre>
-              <p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
 <ol>
 <li>master启动</li>
 <li>slave的启动</li>
@@ -426,62 +432,107 @@ public void run() {
 <p>关于slave于高级部分在后续文章中更新。</p>
 </blockquote>
 
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E7%96%91%E9%97%AE%E7%82%B9">疑问点</a>
+<ul>
+<li><a href="#master">Master</a></li>
+<li><a href="#slave">Slave</a></li>
+<li><a href="#%E9%AB%98%E7%BA%A7">高级</a></li>
+</ul>
+</li>
+<li><a href="#ha%E7%B1%BB">HA类</a>
+<ul>
+<li><a href="#ha%E7%B1%BB%E8%AF%B4%E6%98%8E">HA类说明</a></li>
+</ul>
+</li>
+<li><a href="#%E6%BA%90%E7%A0%81%E9%83%A8%E5%88%86">源码部分</a>
+<ul>
+<li><a href="#haservice-%E6%A8%A1%E5%9D%97%E5%90%AF%E5%8A%A8">HAService 模块启动</a>
+<ul>
+<li><a href="#acceptsocketservicebeginaccept">acceptSocketService.beginAccept()</a></li>
+<li><a href="#acceptsocketservicestart">acceptSocketService.start()</a></li>
+</ul>
+</li>
+<li><a href="#haconnection%E5%90%AF%E5%8A%A8">HAConnection启动</a>
+<ul>
+<li><a href="#master%E5%A4%84%E7%90%86slave%E8%AF%B7%E6%B1%82">Master处理slave请求</a></li>
+</ul>
+</li>
+<li><a href="#master%E4%BC%A0%E8%BE%93%E6%95%B0%E6%8D%AE">Master传输数据</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+
+              </div>
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
-                    RocketMQ
-                  </a>
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
-                    源码
-                  </a>
-                
-              </div>
-            
-            
-              <div class="next-post">
-                <div class="next">下一篇</div>
-                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/">
-                  <h3 class="post-title">
-                    RocketMQ4.9.1源码分析_(事务) Half半消息处理
-                  </h3>
-                </a>
-              </div>
-            
-
-            
-
-          </div>
-
+          </article>
         </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/">
+              <h3 class="post-title">
+                RocketMQ4.9.1源码分析_(事务) Half半消息处理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
       </div>
     </div>
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script type="application/javascript">
+    <script>
+      hljs.initHighlightingOnLoad()
 
-AOS.init();
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
 
-var app = new Vue({
-  el: '#app',
-  data: {
-    menuVisible: false,
-  },
-})
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
 
-</script>
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
 
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
 
-  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>
-    hljs.initHighlightingOnLoad()
-  </script>
-
-
-
-
-
+    </script>
   </body>
 </html>

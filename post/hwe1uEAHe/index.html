@@ -1,100 +1,102 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" >
-
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>微信小程序：预览页实现与后台通信 | Zexho&#39; blog</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647609112336">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-
-
-
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<link rel="alternate" type="application/atom+xml" title="微信小程序：预览页实现与后台通信 | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
     <meta name="description" content="我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了..." />
     <meta name="keywords" content="微信小程序" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
   <body>
-    <div id="app" class="main">
-
-      <div class="sidebar" :class="{ 'full-height': menuVisible }">
-  <div class="top-container" data-aos="fade-right">
-    <div class="top-header-container">
-      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
-        <h1 class="site-title">Zexho&#39; blog</h1>
-      </a>
-      <div class="menu-btn" @click="menuVisible = !menuVisible">
-        <div class="line"></div>
-      </div>
-    </div>
-    <div>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647609112336" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    日积跬步，以致千里
+  </p>
+  <div class="menu-container">
+    
       
-        
-          <a href="/" class="site-nav">
-            首页
-          </a>
-        
+        <a href="/" class="menu">
+          首页
+        </a>
       
-        
-          <a href="/archives" class="site-nav">
-            归档
-          </a>
-        
+    
       
-        
-          <a href="/tags" class="site-nav">
-            标签
-          </a>
-        
+        <a href="/archives" class="menu">
+          归档
+        </a>
       
-        
-          <a href="/post/about" class="site-nav">
-            关于
-          </a>
-        
+    
       
-    </div>
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
   </div>
-  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
-    <div class="social-container">
+  <div class="social-container">
+    
       
-        
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
       
-        
+    
       
-        
+    
       
-        
+    
       
-        
+    
       
-    </div>
-    <div class="site-description">
-      日积跬步，以致千里
-    </div>
-    <div class="site-footer">
-       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-    </div>
+    
   </div>
 </div>
 
-
-      <div class="main-container">
-        <div class="content-container" data-aos="fade-up">
-          <div class="post-detail">
-            <h2 class="post-title">微信小程序：预览页实现与后台通信</h2>
-            <div class="post-date">2019-04-19</div>
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              微信小程序：预览页实现与后台通信
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-04-19
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="post-tag">
+                  # 微信小程序
+                </a>
+              
+            </div>
             
-            <div class="post-content" v-pre>
-              <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
 <!-- more -->
 <h2 id="关键点">关键点：</h2>
 <p><strong>手机，服务器，保持同一局域网。</strong></p>
@@ -128,58 +130,97 @@ ok，可以获取到数据。<br>
 <p><strong>网页手机截图：</strong></p>
 <figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b073aa9f2958a9~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></figure>
 
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%85%B3%E9%94%AE%E7%82%B9">关键点：</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%BC%80%E5%90%AF%E5%B1%80%E5%9F%9F%E7%BD%91">第一步：开启局域网</a>
+<ul>
+<li><a href="#%E6%96%B9%E6%B3%951%E4%BD%BF%E7%94%A8%E7%94%B5%E8%84%91%E5%BC%80%E5%90%AF%E5%85%B1%E4%BA%ABwifi%E6%89%8B%E6%9C%BA%E8%BF%9E%E6%8E%A5%E6%AD%A4wifi-%E4%B8%8D%E8%BF%87%E8%BF%99%E9%87%8C%E5%9B%A0%E4%B8%BA%E6%88%91%E4%BB%AC%E5%AD%A6%E6%A0%A1%E5%86%85%E9%83%A8%E7%BD%91%E9%9C%80%E8%A6%81%E8%B4%A6%E5%8F%B7%E7%99%BB%E9%99%86%E6%89%80%E4%BB%A5%E6%88%91%E6%B2%A1%E9%87%87%E7%94%A8%E8%BF%99%E7%A7%8D%E6%96%B9%E6%B3%95%E4%B8%8D%E8%BF%87%E8%BF%99%E7%A7%8D%E6%96%B9%E6%B3%95%E7%9A%84%E5%90%8E%E7%BB%AD%E6%B5%81%E7%A8%8B%E5%92%8C%E7%AC%AC%E4%BA%8C%E7%A7%8D%E6%96%B9%E6%B3%95%E5%B7%AE%E4%B8%8D%E5%A4%9A">方法1）<strong>使用电脑开启共享wifi，手机连接此wifi</strong>。不过这里因为我们学校内部网需要账号登陆，所以我没采用这种方法，不过这种方法的后续流程和第二种方法差不多。</a></li>
+<li><a href="#%E6%96%B9%E6%B3%952%E6%89%8B%E6%9C%BA%E5%BC%80%E5%90%AF%E7%83%AD%E7%82%B9%E7%94%B5%E8%84%91%E8%BF%9E%E6%8E%A5%E6%AD%A4%E7%83%AD%E7%82%B9">方法2）<strong>手机开启热点，电脑连接此热点</strong>。</a>
+<ul>
+<li><a href="#1%E8%BF%9E%E6%8E%A5%E5%90%8E%E9%A6%96%E5%85%88%E6%89%BE%E5%88%B0%E5%88%86%E9%85%8D%E7%BB%99%E7%94%B5%E8%84%91%E7%9A%84ip-mac%E8%8E%B7%E5%8F%96ip%E5%9C%A8%E8%AE%BE%E7%BD%AE-%E7%BD%91%E7%BB%9C%E9%87%8C%E9%9D%A2%E5%B0%B1%E5%8F%AF%E4%BB%A5%E7%9C%8B%E5%88%B0">1）连接后，首先找到分配给电脑的IP。mac获取IP在设置-&gt;网络，里面就可以看到。</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E4%BF%AE%E6%94%B9%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%9C%B0%E5%9D%80">第二步：修改服务器地址</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%E4%BF%AE%E6%94%B9url%E5%9C%B0%E5%9D%80">第三步：修改url地址：</a></li>
+<li><a href="#%E6%B3%A8%E6%84%8F%E7%82%B9">注意点：</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结：</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="tag">
-                    微信小程序
-                  </a>
-                
-              </div>
-            
-            
-              <div class="next-post">
-                <div class="next">下一篇</div>
-                <a href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
-                  <h3 class="post-title">
-                    微信小程序：POST 传输 List 数据
-                  </h3>
-                </a>
-              </div>
-            
-
-            
-
-          </div>
-
+          </article>
         </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
+              <h3 class="post-title">
+                微信小程序：POST 传输 List 数据
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
       </div>
     </div>
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script type="application/javascript">
+    <script>
+      hljs.initHighlightingOnLoad()
 
-AOS.init();
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
 
-var app = new Vue({
-  el: '#app',
-  data: {
-    menuVisible: false,
-  },
-})
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
 
-</script>
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
 
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
 
-  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>
-    hljs.initHighlightingOnLoad()
-  </script>
-
-
-
-
-
+    </script>
   </body>
 </html>

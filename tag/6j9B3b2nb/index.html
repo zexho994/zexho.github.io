@@ -1,159 +1,190 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" >
-
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Java | Zexho&#39; blog</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647609112336">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Java | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-
-
-
-    <meta name="description" content="日积跬步，以致千里">
+  <meta name="description" content="日积跬步，以致千里" />
   </head>
   <body>
-    <div id="app" class="main">
-
-      <div class="sidebar" :class="{ 'full-height': menuVisible }">
-  <div class="top-container" data-aos="fade-right">
-    <div class="top-header-container">
-      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
-        <h1 class="site-title">Zexho&#39; blog</h1>
-      </a>
-      <div class="menu-btn" @click="menuVisible = !menuVisible">
-        <div class="line"></div>
-      </div>
-    </div>
-    <div>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647609112336" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    日积跬步，以致千里
+  </p>
+  <div class="menu-container">
+    
       
-        
-          <a href="/" class="site-nav">
-            首页
-          </a>
-        
+        <a href="/" class="menu">
+          首页
+        </a>
       
-        
-          <a href="/archives" class="site-nav">
-            归档
-          </a>
-        
+    
       
-        
-          <a href="/tags" class="site-nav">
-            标签
-          </a>
-        
+        <a href="/archives" class="menu">
+          归档
+        </a>
       
-        
-          <a href="/post/about" class="site-nav">
-            关于
-          </a>
-        
+    
       
-    </div>
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
   </div>
-  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
-    <div class="social-container">
+  <div class="social-container">
+    
       
-        
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
       
-        
+    
       
-        
+    
       
-        
+    
       
-        
+    
       
-    </div>
-    <div class="site-description">
-      日积跬步，以致千里
-    </div>
-    <div class="site-footer">
-       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-    </div>
+    
   </div>
 </div>
 
+        <div class="current-tag-container">
+            <h2 class="title">
+                标签：# Java
+            </h2> 
+        </div>
+        <div class="post-container">
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">
+        <h2 class="post-title">快速看清lambda的本质</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2022-02-11
+        </span>
+        <span>
+          2 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        <p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
 
-      <div class="main-container">
-        <div class="content-container" data-aos="fade-up">
-          <h2 class="current-tag">标签: Java</h2>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">
-                  <h2 class="post-title">快速看清lambda的本质</h2>
-                </a>
-                <div class="post-date">
-                  2022-02-11
-                </div>
-                <div class="post-abstract">
-                  <p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
-
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/">
-                  <h2 class="post-title">利用Cglib和JDK动态代理实现AOP</h2>
-                </a>
-                <div class="post-date">
-                  2021-11-11
-                </div>
-                <div class="post-abstract">
-                  <p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
+      </div>
+    </article>
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/">
+        <h2 class="post-title">利用Cglib和JDK动态代理实现AOP</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2021-11-11
+        </span>
+        <span>
+          4 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="post-tag">
+            # 造轮子
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        <p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
 项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
 
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
-                  <h2 class="post-title">深入解析 Java Parallel Stream</h2>
-                </a>
-                <div class="post-date">
-                  2021-08-11
-                </div>
-                <div class="post-abstract">
-                  <h2 id="提出疑问">提出疑问</h2>
+      </div>
+    </article>
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
+        <h2 class="post-title">深入解析 Java Parallel Stream</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2021-08-11
+        </span>
+        <span>
+          7 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
+            # 源码
+          </a>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        <h2 id="提出疑问">提出疑问</h2>
 <ol>
 <li>如何转换流类型，怎么实现的？</li>
 <li>如何切分任务的？</li>
 <li>如何合并任务结果的？</li>
 </ol>
 
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/">
-                  <h2 class="post-title">深入解析Java Stream（中）：OP操作流</h2>
-                </a>
-                <div class="post-date">
-                  2021-07-22
-                </div>
-                <div class="post-abstract">
-                  <h3 id="几个疑问">几个疑问</h3>
+      </div>
+    </article>
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/">
+        <h2 class="post-title">深入解析Java Stream（中）：OP操作流</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2021-07-22
+        </span>
+        <span>
+          6 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        <h3 id="几个疑问">几个疑问</h3>
 <ol>
 <li><strong>各个中间操作是如何进行关联的？</strong></li>
 <li><strong>如何执行完一个中间操作，然后执行下一个？</strong></li>
@@ -161,77 +192,81 @@
 <li><strong>懒加载如何实现的</strong></li>
 </ol>
 
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/">
-                  <h2 class="post-title">Java中二进制的补码，反码，正负数</h2>
-                </a>
-                <div class="post-date">
-                  2020-08-08
-                </div>
-                <div class="post-abstract">
-                  
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
-                  <h2 class="post-title">微信小程序：POST 传输 List 数据</h2>
-                </a>
-                <div class="post-date">
-                  2019-03-15
-                </div>
-                <div class="post-abstract">
-                  <blockquote>
+      </div>
+    </article>
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/">
+        <h2 class="post-title">Java中二进制的补码，反码，正负数</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2020-08-08
+        </span>
+        <span>
+          3 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        
+      </div>
+    </article>
+  
+    <article class="post">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
+        <h2 class="post-title">微信小程序：POST 传输 List 数据</h2>
+      </a>
+      <div class="post-info">
+        <span>
+          2019-03-15
+        </span>
+        <span>
+          3 min read
+        </span>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
+            # 源码
+          </a>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
+            # Java
+          </a>
+        
+          <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="post-tag">
+            # 微信小程序
+          </a>
+        
+      </div>
+      
+      <div class="post-abstract">
+        <blockquote>
 <p>最近在学习微信小程序，遇到了一些坑，有些问题我看官网或者其他博客，可能讲的不是那么易懂，所以自己找到解决方法后，写下来供大家参考，如有不对指出，还恳请大家指出～</p>
 </blockquote>
 
-                </div>
-              </div>
-              
-            </article>
-          
+      </div>
+    </article>
+  
+</div>
 
-          <div class="pagination-container">
+        <div class="pagination-container">
   
   
 </div>
 
-        </div>
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
       </div>
     </div>
-
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script type="application/javascript">
-
-AOS.init();
-
-var app = new Vue({
-  el: '#app',
-  data: {
-    menuVisible: false,
-  },
-})
-
-</script>
-
-
-  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>
-    hljs.initHighlightingOnLoad()
-  </script>
-
-
-
-
-
   </body>
 </html>

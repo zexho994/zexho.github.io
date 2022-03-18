@@ -1,20 +1,13 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" >
-
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RocketMQ4.9.1源码分析-Namesrv服务注册&amp;路由发现 | Zexho&#39; blog</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647609112336">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-
-
-
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<link rel="alternate" type="application/atom+xml" title="RocketMQ4.9.1源码分析-Namesrv服务注册&amp;路由发现 | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
@@ -26,81 +19,94 @@
 
 假如现在..." />
     <meta name="keywords" content="RocketMQ,源码" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
   <body>
-    <div id="app" class="main">
-
-      <div class="sidebar" :class="{ 'full-height': menuVisible }">
-  <div class="top-container" data-aos="fade-right">
-    <div class="top-header-container">
-      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
-        <h1 class="site-title">Zexho&#39; blog</h1>
-      </a>
-      <div class="menu-btn" @click="menuVisible = !menuVisible">
-        <div class="line"></div>
-      </div>
-    </div>
-    <div>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647609112336" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    日积跬步，以致千里
+  </p>
+  <div class="menu-container">
+    
       
-        
-          <a href="/" class="site-nav">
-            首页
-          </a>
-        
+        <a href="/" class="menu">
+          首页
+        </a>
       
-        
-          <a href="/archives" class="site-nav">
-            归档
-          </a>
-        
+    
       
-        
-          <a href="/tags" class="site-nav">
-            标签
-          </a>
-        
+        <a href="/archives" class="menu">
+          归档
+        </a>
       
-        
-          <a href="/post/about" class="site-nav">
-            关于
-          </a>
-        
+    
       
-    </div>
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
   </div>
-  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
-    <div class="social-container">
+  <div class="social-container">
+    
       
-        
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
       
-        
+    
       
-        
+    
       
-        
+    
       
-        
+    
       
-    </div>
-    <div class="site-description">
-      日积跬步，以致千里
-    </div>
-    <div class="site-footer">
-       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-    </div>
+    
   </div>
 </div>
 
-
-      <div class="main-container">
-        <div class="content-container" data-aos="fade-up">
-          <div class="post-detail">
-            <h2 class="post-title">RocketMQ4.9.1源码分析-Namesrv服务注册&amp;路由发现</h2>
-            <div class="post-date">2021-10-27</div>
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              RocketMQ4.9.1源码分析-Namesrv服务注册&amp;路由发现
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-10-27
+              </span>
+              <span>
+                10 min read
+              </span>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="post-tag">
+                  # RocketMQ
+                </a>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
+                  # 源码
+                </a>
+              
+            </div>
             
-            <div class="post-content" v-pre>
-              <p>何为路由中心？<br>
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>何为路由中心？<br>
 在通常的理解中，提到消息队列，最简单的模型如下图：</p>
 <!-- more -->
 <figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9f71895f47ec4236a5bea69b046546dc~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
@@ -377,62 +383,100 @@
 }
 </code></pre>
 
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#rocketmq%E4%B8%AD%E7%9A%84namesrv">RocketMQ中的Namesrv</a></li>
+<li><a href="#%E8%B7%AF%E7%94%B1%E5%85%83%E4%BF%A1%E6%81%AF">路由元信息</a><br>
+*
+<ul>
+<li><a href="#topicqueuetable">topicQueueTable</a></li>
+<li><a href="#brokeraddrtable">brokerAddrTable</a></li>
+<li><a href="#clusteraddrtable">clusterAddrTable</a></li>
+<li><a href="#brokerlivetable">brokerLiveTable</a></li>
+<li><a href="#filterservertable">filterServerTable</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C">服务注册</a></li>
+<li><a href="#%E8%B7%AF%E7%94%B1%E5%89%94%E9%99%A4">路由剔除</a>
+<ul>
+<li><a href="#broker-%E6%AD%A3%E5%B8%B8%E5%81%9C%E6%AD%A2">Broker 正常停止</a></li>
+<li><a href="#broker-%E5%BC%82%E5%B8%B8">Broker 异常</a>
+<ul>
+<li><a href="#%E5%90%AF%E5%8A%A8%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1">启动定时任务</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
-                    RocketMQ
-                  </a>
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
-                    源码
-                  </a>
-                
-              </div>
-            
-            
-              <div class="next-post">
-                <div class="next">下一篇</div>
-                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/">
-                  <h3 class="post-title">
-                    RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理
-                  </h3>
-                </a>
-              </div>
-            
-
-            
-
-          </div>
-
+          </article>
         </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/">
+              <h3 class="post-title">
+                RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
       </div>
     </div>
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script type="application/javascript">
+    <script>
+      hljs.initHighlightingOnLoad()
 
-AOS.init();
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
 
-var app = new Vue({
-  el: '#app',
-  data: {
-    menuVisible: false,
-  },
-})
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
 
-</script>
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
 
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
 
-  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>
-    hljs.initHighlightingOnLoad()
-  </script>
-
-
-
-
-
+    </script>
   </body>
 </html>

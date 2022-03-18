@@ -1,20 +1,13 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" >
-
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>手写实现 Java Stream | Zexho&#39; blog</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647609112336">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-
-
-
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<link rel="alternate" type="application/atom+xml" title="手写实现 Java Stream | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
@@ -33,81 +26,90 @@
 创建操作
 of(T....." />
     <meta name="keywords" content="造轮子" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
   <body>
-    <div id="app" class="main">
-
-      <div class="sidebar" :class="{ 'full-height': menuVisible }">
-  <div class="top-container" data-aos="fade-right">
-    <div class="top-header-container">
-      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
-        <h1 class="site-title">Zexho&#39; blog</h1>
-      </a>
-      <div class="menu-btn" @click="menuVisible = !menuVisible">
-        <div class="line"></div>
-      </div>
-    </div>
-    <div>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647609112336" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    日积跬步，以致千里
+  </p>
+  <div class="menu-container">
+    
       
-        
-          <a href="/" class="site-nav">
-            首页
-          </a>
-        
+        <a href="/" class="menu">
+          首页
+        </a>
       
-        
-          <a href="/archives" class="site-nav">
-            归档
-          </a>
-        
+    
       
-        
-          <a href="/tags" class="site-nav">
-            标签
-          </a>
-        
+        <a href="/archives" class="menu">
+          归档
+        </a>
       
-        
-          <a href="/post/about" class="site-nav">
-            关于
-          </a>
-        
+    
       
-    </div>
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
   </div>
-  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
-    <div class="social-container">
+  <div class="social-container">
+    
       
-        
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
       
-        
+    
       
-        
+    
       
-        
+    
       
-        
+    
       
-    </div>
-    <div class="site-description">
-      日积跬步，以致千里
-    </div>
-    <div class="site-footer">
-       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-    </div>
+    
   </div>
 </div>
 
-
-      <div class="main-container">
-        <div class="content-container" data-aos="fade-up">
-          <div class="post-detail">
-            <h2 class="post-title">手写实现 Java Stream</h2>
-            <div class="post-date">2021-09-10</div>
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              手写实现 Java Stream
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-09-10
+              </span>
+              <span>
+                10 min read
+              </span>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="post-tag">
+                  # 造轮子
+                </a>
+              
+            </div>
             
-            <div class="post-content" v-pre>
-              <p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
 实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。</p>
 <!-- more -->
 <table>
@@ -544,58 +546,93 @@ public River&lt;O&gt; distinct() {
 <p>项目的源码在github，测试代码在test包下，目前只支持串行流，后续会添加并行流的支持，并且提供更多的API，让River可以进行更多更强大的操作。</p>
 <p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a></p>
 
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%A1%B6%E5%B1%82%E6%8E%A5%E5%8F%A3-river">顶层接口-River</a></li>
+<li><a href="#river%E5%AE%9E%E7%8E%B0%E7%B1%BB-abstractriverpipeline">River实现类 - AbstractRiverPipeline</a></li>
+<li><a href="#%E9%98%B6%E6%AE%B5%E5%B0%81%E8%A3%85-pipelinestage">阶段封装-PipelineStage</a></li>
+<li><a href="#head%E9%98%B6%E6%AE%B5%E7%94%9F%E6%88%90-rivergenerator">Head阶段生成-RiverGenerator</a></li>
+<li><a href="#%E6%B5%81%E7%9A%84%E5%A4%84%E7%90%86%E9%93%BE-sinkchain">流的处理链-SinkChain</a>
+<ul>
+<li><a href="#%E5%8C%85%E8%A3%85-wrappipeline">包装 - wrapPipeline</a></li>
+<li><a href="#%E6%B5%81%E7%9A%84%E8%BF%90%E8%A1%8C%E6%B5%81%E7%A8%8B">流的运行流程</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="tag">
-                    造轮子
-                  </a>
-                
-              </div>
-            
-            
-              <div class="next-post">
-                <div class="next">下一篇</div>
-                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
-                  <h3 class="post-title">
-                    深入解析 Java Parallel Stream
-                  </h3>
-                </a>
-              </div>
-            
-
-            
-
-          </div>
-
+          </article>
         </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
+              <h3 class="post-title">
+                深入解析 Java Parallel Stream
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
       </div>
     </div>
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script type="application/javascript">
+    <script>
+      hljs.initHighlightingOnLoad()
 
-AOS.init();
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
 
-var app = new Vue({
-  el: '#app',
-  data: {
-    menuVisible: false,
-  },
-})
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
 
-</script>
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
 
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
 
-  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>
-    hljs.initHighlightingOnLoad()
-  </script>
-
-
-
-
-
+    </script>
   </body>
 </html>
