@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602169413">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602169413" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -101,7 +101,10 @@
                   2021-02-02
                 </div>
                 <div class="post-abstract">
-                  
+                  <blockquote>
+<p>项目代码：<a href="https://github.com/zexho994/gvm">https://github.com/zexho994/gvm</a></p>
+</blockquote>
+
                 </div>
               </div>
               
@@ -116,7 +119,8 @@
                   2020-10-30
                 </div>
                 <div class="post-abstract">
-                  
+                  <p>github地址：https://github.com/zexho994/IOC-AOP</p>
+
                 </div>
               </div>
               
@@ -146,7 +150,12 @@
                   2020-08-13
                 </div>
                 <div class="post-abstract">
-                  
+                  <ol>
+<li>找到License.class<br>
+在words的jar包中找到License类.验证方法入口在这里<br>
+虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。</li>
+</ol>
+
                 </div>
               </div>
               
@@ -176,7 +185,10 @@
                   2020-02-15
                 </div>
                 <div class="post-abstract">
-                  
+                  <h2 id="1-在-docker-hub-下查看-neo4j-镜像">1. 在 docker hub 下查看 neo4j 镜像</h2>
+<pre><code class="language-shell">docker search neo4j
+</code></pre>
+
                 </div>
               </div>
               
@@ -191,7 +203,8 @@
                   2019-07-05
                 </div>
                 <div class="post-abstract">
-                  
+                  <p>在刚开始学习git的时候，我很疑惑git可以同时管理这么多分支，而且切换分支都是瞬间完成。尽管Git官方推荐我们多使用分支去开发，但是天真的我很担心分支太多，导致文件数量会剧增，所以一直不敢使用太多分支。</p>
+
                 </div>
               </div>
               
@@ -206,7 +219,12 @@
                   2019-06-14
                 </div>
                 <div class="post-abstract">
-                  
+                  <blockquote>
+<p>今天看到一篇文章，觉得不错。<br>
+原文链接：https://medium.com/@adamhooper/in-mysql-never-use-utf8-use-utf8mb4-11761243e434<br>
+译文：https://www.jianshu.com/p/ab9aa8d4df7d</p>
+</blockquote>
+
                 </div>
               </div>
               
@@ -221,7 +239,11 @@
                   2019-06-07
                 </div>
                 <div class="post-abstract">
-                  
+                  <blockquote>
+<p>有一次我的项目中采用了前后端分离的模式，引起了跨域问题，本文将介绍我所采用的跨域解决方法。</p>
+</blockquote>
+<p>首先要了解产生跨域的本质，也就是同源策略的限制，源是指域名、端口号、协议，有一者不相同将被浏览器拒绝接受响应信息，（请求可以发送出去，但是浏览器不接受响应）。</p>
+
                 </div>
               </div>
               
@@ -236,7 +258,11 @@
                   2019-05-11
                 </div>
                 <div class="post-abstract">
-                  
+                  <blockquote>
+<p>前一阵子要给实验室的学弟们技术分享，当时收到建议给他们普及一些计算机网络的知识，可是关<br>
+有理论知识讲课肯定不够吸引人，于是便一边学习Wireshark一边做PPT一边写讲稿。忙碌了两个星期后，分享会后还是得到了不错的的评价😁，我也在博客中总结下一些使用技巧，内容主要面向新手</p>
+</blockquote>
+
                 </div>
               </div>
               
@@ -251,7 +277,8 @@
                   2019-04-19
                 </div>
                 <div class="post-abstract">
-                  
+                  <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
+
                 </div>
               </div>
               
@@ -266,7 +293,10 @@
                   2019-03-15
                 </div>
                 <div class="post-abstract">
-                  
+                  <blockquote>
+<p>最近在学习微信小程序，遇到了一些坑，有些问题我看官网或者其他博客，可能讲的不是那么易懂，所以自己找到解决方法后，写下来供大家参考，如有不对指出，还恳请大家指出～</p>
+</blockquote>
+
                 </div>
               </div>
               

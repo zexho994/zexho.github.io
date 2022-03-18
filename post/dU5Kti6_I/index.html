@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602169413">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -18,8 +18,12 @@
 
 
 
-    <meta name="description" content="我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了..." />
-    <meta name="keywords" content="微信小程序" />
+    <meta name="description" content="
+最近在学习微信小程序，遇到了一些坑，有些问题我看官网或者其他博客，可能讲的不是那么易懂，所以自己找到解决方法后，写下来供大家参考，如有不对指出，还恳请大家指出～
+
+
+比如在实现购物车批量购买的时候，我们需要向后台请求一个list，包含所有..." />
+    <meta name="keywords" content="源码,Java,微信小程序" />
   </head>
   <body>
     <div id="app" class="main">
@@ -28,7 +32,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602169413" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -94,42 +98,93 @@
             <div class="post-date">2019-03-15</div>
             
             <div class="post-content" v-pre>
-              <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
-<h2 id="关键点">关键点：</h2>
-<p><strong>手机，服务器，保持同一局域网。</strong></p>
-<h2 id="第一步开启局域网">第一步：开启局域网</h2>
-<h3 id="方法1使用电脑开启共享wifi手机连接此wifi-不过这里因为我们学校内部网需要账号登陆所以我没采用这种方法不过这种方法的后续流程和第二种方法差不多">方法1）<strong>使用电脑开启共享wifi，手机连接此wifi</strong>。不过这里因为我们学校内部网需要账号登陆，所以我没采用这种方法，不过这种方法的后续流程和第二种方法差不多。</h3>
-<h3 id="方法2手机开启热点电脑连接此热点">方法2）<strong>手机开启热点，电脑连接此热点</strong>。</h3>
-<h4 id="1连接后首先找到分配给电脑的ip-mac获取ip在设置-网络里面就可以看到">1）连接后，首先找到分配给电脑的IP。mac获取IP在设置-&gt;网络，里面就可以看到。</h4>
-<p><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b071a3d75c0c24~tplv-t2oaga2asx-image.image" alt="" loading="lazy"><br>
-或者在终端输入<strong>ifconfig</strong>，可以找到<br>
-<img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b071e4ad724f4e~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></p>
-<h2 id="第二步修改服务器地址">第二步：修改服务器地址</h2>
-<p>我后台使用的SpringBoot，在properties里面直接修改<br>
-<img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b0720284e518d4~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></p>
-<h2 id="第三步修改url地址">第三步：修改url地址：</h2>
-<p>之前使用的url地址类似于：<strong>http://localhost:8080/user/login/</strong></p>
-<p>修改后服务器地址后同一修改为：<strong>http://172.20.10.2:8080/user/login/</strong></p>
-<p>重启后台，然后在postman测试一下：<br>
-<img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b07252a4316a41~tplv-t2oaga2asx-image.image" alt="" loading="lazy"><br>
-ok，可以获取到数据。<br>
-然后我们把小程序里的request里的url全部使用这种方法。</p>
-<p><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b072a3158b4750~tplv-t2oaga2asx-image.image" alt="" loading="lazy"><br>
-重新编译后，测试一下可不可以获取到数据，如果之前步骤没错，肯定没问题的。<br>
-我们直接使用预览，也是一样可以获取到数据的。</p>
-<h2 id="注意点">注意点：</h2>
-<p>1） 在后台修改了地址后，以后必须在热点环境下运行项目，不然会报错。（我就是有一次忘记连热点，结果一直启动失败，我还以为是8080端口占用问题）</p>
-<p>2）如果要别人预览你的小程序，得先连接你的热点，才能获取到数据。</p>
-<h2 id="总结">总结：</h2>
-<p>对了，如果你还有了网页，那么一样可以使用这种方法在手机上访问你的界面的。</p>
-<p><strong>小程序截图：</strong><br>
-<img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b0739305696dd0~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></p>
-<p><strong>网页手机截图：</strong></p>
-<figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b073aa9f2958a9~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></figure>
+              <blockquote>
+<p>最近在学习微信小程序，遇到了一些坑，有些问题我看官网或者其他博客，可能讲的不是那么易懂，所以自己找到解决方法后，写下来供大家参考，如有不对指出，还恳请大家指出～</p>
+</blockquote>
+<!-- more -->
+<p>比如在实现购物车批量购买的时候，我们需要向后台请求一个list，包含所有勾选的物品信息，在微信小程序里，page里的data是这样定义</p>
+<pre><code class="language-java">        data {  
+            orders：[]  
+        }
+</code></pre>
+<p>在我们给它赋值后，数据类似于</p>
+<figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/28/16afc450f3dd4a23~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></figure>
+<p>如果我们利用wx.request把这个list发送的时候，根据微信官方文档的解释：</p>
+<!--![](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/28/16afc476b45019b8~tplv-t2oaga2asx-image.image)-->
+<p><strong>data 参数说明</strong></p>
+<p>最终发送给服务器的数据是 String 类型，如果传入的 data 不是 String 类型，会被转换成 String 。转换规则如下：</p>
+<ul>
+<li>对于 GET 方法的数据，会将数据转换成 query string（encodeURIComponent(k)=encodeURIComponent(v)&amp;encodeURIComponent(k)=encodeURIComponent(v)...）</li>
+<li>对于 POST 方法且 header['content-type'] 为 application/json 的数据，会对数据进行 JSON 序列化</li>
+<li>对于 POST 方法且 header['content-type'] 为 application/x-www-form-urlencoded 的数据，会将数据转换成 query string （encodeURIComponent(k)=encodeURIComponent(v)&amp;encodeURIComponent(k)=encodeURIComponent(v)...）</li>
+</ul>
+<p><a href="https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html">微信对于该部位解释官网文档地址</a></p>
+<p>意思就是所有的data数据都会以String类型发送。所以很多朋友可能刚开始和我一样，请求总是错误，或者后台接收了请求，可是值却是null。许多博客给的方法比如</p>
+<pre><code class="language-js">        header: {
+        'content-type': 'application/json'
+      },
+      改为
+      header: {
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+</code></pre>
+<p>我尝试之后发现请求还是报错，下面给出我的解决方法：</p>
+<h2 id="微信小程序">微信小程序：</h2>
+<pre><code class="language-js">        wx.request({
+          url: 'http://172.20.10.2:8080/order/wx/buy',
+          header: {
+               'content-type': 'application/json'
+            },
+          method: &quot;POST&quot;,
+          data:{
+            buyGoodsDTOS:this.data.orders,
+            user_id:this.data.user_info.user_id
+        },
+</code></pre>
+<p>data里面有列表类型的orders，以及一个用户ID，<br>
+我们就这直接这样发起请求，orders和user_id都会被序列化为json</p>
+<h2 id="后台接收">后台接收</h2>
+<p>利用阿里的<strong>fastjson</strong>，我使用的<strong>SpringBoot</strong></p>
+<h3 id="pomxml里添加">pom.xml里添加：</h3>
+<pre><code class="language-xml">        &lt;dependency&gt;
+            &lt;groupId&gt;com.alibaba&lt;/groupId&gt;
+            &lt;artifactId&gt;fastjson&lt;/artifactId&gt;
+            &lt;version&gt;1.2.46&lt;/version&gt;
+        &lt;/dependency&gt;
+</code></pre>
+<h3 id="controller里面">Controller里面：</h3>
+<p>利用<strong>fastjson</strong>的<strong>JSONObject</strong>接收wx序列化后的json数据</p>
+<figure data-type="image" tabindex="2"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/28/16afc9d899d22dda~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></figure>
+<p>通过JSONObject类的源码，可以发现他实现类Map接口</p>
+<pre><code class="language-java">        public class JSONObject extends JSON implements Map&lt;String, Object&gt;,。。。
+</code></pre>
+<p>可以知道，它是利用键值对存储微信小程序发送的json数据，存储方式类似于</p>
+<p><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/28/16afc685bf16f9d4~tplv-t2oaga2asx-image.image" alt="" loading="lazy"><br>
+下划线部分为key，名称相同，value就是传过来的数据。<br>
+对于里面jsonData里面orders数据（list）的获取：</p>
+<pre><code class="language-java">        JSONArray jsonArray = jsonData.getJSONArray(&quot;buyGoodsDTOS&quot;);    //根据key名获取
+        List&lt;BuyGoodsDTO&gt; list = jsonArray.toJavaList(BuyGoodsDTO.class); //将数组对象转化为list，BuyGoodsDTO是与orders里面对象要对应
+        
+        String user_id = jsonData.get(&quot;user_id&quot;).toString();    //获取user_id
+        Integer id = Integer.parseInt(user_id);         //转化类型
+```j
+这样所有的数据都获取到啦～
+
+
+
+</code></pre>
 
             </div>
             
               <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="tag">
+                    Java
+                  </a>
                 
                   <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="tag">
                     微信小程序

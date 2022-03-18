@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602169413">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -31,7 +31,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602169413" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -101,6 +101,7 @@
 <p>有一次我的项目中采用了前后端分离的模式，引起了跨域问题，本文将介绍我所采用的跨域解决方法。</p>
 </blockquote>
 <p>首先要了解产生跨域的本质，也就是同源策略的限制，源是指域名、端口号、协议，有一者不相同将被浏览器拒绝接受响应信息，（请求可以发送出去，但是浏览器不接受响应）。</p>
+<!-- more -->
 <h2 id="解决方法">解决方法：</h2>
 <h3 id="1-jsonp">1. jsonp</h3>
 <p>jsonp的原理的 src=&quot;&quot; 属性不受同源策略的限制，动态创建一个callback回调函数，服务器调用回调函数把数据放进去，具体的细节打算以后做一个专门讲解。</p>

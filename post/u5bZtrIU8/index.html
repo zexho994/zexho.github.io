@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602169413">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -18,9 +18,12 @@
 
 
 
-    <meta name="description" content="1. 找到License.class
+    <meta name="description" content="
+找到License.class
 在words的jar包中找到License类.验证方法入口在这里
 虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。
+
+
 public class License ..." />
     <meta name="keywords" content="知识分享" />
   </head>
@@ -31,7 +34,7 @@ public class License ..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602169413" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -97,9 +100,12 @@ public class License ..." />
             <div class="post-date">2020-08-13</div>
             
             <div class="post-content" v-pre>
-              <h2 id="1-找到licenseclass">1. 找到License.class</h2>
-<p>在words的jar包中找到License类.验证方法入口在这里<br>
-虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。</p>
+              <ol>
+<li>找到License.class<br>
+在words的jar包中找到License类.验证方法入口在这里<br>
+虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。</li>
+</ol>
+<!-- more -->
 <pre><code class="language-java">public class License {
     private zz2B zzYIM = zz2B.zzoF();
 

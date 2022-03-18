@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602169413">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602467404">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -21,13 +21,13 @@
     <meta name="description" content="
 项目代码：https://github.com/zexho994/gvm
 
+
 虚拟机整体的流程
 不同类型的虚拟机
 从解释器的实现方式上来看，有两种类型的虚拟机执行架构。
 
 基于栈结构
 基于寄存器
-
 jvm家族的虚拟机基本都是基于栈的，基于栈..." />
     <meta name="keywords" content="JVM" />
   </head>
@@ -38,7 +38,7 @@ jvm家族的虚拟机基本都是基于栈的，基于栈..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602169413" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602467404" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -107,14 +107,15 @@ jvm家族的虚拟机基本都是基于栈的，基于栈..." />
               <blockquote>
 <p>项目代码：<a href="https://github.com/zexho994/gvm">https://github.com/zexho994/gvm</a></p>
 </blockquote>
+<!-- more -->
 <h2 id="虚拟机整体的流程">虚拟机整体的流程</h2>
 <h2 id="不同类型的虚拟机">不同类型的虚拟机</h2>
 <p>从解释器的实现方式上来看，有两种类型的虚拟机执行架构。</p>
 <ol>
 <li>基于栈结构</li>
-<li>基于寄存器</li>
+<li>基于寄存器<br>
+jvm家族的虚拟机基本都是基于栈的，基于栈的实现稍微简单，移植性高。基于寄存器的虚拟机和cpu的执行方式类似，性能更快，例如v8。Lua虚拟机从5.0之前是栈虚拟机，5.0时转变为寄存器虚拟机</li>
 </ol>
-<p>jvm家族的虚拟机基本都是基于栈的，基于栈的实现稍微简单，移植性高。基于寄存器的虚拟机和cpu的执行方式类似，性能更快，例如v8。Lua虚拟机从5.0之前是栈虚拟机，5.0时转变为寄存器虚拟机</p>
 <blockquote>
 <p>Lars Bak 是v8的作者，也是hotspot的作者之一，还是Dart语言的作者。</p>
 </blockquote>
