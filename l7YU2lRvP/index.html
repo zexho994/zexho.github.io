@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>JVM 指令运行 解析 | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647594502883">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647594502883" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">JVM 指令运行 解析</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-02-17</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/jjLsZt3QW/">
+                    JVM
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="jvm指令集">JVM指令集</h2>
+<p>在jvm中，定义了有205条指令，从0x00 -&gt; 0xCA , 0xFE -&gt; 0xFF。我们在方法中写的所有逻辑，最终都会转换成这些指令，而虚拟机的最重要的一个任务就是解释执行这些指令。</p>
+<p>指令类型种类很多</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9ebfd1be8ab947b1b8452e46405b1839~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>比较常见的类型有：</p>
+<ul>
+<li>load ： 数据从局部变量表 -&gt; 操作数栈中</li>
+<li>store ： 数据从操作数栈 -&gt; 局部变量表中</li>
+</ul>
+<!---->
+<ul>
+<li>references : 方法调用、类型强转、monitor锁等</li>
+<li>math ：运算操作相关</li>
+</ul>
+<!---->
+<ul>
+<li>comparisons : 逻辑操作，if，while，for，goto等</li>
+</ul>
+<h3 id="指令格式">指令格式</h3>
+<p>指令都是由两部分组成，<strong>操作码</strong>和<strong>操作数。</strong></p>
+<ul>
+<li><strong>操作码：</strong> 用于表示是什么指令. 0x1a , 0x45 ,0x57 是操作码</li>
+<li><strong>操作数：</strong> 有些指令需要操作局部变量表和操作数栈，需要知道索引的位置.</li>
+</ul>
+<pre><code class="language-go">//匹配指令
+switch opcode {
+    ...
+    case 0x1a:
+		return iload_0
+    ...
+	case 0x45:
+		return fstore_2
+    ...
+    case 0x57:
+		return pop
+}
+</code></pre>
+<h3 id="超级指令">超级指令</h3>
+<p>解释的速度通常比较慢，原因之一是解释器在判断指令类型的时候涉及到分支，cpu层面分支预测失败和指令缓存未命中的开销都很大。</p>
+<p>解决办法很容易想到，把两个或者多个代码合并成一个代码，在一趟处理中可以直接获取然后执行指令，这样就减少了分支的次数，这些指令便称为超级指令、快速指令、虚拟指令。</p>
+<pre><code class="language-go">...
+case 0x59:
+	return dup
+...
+case 0x60:
+	return iadd
+...
+case 0x84:
+	return iinc
+...
+</code></pre>
+<p>例如</p>
+<ul>
+<li>dup: 指令表示将操作数栈顶的元素复制一份。</li>
+<li>iinc: 表示局部变量表+1，省略了经过操作数栈+1，然后再保存的过程。</li>
+</ul>
+<h3 id="指令流获取">指令流获取</h3>
+<p>在类加载过程-加载步骤。在字节码文件中，指令的数据保存在在methods的的属性表的code字段中。在类加载阶段，读取字节码文件时候会生成一份等价的对象，对象的构建就是从头到尾的把所有数据都进行读取，然后解析。每个不同组件都有不同的方法读取。</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a5bde907abd949a4a154053757390bf2~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">// 读取length长度的数据
+func parseMethod(count uint16, reader *loader.ClassReader, pool *constant_pool.ConstantPool, k *Klass) Methods {
+	methods := make([]*MethodKlass, count)
+	for i := range methods {
+		method := &amp;MethodKlass{}
+		//设置常量池
+		method.ConstantPool = pool
+		//设置访问标记
+		method.accessFlag = reader.ReadUint16()
+		//name常量池索引
+		method.nameIdx = reader.ReadUint16()
+		//描述符常量池索引
+		method.descriptorIdx = reader.ReadUint16()
+		//属性表数量
+		method.attrCount = reader.ReadUint16()
+		// 解析方法表中的属性表字段
+		method.AttributesInfo = attribute.ParseAttributes(method.attrCount, reader, pool)
+		// 绑定klass&amp;method
+		method.Klass = k
+		// 本地方法注入字节码
+		method.InjectCodeAttrIfNative()
+	}
+	return methods
+}
+
+func (c *AttrCode) parse(reader *loader.ClassReader) {
+	c.MaxStack = reader.ReadUint16()
+	c.MaxLocals = reader.ReadUint16()
+	//code长度
+	c.codeLen = reader.ReadUint32()
+	//读取len长度的字节
+	c.code = reader.ReadBytes(c.codeLen)
+	c.ExceptionTable = parseExceptionTable(reader)
+	c.attrCount = reader.ReadUint16()
+	c.AttributesInfo = ParseAttributes(c.attrCount, reader, c.ConstantPool)
+}
+</code></pre>
+<h3 id="指令的解释过程">指令的解释过程</h3>
+<p>指令的执行是由解释器负责的，解析器的流程简单说就是:</p>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h0e47eze27j211s03cq3e.jpg" alt="" loading="lazy"></figure>
+<p>指令解释就是将这三步重复循环，其中要注意的点是栈帧中的pc和整体pc寄存器的值要保持一致。</p>
+<pre><code class="language-go">//循环解释
+func loop(thread *runtime.Thread) {
+    methodReader := &amp;base.MethodCodeReader{}
+        for {
+        // 更新pc寄存器
+        updatePC(thread)
+        // 更新方法code
+        updateCodeArrt(thread, methodReader)
+        //执行指令
+        execInst(thread, methodReader)
+        if finished(thread) {
+                break
+        }
+    }
+}
+
+//执行
+func execInst(thread *runtime.Thread, reader *base.MethodCodeReader) {
+    curFrame := thread.PeekFrame()
+    //获取操作码
+    opcode := reader.ReadOpenCdoe()
+    //创建指令
+    inst := instructions.NewInstruction(opcode)
+    //获取操作数
+    inst.FetchOperands(reader)
+    curFrame.SetFramePC(reader.MethodReaderPC())
+    //执行指令
+    inst.Execute(curFrame)
+}
+</code></pre>
+<h3 id="指令解释执行">指令解释执行</h3>
+<p>获取到指令后，<code>inst.Execute(curFrame)</code> 执行指令。每条指令都有各自的执行逻辑</p>
+<p>每条指令都有不同的执行逻辑。</p>
+<pre><code class="language-go">func iload_0(frame *runtime.Frame) {
+	val := frame.LocalVars().GetInt(0)
+	frame.OperandStack().PushInt(val)
+}
+
+func iload_1(frame *runtime.Frame) {
+	val := frame.LocalVars().GetInt(1)
+	frame.OperandStack().PushInt(val)
+}
+</code></pre>
+<h4 id="i-i">i++ &amp; ++i</h4>
+<pre><code class="language-go">int i = 1;
+print(i++);  
+print(++i);  
+</code></pre>
+<p>编译后字节码两者是不同的，原因与java编译器的遍历AST（javac采用逆波兰表达算法）有关。</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/268c4ab96e09427194ff1d0ac6ff94d3~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">func (i *IINC) Execute(frame *runtime.Frame) {
+	idx := i.Index &gt;&gt; 8         //局部变量表下标
+	toAdd := i.Index &amp; 0x0011   //值
+	old := frame.LocalVars().GetInt(uint(idx)) 
+	frame.LocalVars().SetInt(uint(idx), int32(toAdd)+old) //设置新的值
+}
+</code></pre>
+<p>i++ ：先把i保存到了操作数栈，然后再对局部变量表的i+1。</p>
+<p>++i ：先对局部变量表的i+1，然后再把i保存到了操作数栈。</p>
+<h4 id="ifelse关键字">if..else..关键字</h4>
+<pre><code class="language-go">public static void if_test() {
+    int n = 10;
+    GvmOut.to(&quot;testing if&quot;);
+    GvmOut.to(&quot;10 &gt; 9 ?&quot;);
+    if (n &gt; 9) {
+        GvmOut.to(&quot;yes&quot;);
+    } else {
+        GvmOut.to(&quot;no&quot;);
+    }
+}
+</code></pre>
+<figure data-type="image" tabindex="5"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5de568db80345d2ba675a334dc78683~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h4 id="for关键字">for..关键字</h4>
+<pre><code class="language-go">public static void for_test() {
+    GvmOut.to(&quot;testing for&quot;);
+    for (int i = 0; i &lt; 5; i++) {
+        GvmOut.to(i);
+	}
+}
+    
+</code></pre>
+<figure data-type="image" tabindex="6"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f9b03ddacdcc42b2ac9061589646298b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">// Execute to branch if and only if val1 great or equals val2
+func (icmp *IfIcmpge) Execute(frame *runtime.Frame) {
+	val2 := frame.PopInt()      //弹出栈顶的int
+	val1 := frame.PopInt()      //弹出栈顶的int
+	goNext := icmp.Index        //获取挑战地址
+	if val1 &gt;= val2 {           //比较
+		base.Branch(frame, int(goNext))  
+	}
+</code></pre>
+<h4 id="while">while</h4>
+<pre><code class="language-java">public static void while_test() {
+    GvmOut.to(&quot;testing while&quot;);
+    int x = 100;
+    while (x &lt; 105) {
+        x++;
+        GvmOut.to(x);
+    }
+}
+</code></pre>
+<figure data-type="image" tabindex="7"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd42f104f9fd43079416b393a2624003~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/65lQ_SxQ1/">
+              <h3 class="post-title">
+                下一篇：JVM 方法调用与执行
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>从字节码剖析泛型 | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647594502883">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647594502883" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">从字节码剖析泛型</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-05-06</span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="泛型">泛型</h2>
+<p>Java里泛型，与c#比起来，更算是一种语法糖。关于语法糖，是编译时的一种“小把戏”，目的是让使用者可以有更多的手段是编写代码。</p>
+<p>好处是效率，了解Rust的可以感受到，编写Rust的代码极其高效的，代价就是学习成本非常高，原因之一就是大量的语法糖。</p>
+<p>在java 中:</p>
+<pre><code class="language-java">public void foo(Person&lt;String&gt; p){}
+
+public void foo(Person&lt;Long&gt; p){}
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8b95e4b789e245b581f3159d90c25eec~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="泛型擦除-字节码分析">泛型擦除-字节码分析</h3>
+<pre><code class="language-java">public void foo(Person&lt;String&gt; p){}  ==&gt; public void foo(Person&lt;Object&gt; p){}
+
+public void foo(Person&lt;Long&gt; p){} ==&gt; public void foo(Person&lt;Object&gt; p){}
+</code></pre>
+<p>下面这个类</p>
+<pre><code class="language-java">public class Person&lt;T&gt;{
+
+    T name;
+
+    public static void main(String[] args) {
+        Person&lt;String&gt; p = new Person&lt;String&gt;();
+        p.name = &quot;张三&quot;;
+        GvmOut.to(p.name);
+    }
+
+    public void foo(T t){}
+}
+</code></pre>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/356e67eb94044e85bc0270e8dbd05805~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/498461b0cf404349baaf98ca47e5f2c7~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>字段的签名和方法的签名都是Object对象，那为什么还需要范型，直接用Object声明不就好了吗。答案是约束，使用泛型可以保证类型符合要求。</p>
+<p>在字节码指令中，会添加checkcast命令去检查类型是否匹配。</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6a2ceac67b4b4b8e98e3725639bbca97~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d997841902ca4fb9b4c1473a45265c7b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<h3 id="泛型上下边界-字节码分析">泛型上下边界-字节码分析</h3>
+<p>泛型常见的场景之一是使用extends，可以约束参数的范围。</p>
+<pre><code class="language-java">public class Son&lt;T extends Person&gt;{
+
+    T father;
+
+    public static void main(String[] args) {
+        Son&lt;Person&gt; son = new Son&lt;&gt;();
+        son.father = new Person();
+    }
+
+    public T name(T t){
+        return t;
+    }
+}
+</code></pre>
+<h2 id=""><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6005fb3ea7494860b1a9669d34bda1c5~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bc1e578969da44529d65f459c4baf301~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h2>
+<p>本质上，编译后，泛型依然被擦除了，但是不再是Object类，而是Person类。</p>
+<h3 id="为什么选择这种方式实现范型">为什么选择这种方式实现范型</h3>
+<p>向下兼容。向下兼容。向下兼容。</p>
+<h2 id="参考">参考：</h2>
+<p>-《虚拟机规范(SE8)》<br>
+-《自己动手些虚拟机》</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/l7YU2lRvP/">
+              <h3 class="post-title">
+                下一篇：JVM 指令运行 解析
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

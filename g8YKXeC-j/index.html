@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Java中二进制的补码，反码，正负数 | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647594502883">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647594502883" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">Java中二进制的补码，反码，正负数</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-08-08</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/6j9B3b2nb/">
+                    Java
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="java负数的计算过程">Java负数的计算过程</h2>
+<p>java中最高位表示符号位,0表示正数，1表示负数</p>
+<h3 id="根据十进制推算二进制">根据十进制推算二进制</h3>
+<p>以-5为例子</p>
+<ol>
+<li>-5的原码：<code>1000 0101</code></li>
+<li>求反码 : <code>1111 1010</code> ，符号位不进行取反</li>
+<li>求补码（+1）：<code>1111 1011</code></li>
+</ol>
+<p>所以-5用二进制表示为<code>1111 1011</code></p>
+<h3 id="根据二进制逆推十进制">根据二进制逆推十进制</h3>
+<p>以<code>10001010</code>为例子</p>
+<ol>
+<li>
+<p>获取补码,（-1操作）</p>
+<p><code>10001010 - 1 = 10001001</code></p>
+</li>
+<li>
+<p>获取反码</p>
+<p><code>10001001</code> 的反码 <code>11110110</code></p>
+</li>
+<li>
+<p>不看符号位，算出大小</p>
+<p><code>1110110</code>  对应的值为 <code>118</code>，所以10001010的值就是-118</p>
+</li>
+</ol>
+<p>可以看出来，对于负数而言，因为<code>1000 0000</code> 后七位因为要取反，所以后七位越大反而绝对值越小，例如<code>1111 1111</code> 等于-1，而<code>1111 1110</code> 等于-2</p>
+<p>那么对于负数而言 <code>1000 0000</code> 就是绝对值最大，相对值最小的了，等于-128</p>
+<h2 id="为什么要这样设计">为什么要这样设计</h2>
+<p>首先在计算机中减法实际上是加法，2-1 == 2 + (-1)，那么进行推理一下</p>
+<h3 id="如果都用原码">如果都用原码</h3>
+<p><code>2</code> 的原码：<code>0000 0010</code></p>
+<p><code>-1</code> 的原码: <code>1000 0001</code></p>
+<p><code>2 + (-1)</code>= <code>10000 0011</code></p>
+<p>答案是是 -3，答案错误</p>
+<h3 id="如果正数用原码负数用补码">如果正数用原码，负数用补码</h3>
+<p>事例1</p>
+<p><code>2</code>原码:<code>0000 0010</code></p>
+<p><code>-1</code>补码: <code>1111 1111</code></p>
+<p>相加 =<code>0000 0001</code> ，就等于1</p>
+<p>事例2</p>
+<p><code>10</code>原码:<code>0000 1010</code></p>
+<p><code>-20</code>补码: <code>1110 1100</code></p>
+<p><code>10 + (-20)</code> =  <code>1111 0110</code> 等于-10</p>
+<h3 id="为什么要用补码表示负数而不是反码">为什么要用补码表示负数，而不是反码</h3>
+<p>或者换个说法，为什么要进行+1操作</p>
+<p>如果不用补码,而用反码</p>
+<p>1的原码: <code>0000 0001</code></p>
+<p>-1的反码:<code>1111 1110</code></p>
+<p>1 + (-1) = <code>1111 1111</code> = -128</p>
+<p>很明显答案错误</p>
+<p>那么为什么要进行+1操作，如果你对<code>1111 11111</code> +1可以发现 = <code>0001 0000 0000</code>，而因为byte的大小只有8位，第9位要舍弃也就是<code>0000 0000</code></p>
+<p>因为负数最高位存在一个1，也就是说负数天然要比正数多一个1，对于正数而言，你就得额外+1才能保证正数和负数是一样大的。</p>
+<h2 id="关于byte取值范围">关于byte取值范围</h2>
+<p>byte的取值范围为<code>-128 ~ 127</code></p>
+<p>为什么负值要大于正值？</p>
+<p>对于最大值很容易得出：<code>0111 1111</code> 就等于127</p>
+<p>但是负数不同，在<code>1000 0000</code>这个特殊情况下符号位是参与运算的，也就是说，<code>1000 0000</code> 是最小值，转化成十进制就是-128了</p>
+<h2 id="java代码测试">Java代码测试</h2>
+<pre><code class="language-java">public static void main(String[] args) {
+        byte x1 = (byte)0b00000010;
+        byte x2 = (byte)0b11111111;
+
+        System.out.println(&quot;x1 = &quot; + x1);
+        System.out.println(&quot;x2 = &quot; + x2);
+        System.out.println(&quot;x1 + x2 = &quot; +  (x1 + x2));
+
+        byte x3 = (byte)0b11111110;
+        System.out.println(&quot;x3 = &quot; + x3);
+
+        byte negative20 = (byte)0b11101100;
+        System.out.println(&quot;negative20 : &quot; + negative20);
+
+        byte negative10 = (byte)0b11110110;
+        System.out.println(&quot;negative10:&quot;+negative10);
+
+    }
+</code></pre>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/docker_1/">
+              <h3 class="post-title">
+                下一篇：Docker 中搭建 Neo4j 图数据库 
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
