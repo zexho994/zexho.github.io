@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>JVM 方法调用与执行 | Zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647595070507">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647595070507" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">JVM 方法调用与执行</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2021-02-02</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/">
+                    JVM
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <blockquote>
+<p>项目代码：<a href="https://github.com/zexho994/gvm">https://github.com/zexho994/gvm</a></p>
+</blockquote>
+<h2 id="虚拟机整体的流程">虚拟机整体的流程</h2>
+<h2 id="不同类型的虚拟机">不同类型的虚拟机</h2>
+<p>从解释器的实现方式上来看，有两种类型的虚拟机执行架构。</p>
+<ol>
+<li>基于栈结构</li>
+<li>基于寄存器</li>
+</ol>
+<p>jvm家族的虚拟机基本都是基于栈的，基于栈的实现稍微简单，移植性高。基于寄存器的虚拟机和cpu的执行方式类似，性能更快，例如v8。Lua虚拟机从5.0之前是栈虚拟机，5.0时转变为寄存器虚拟机</p>
+<blockquote>
+<p>Lars Bak 是v8的作者，也是hotspot的作者之一，还是Dart语言的作者。</p>
+</blockquote>
+<h3 id="栈虚拟机">栈虚拟机</h3>
+<p>一段java代码</p>
+<pre><code class="language-java">public void foo(){
+	int a = 1;  
+    int b = 2;  
+    int c = a*b;
+}
+</code></pre>
+<p>在不同类型的虚拟机中，要执行这段代码，首先编译的方式也会有不同,在基于栈的虚拟机中，编译后的指令为</p>
+<pre><code class="language-java">public void fooj();
+    Code:
+       0: iconst_1   //常量1存入到操作数栈
+       1: istore_1   //操作数栈顶pop到局部变量表1
+       2: iconst_2   
+       3: istore_2
+       4: iload_1    //局部变量表索引1数push到操作数栈
+       5: iload_2    
+       6: iadd       //操作数栈顶两个数相加
+       7: iconst_5
+       8: imul       //操作数栈顶两个数相乘
+       9: istore_3
+      10: return  
+          
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dffe4e0c06c44ec1a3d74146ab023cd1~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="寄存器虚拟机">寄存器虚拟机</h3>
+<p>和汇编的风格类似，因为cpu本质上也是一个基于寄存器的解释器。寄存器虚拟机最大的优点就是性能好，支持随机访问，相比起来栈虚拟机的指令执行就显得十分麻烦的。</p>
+<p>在基于寄存器的虚拟机中：</p>
+<pre><code>add ax bx	//其中AX寄存器的值为1,BX寄存器的值为2，将结果放入AX
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/63c9bd9e740241a3b9e8154f39a15106~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="虚拟机类型的抉择">虚拟机类型的抉择</h3>
+<p>为什么JVM选择了使用栈虚拟机的方式? 原因有很多，从历史的角度上看：</p>
+<ul>
+<li>栈虚拟机中，指令的平台无关性好。</li>
+</ul>
+<!---->
+<ul>
+<li>栈虚拟机的优点之一是指令更短，只用1字节，而基于寄存器的需要额外保存地址，一般为2字节。在当时，内存是比较重要的。</li>
+<li>James Gosling 对这种方式的实现比较熟悉（之前他实现了PostScript虚拟机）。</li>
+</ul>
+<h3 id="对java的影响">对Java的影响</h3>
+<p>指令重排序之一的编译器重排序，是IR优化阶段的一种手段，叫表达式提升、表达式下沉。</p>
+<p>优化的原因之一就是考虑栈的特性。</p>
+<pre><code>a=1;         b=2;
+b=2;         a=1;
+c=a+1;  ==&gt;  c=a+1;
+</code></pre>
+<h2 id="方法执行">方法执行</h2>
+<h3 id="栈帧">栈帧</h3>
+<p>栈帧是方法的执行单位，一个方法对应一个栈帧。</p>
+<pre><code class="language-go">//栈帧
+type Frame struct {
+	framePC   uint
+	nextFrame *Frame
+	*LocalVars
+	*OperandStack
+	*klass.MethodKlass
+	*Thread
+}
+</code></pre>
+<h3 id=""><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1478dbbbd6704bbe98da7eea1d55b726~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h3>
+<h3 id="虚拟机栈">虚拟机栈</h3>
+<p>虚拟机栈是线程私有的，用于存放栈帧。当一个方法准备执行时候，栈帧push进行，完成</p>
+<pre><code class="language-go">//线程模型
+type Thread struct {
+    ...
+	*Stack  //虚拟机栈,存放栈帧
+    ...
+}
+//虚拟机栈
+type Stack struct {
+    ...
+	// 栈最大大小
+	maxSize uint
+	// 当前栈的大小
+	size uint
+	// 顶层帧
+	top *Frame
+    ...
+}
+</code></pre>
+<h3 id="-2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/edf832f25aed447c87e2fc26fd868add~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h3>
+<h3 id="局部变量表和操作数栈size">局部变量表和操作数栈size</h3>
+<p>局部变量表和操作数栈的大小如何确定？在code属性表中，MaxStack表示栈的最大深度，MaxLocals表示局部变量表的最大深度。</p>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5dc1b27cd5c64897ba2677d8cdaffe6f~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">type Attr_Code struct {
+	NameIdx uint16
+	name    string
+	AttrLen uint32
+	cp      constant_pool.ConstantPool
+	// 方法的操作数栈在任何时间点的最大深度，在编译期就可以确定
+	MaxStack uint16
+	// 局部变量表大小，包括方法的参数
+	MaxLocals uint16
+	codeLen   uint32
+	code      []byte
+	// 异常表
+	ExceptionTable []*ExceptionTable
+	// 属性表
+	attrCount uint16
+	attrInfo  AttributesInfo
+}
+</code></pre>
+<p>两个值的大小已经在编译期间确定，在字节码中保存，最后在类加载过程中，获取这两个字段。</p>
+<pre><code class="language-go">func (c *Attr_Code) parse(reader *classfile.ClassReader) {
+	c.MaxStack = reader.ReadUint16()
+	c.MaxLocals = reader.ReadUint16()
+	c.codeLen = reader.ReadUint32()
+	c.code = reader.ReadBytes(c.codeLen)
+	c.ExceptionTable = parseExceptionTable(reader)
+	c.attrCount = reader.ReadUint16()
+	c.attrInfo = ParseAttributes(c.attrCount, reader, c.cp)
+}
+</code></pre>
+<h2 id="方法调用">方法调用</h2>
+<h3 id="invoke-指令簇">Invoke 指令簇</h3>
+<ul>
+<li>invokeinterface : 调用接口方法</li>
+<li>invokespecial : 调用实例方法，（父类方法、私有方法、实例初始化方法）</li>
+</ul>
+<!---->
+<ul>
+<li>invokevirtual : 调用虚方法，会根据实例的类型进行分派</li>
+<li>invokestatic : 调用静态方法</li>
+</ul>
+<!---->
+<ul>
+<li>invokedynamic : 调用动态方法(java7新增，支持动态语言的方法调用)</li>
+</ul>
+<h3 id="调用执行逻辑">调用执行逻辑</h3>
+<pre><code class="language-java">public class Invokevirtual {
+    
+    public static void main(String[] args) {
+        Invokevirtual invokevirtual = new Invokevirtual();
+        int res = invokevirtual.additive(1, 2);
+        GvmOut.to(res);
+    }
+
+    public int additive(int x, int y) {
+        int r = x + y;
+        return r;
+    }
+
+}
+</code></pre>
+<p>java中函数调用如何实现？<br>
+main方法的code指令流：<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9610b89aa564ef08ab23c577af54559~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>additive方法的code指令流：</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c31c3e99e2c04fd2b774172edde8fd13~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="5"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/91cbecea94264be485a5a7dc87f010df~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h2 id="静态绑定与动态绑定">静态绑定与动态绑定</h2>
+<p>网上很多文章对于这两者的解释为重载是静态绑定（编译时多态），重写是动态绑定。其实不完全正确，重载也可能被子类重写的情况，一样需要在运行期间判断。</p>
+<p>准确地说，Java 虚拟机中的静态绑定指的是在解析时便能够直接识别目标方法的情况，而动态绑定则指的是需要在运行过程中根据调用者的动态类型来识别目标方法的情况。概括就是</p>
+<ul>
+<li><strong>静态绑定</strong>只在编译期间就可以知道具体要调用的方法。</li>
+<li><strong>动态绑定</strong>指要到运行期间才能知道要调用的方法。</li>
+</ul>
+<p>在invoke命令中，invokestatic对应的为静态绑定（使用static修饰），invokevirtual、invokeinterface为动态绑定的。</p>
+<p>用代码进行说明就是</p>
+<h4 id="invokestatic的逻辑">invokestatic的逻辑</h4>
+<pre><code class="language-go">func (i *INVOKE_STATIC) Execute(frame *runtime.Frame) {
+	cp := frame.Method().CP()
+	contantMethod := cp.GetConstantInfo(i.Index).(*constant_pool.ConstantMethod)
+	className := contantMethod.ClassName()
+	perm := jclass.GetPerm()
+	class := perm.Space[className]
+	if class == nil {
+		class = jclass.ParseInstanceByClassName(className)
+	}
+	name, _type := contantMethod.NameAndDescriptor()
+	methodInfo, err := class.FindStaticMethod(name, _type)        //获取目标方法
+	if err != nil {
+		panic(&quot;[gvm]&quot; + err.Error())
+	}
+	if !jclass.IsStatic(methodInfo.AccessFlag()) {
+		panic(&quot;[gvm] invoke static error&quot;)
+	}
+	methodInfo.SetJClass(class)
+	base.InvokeMethod(frame, methodInfo, true)
+}
+
+func (j JClass_Instance) FindStaticMethod(name, descriptor string) (*MethodInfo, error) {       // 在本类中获取
+	for i := range j.Methods {
+		methodInfo := j.Methods[i]
+		if !IsStatic(methodInfo.accessFlag) {
+			continue
+		}
+		mName := j.ConstantPool.GetUtf8(methodInfo.nameIdx)
+		mDesc := j.ConstantPool.GetUtf8(methodInfo.descriptorIdx)
+		if name != mName || mDesc != descriptor {
+			continue
+		}
+		return j.Methods[i], nil
+	}
+	return nil, exception.GvmError{Msg: &quot;not find static method it name &quot; + name}
+}
+</code></pre>
+<h4 id="invokevirtual的逻辑">invokevirtual的逻辑</h4>
+<pre><code class="language-go">func (i *INVOKE_VIRTUAL) Execute(frame *runtime.Frame) {
+	constantMethod := frame.Method().CP().GetConstantInfo(i.Index).(*constant_pool.ConstantMethod)
+	methodNameStr, methodDescStr := constantMethod.NameAndDescriptor()
+	exception.AssertTrue(methodNameStr != &quot;&lt;init&gt;&quot; &amp;&amp; methodNameStr != &quot;&lt;clinit&gt;&quot;, &quot;IncompatibleClassChangeError&quot;)
+
+	classNameStr := constantMethod.ClassName()
+	permSpace := jclass.GetPerm().Space
+	jc := permSpace[classNameStr]
+	if jc == nil {
+		jc = jclass.ParseInstanceByClassName(classNameStr)
+	}
+	exception.AssertTrue(jc != nil, &quot;NullPointerException&quot;)
+    
+    //*****查找目标实例方法*****
+	methodInfo, err, _ := jc.FindMethod(methodNameStr, methodDescStr)     
+	exception.AssertTrue(err == nil, &quot;no find the method of &quot;+methodNameStr)
+	exception.AssertFalse(jclass.IsStatic(methodInfo.AccessFlag()), &quot;IncompatibleClassChangeError&quot;)
+
+	if jclass.IsProteced(methodInfo.AccessFlag()) {
+		// todo if is proteced , need to judge the relation between caller and called
+	}
+
+	base.InvokeMethod(frame, methodInfo, false)
+}
+
+
+func (j *JClass_Instance) FindMethod(name, descriptor string) (*MethodInfo, error, *JClass_Instance) {
+	for i := range j.Methods {
+		methodInfo := j.Methods[i]
+		if IsStatic(methodInfo.accessFlag) {
+			continue
+		}
+		mName := j.ConstantPool.GetUtf8(methodInfo.nameIdx)
+		mDesc := j.ConstantPool.GetUtf8(methodInfo.descriptorIdx)
+		if mName == name &amp;&amp; mDesc == descriptor {
+			return j.Methods[i], nil, j
+		}
+	}
+	// 在父类中遍历查找
+	m, err, jc := j.SuperClass.FindMethod(name, descriptor)
+	if err == nil {
+		return m, nil, jc
+	}
+	// 在接口中遍历查找
+	for i := range j.Interfaces {
+		m, err, jc := j.Interfaces[i].FindMethod(name, descriptor)
+		if err == nil {
+			return m, nil, jc
+		}
+	}
+	return nil, exception.GvmError{Msg: &quot;not find method it name &quot; + name}, nil
+}
+</code></pre>
+<h2 id="jni方法简述">JNI方法简述</h2>
+<p>有一些场景中，java本身没有能力去完成，最常见的就是当要系统调用时候,就要使用JNI（Java Native Interface）这种方式。</p>
+<p>例如nio中的Selector</p>
+<pre><code class="language-java">private native int poll0(long var1, int var3, long var4);
+</code></pre>
+<p>unsafe.cas</p>
+<pre><code class="language-java">public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);
+</code></pre>
+<p>这种方式本质上也是调用另一个地方的函数，链接的工作由虚拟机完成。GvmOut是invoke调用时基于Go的Print方法实现，使用native方法可以进行非常多的扩展操作。</p>
+<pre><code class="language-java">public class GvmOut{
+    public native static void to(int i);
+    public native static void to(float i);
+    public native static void to(double i);
+    public native static void to(boolean i);
+    public native static void to(long i);
+    public native static void to(String i);
+}
+</code></pre>
+<h2 id="参考">参考：</h2>
+<ul>
+<li><a href="https://www.zhihu.com/question/35777031">栈式虚拟机和寄存器式虚拟机？</a></li>
+<li><a href="https://www.iteye.com/blog/rednaxelafx-492667">虚拟机随谈（一）：解释器，树遍历解释器，基于栈与基于寄存器，大杂烩 - Script Ahead, Code Behind - ITeye博客</a><br>
+-《虚拟机规范(SE8)》<br>
+-《自己动手些虚拟机》</li>
+</ul>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/">
+              <h3 class="post-title">
+                下一篇：参考Spring实现 IOC（下）
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

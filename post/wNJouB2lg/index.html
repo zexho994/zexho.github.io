@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>SpringBoot 跨域 Jsonp 和 Cors | Zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647595070507">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647595070507" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">SpringBoot 跨域 Jsonp 和 Cors</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-06-07</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/P-ZT7Pj1-8/">
+                    Spring
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <blockquote>
+<p>有一次我的项目中采用了前后端分离的模式，引起了跨域问题，本文将介绍我所采用的跨域解决方法。</p>
+</blockquote>
+<p>首先要了解产生跨域的本质，也就是同源策略的限制，源是指域名、端口号、协议，有一者不相同将被浏览器拒绝接受响应信息，（请求可以发送出去，但是浏览器不接受响应）。</p>
+<h2 id="解决方法">解决方法：</h2>
+<h3 id="1-jsonp">1. jsonp</h3>
+<p>jsonp的原理的 src=&quot;&quot; 属性不受同源策略的限制，动态创建一个callback回调函数，服务器调用回调函数把数据放进去，具体的细节打算以后做一个专门讲解。</p>
+<p>这里给一个模版:</p>
+<pre><code class="language-js">            $.ajax({
+             type: &quot;get&quot;,               //jsonp只能使用get
+             async: false,
+             url: &quot;&quot;
+             dataType: &quot;jsonp&quot;,
+             jsonp: &quot;callback&quot;,        
+             jsonpCallback:&quot;message&quot;,       //注意这里给回调函数起的名字
+                 success: function(json){
+                 
+                }
+            })
+</code></pre>
+<p>如果这里你的回调函数起名为message，那么你在后端返回json的时候，也要注意在最外面包一层message{}。</p>
+<p>这里jsonp的缺点也可以明显的看出，只支持get请求，原因就是因为通过src=“”发送请求，所以可以知道是url传参。</p>
+<p>那么jsonp的好处是什么呢，兼容性，几乎所有浏览器都支持（包括一些版本比较老的），不需要XMLHttpRequest或ActiveX的支持。</p>
+<h3 id="2-cors">2. cors</h3>
+<p>又称跨域访问，浏览器将cors请求分为简单请求和非简单请求，因为本文主要讲解具体的方法，所以关于细节部分有兴趣可以去看其他博客或者我以后再做一篇具体的讲解（和jsonp一起）。在springboot中，官方已经提供了支持。直接贴代码：</p>
+<h3 id="方式一全局定义">方式一：全局定义</h3>
+<p>注意@Order这个注解，不加的话很大可能导致配置失效</p>
+<pre><code class="language-java">    @Component
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public class CorsFilter implements Filter {
+        @Override
+        public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+            HttpServletResponse response = (HttpServletResponse) res;
+            HttpServletRequest request = (HttpServletRequest) req;
+            response.setHeader(&quot;Access-Control-Allow-Origin&quot;, &quot;*&quot;);
+            response.setHeader(&quot;Access-Control-Allow-Credentials&quot;, &quot;true&quot;);
+            response.setHeader(&quot;Access-Control-Allow-Methods&quot;,
+                    &quot;ACL, CANCELUPLOAD, CHECKIN, CHECKOUT, COPY, DELETE, GET, HEAD, LOCK, MKCALENDAR, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, REPORT, SEARCH, UNCHECKOUT, UNLOCK, UPDATE, VERSION-CONTROL&quot;);
+            response.setHeader(&quot;Access-Control-Max-Age&quot;, &quot;3600&quot;);
+            response.setHeader(&quot;Access-Control-Allow-Headers&quot;,
+                    &quot;Origin, X-Requested-With, Content-Type, Accept, x-userId&quot;);
+
+            if (&quot;OPTIONS&quot;.equalsIgnoreCase(request.getMethod())) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                chain.doFilter(req, res);
+            }
+        }
+    }
+</code></pre>
+<h3 id="方式二局部定义">方式二：局部定义</h3>
+<pre><code class="language-java">        @CrossOrigin(origins = &quot;*&quot;,allowCredentials=&quot;true&quot;,allowedHeaders = &quot;&quot;,methods = {})
+</code></pre>
+<p>直接在需要跨域的方法上添加注解,十分方便。也可以在类上使用该注解.</p>
+<h2 id="总结">总结：</h2>
+<p>个人推荐使用cors，如果因为兼容性问题不得不使用jsonp那也没办法。然后如果是前后端分离的模式下，对于用户权限验证这一块也是一个需要注意点，如果使用cookie-session，跨域会导致后台获取不到session，我们可以利用token的方法来解决这个问题，我打算以后介绍一下jwt（Json web Token）来实现用户认证。</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/post/Qh3b7MWAh/">
+              <h3 class="post-title">
+                下一篇：给实验室学弟分享 WireShark 
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

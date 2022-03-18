@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>反编译+字节码注入破解 Aspose Words 20.6 | Zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647595070507">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647595070507" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">反编译+字节码注入破解 Aspose Words 20.6</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-08-13</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/">
+                    知识分享
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <h2 id="1-找到licenseclass">1. 找到License.class</h2>
+<p>在words的jar包中找到License类.验证方法入口在这里<br>
+虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。</p>
+<pre><code class="language-java">public class License {
+    private zz2B zzYIM = zz2B.zzoF();
+
+    public License() {
+    }
+
+    public void setLicense(String licenseName) throws Exception {
+        if (licenseName == null) {
+            throw new NullPointerException(this.zzYIM.zzZu(new byte[]{108, 105, 99, 101, 110, 115, 101, 78, 97, 109, 101}));
+        } else {
+            (new zzZJ5()).zzV(licenseName, zzZY2.zzkc());
+        }
+    }
+
+    public void setLicense(InputStream stream) throws Exception {
+        if (stream == null) {
+            throw new NullPointerException(this.zzYIM.zzZu(new byte[]{115, 116, 114, 101, 97, 109}));
+        } else {
+            (new zzZJ5()).zzV(stream);
+        }
+    }
+}
+</code></pre>
+<p>进入zzV()方法<br>
+在zzV()方法下面有两个方法，类似于下面这样。</p>
+<p><strong>zzZaQ就是要修改的方法。让他始终返回1就好了</strong>。</p>
+<pre><code class="language-java">static int zzZaQ() {
+        boolean var0 = zzYIF == null || zzYIF.zzYIH == 0 || (new Date()).after(zzYIF.zzYII) || zzYNP.zzYlS() == 4096;
+        boolean var1 = zzZE1.zzYZQ() == 0;
+        int var2 = var0 &amp;&amp; var1 ? 0 : 1;
+        return var2; // update , return 1
+    }
+
+    static int zzZaP() {
+        boolean var0 = zzYIF == null || zzYIF.zzYIH == 0 || (new Date()).after(zzYIF.zzYII) || zzYNP.zzYlS() == 4096;
+        boolean var1 = zzZE1.zzYZQ() == 0;
+        int var2 = var0 &amp;&amp; var1 ? 0 : 1;
+        return var2;
+    }
+</code></pre>
+<h2 id="2-利用javassist修改字节码">2. 利用Javassist修改字节码</h2>
+<h3 id="maven添加依赖">Maven添加依赖</h3>
+<pre><code class="language-java">&lt;dependency&gt;
+    &lt;groupId&gt;org.javassist&lt;/groupId&gt;
+    &lt;artifactId&gt;javassist&lt;/artifactId&gt;
+    &lt;version&gt;${javaassist.version}&lt;/version&gt;
+&lt;/dependency&gt;
+ 
+&lt;properties&gt;
+    &lt;javaassist.version&gt;3.21.0-GA&lt;/javaassist.version&gt;
+&lt;/properties&gt;
+</code></pre>
+<h3 id="编写方法">编写方法</h3>
+<pre><code class="language-java">public void removeWatermark() throws NotFoundException, CannotCompileException, IOException {
+        ClassPool.getDefault().insertClassPath(&quot;xxxx&quot;); // jar包的绝对路径
+        CtClass targetClass = ClassPool.getDefault().getCtClass(&quot;com.aspose.words.zzZJ5&quot;); //类路径
+        CtMethod targetMethod = targetClass.getDeclaredMethod(&quot;zzZaQ&quot;); //方法路径
+        targetMethod.setBody(&quot;{return 1;}&quot;); //修改方法体，始终返回1
+        targetClass.writeFile(&quot;/Users/zexho/Documents/&quot;); //保存修改，内容为保存的路径。
+    }
+</code></pre>
+<h2 id="3-更新jar包">3. 更新Jar包</h2>
+<ol>
+<li>将.jar包名后缀改为其他压缩格式。mac的改为tar，win可以改为zip</li>
+<li>解压tar,将新生成class文件替换旧的</li>
+<li>删除META-INF文件中的RSA和SF文件</li>
+<li>确保当前位置在一级目录中，看到这两个文件的位置。<br>
+<img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi3x36zscbj306403zdfo.jpg" alt="" loading="lazy"></li>
+<li>重新打包Jar <code>jar cvf [新文件的名字.jar] .</code>例如<code>jar cvf aspose-slides-20.5-jdk16.jar .</code></li>
+</ol>
+<h2 id="4-maven重新导入jar包">4. Maven重新导入Jar包</h2>
+<p>在maven中导入该jar包。然后刷新就可以用了。<br>
+<img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi3x5s3oxsj307n04bjre.jpg" alt="" loading="lazy"></p>
+<blockquote>
+<p>只能个人使用，不可商用</p>
+</blockquote>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/">
+              <h3 class="post-title">
+                下一篇：Java中二进制的补码，反码，正负数
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

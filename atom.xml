@@ -1,83 +1,1374 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
-    <title>zexho&apos; blog</title>
-    <updated>2022-03-18T09:13:55.633Z</updated>
+    <title>Zexho&apos; blog</title>
+    <updated>2022-03-18T09:17:54.806Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
     <subtitle>日积跬步，以致千里</subtitle>
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
-    <rights>All rights reserved 2022, zexho&apos; blog</rights>
+    <rights>All rights reserved 2022, Zexho&apos; blog</rights>
     <entry>
         <title type="html"><![CDATA[分布式里的CAP]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/fen-bu-shi-li-de-cap/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/fen-bu-shi-li-de-cap/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/fen-bu-shi-li-de-cap/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/fen-bu-shi-li-de-cap/">
         </link>
         <updated>2022-03-18T07:12:38.000Z</updated>
     </entry>
     <entry>
         <title type="html"><![CDATA[深入解析Java Stream源码（上）：初始化 Sink]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/1V4Hrg06J/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/1V4Hrg06J/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/">
         </link>
         <updated>2021-07-09T05:09:05.000Z</updated>
+        <content type="html"><![CDATA[<blockquote>
+<p>了解Stream中Sink和Pipline的概念，以及剖析Stream是如何创建。</p>
+</blockquote>
+<h2 id="类图">类图</h2>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1fccb594381b4b488f58abd47d935f06~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h2 id="概念解释">概念解释</h2>
+<h3 id="pipline和stage">Pipline和Stage</h3>
+<p>Pipline是流水线，表示一整个流程。Stage表示流水线的其中一个阶段。是一个比较抽象层面的描述，因为stage主要表示一种逻辑上的顺序关系，而具体每一个阶段要干嘛、怎么干，使用Sink来进行描述。</p>
+<pre><code class="language-java">new stream          //stage 0
+    .filter()       //stage 1
+    .sort()         //stage 2
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/37dd9b847b014b8c9ae5710c0be1907c~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="sink">Sink</h3>
+<p>直译为水槽，生活中水槽的作用无非</p>
+<ul>
+<li>打开水龙头，知道有水要来</li>
+<li>水在水槽里, 可以进行一些操作</li>
+<li>打开水闸，放水<br>
+Java中的Sink核心功能为：</li>
+<li>begin(): 告诉该水槽水流要来了，可以进行一些初始化操作</li>
+<li>accept()：接受水流，然后进行操作</li>
+<li>end()：水流全部处理完了。<br>
+看一个sort()的示例,sort这个stage的目的就是对所有水流进行排序，然后再流到下游。</li>
+</ul>
+<pre><code class="language-java">private static final class SizedRefSortingSink&lt;T&gt; extends AbstractRefSortingSink&lt;T&gt; {
+        private T[] array;  //要进行排序，需要一个数组进行缓存
+        private int offset; 
+
+        SizedRefSortingSink(Sink&lt;? super T&gt; sink, Comparator&lt;? super T&gt; comparator) {
+            super(sink, comparator);
+        }
+
+        @Override
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public void begin(long size) {
+            if (size &gt;= Nodes.MAX_ARRAY_SIZE)
+                throw new IllegalArgumentException(Nodes.BAD_SIZE);
+            //上游调用begin(),通知sort进行初始化操作，生产一个数组
+            array = (T[]) new Object[(int) size];
+        }
+
+    	//上游调用end()方法，告诉sort水已经全部流过来了。sort开始执行操作
+        @Override
+        public void end() {
+            //操作
+            Arrays.sort(array, 0, offset, comparator);
+            //告诉sort的下游准备接受水流
+            downstream.begin(offset);
+            //一个个元素的传递给下游
+            if (!cancellationWasRequested) {
+                for (int i = 0; i &lt; offset; i++)
+                    downstream.accept(array[i]);
+            }
+            else {
+                for (int i = 0; i &lt; offset &amp;&amp; !downstream.cancellationRequested(); i++)
+                    downstream.accept(array[i]);
+            }
+            //告诉下游水流传递结束
+            downstream.end();
+            //缓存清空
+            array = null;
+        }
+
+    	//上游调用accept()方法，将水流存储到到sort的缓存数组中
+        @Override
+        public void accept(T t) {
+            array[offset++] = t;
+        }
+    }
+</code></pre>
+<h2 id="创建head">创建Head</h2>
+<h3 id="疑问">疑问</h3>
+<ul>
+<li>官方说Stream不存储数据，那么数据保存在那里呢？<br>
+解答在后面。</li>
+</ul>
+<h3 id="使用方式">使用方式</h3>
+<p>可以使用Stream.of()创建一个流，例如</p>
+<pre><code class="language-java">//创建方式 of()
+Stream&lt;Integer&gt; stream = Stream.of(1, 2, 3);
+</code></pre>
+<h3 id="源码分析">源码分析</h3>
+<p>of()方法调用</p>
+<pre><code class="language-java">StreamSupport.stream(Arrays.spliterator(arr, 0, arr.length), false);
+</code></pre>
+<p>stream()方法逻辑：</p>
+<pre><code class="language-java">public static &lt;T&gt; Stream&lt;T&gt; stream(Spliterator&lt;T&gt; spliterator, boolean parallel) {
+    Objects.requireNonNull(spliterator);
+    return new ReferencePipeline.Head&lt;&gt;(spliterator,
+                                        StreamOpFlag.fromCharacteristics(spliterator),
+                                        parallel);
+}
+</code></pre>
+<p>调用了<code>ReferencePipeline.Head&lt;&gt;</code>，返回一个Head对象。Head是ReferencePipeline的子类。可以理解为Head是流水线的第一个stage。<br>
+构造方法的主要了逻辑要一直super()到<code>AbstractPipeline</code>类</p>
+<pre><code class="language-java">    /**
+     * The source spliterator. Only valid for the head pipeline.
+     * Before the pipeline is consumed if non-null then {@code sourceSupplier}
+     * must be null. After the pipeline is consumed if non-null then is set to
+     * null.
+     */
+    private Spliterator&lt;?&gt; sourceSpliterator;
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Spliterator} describing the stream source
+     * @param sourceFlags the source flags for the stream source, described in
+     * {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    AbstractPipeline(Spliterator&lt;?&gt; source,
+                     int sourceFlags, boolean parallel) {
+        this.previousStage = null;
+        //使用一个字段指向数据集合的Spliterator,后续终结操作的时候，引用的方式操作数据
+        this.sourceSpliterator = source;
+        this.sourceStage = this;
+        this.sourceOrOpFlags = sourceFlags &amp; StreamOpFlag.STREAM_MASK;
+        // The following is an optimization of:
+        // StreamOpFlag.combineOpFlags(sourceOrOpFlags, StreamOpFlag.INITIAL_OPS_VALUE);
+        this.combinedFlags = (~(sourceOrOpFlags &lt;&lt; 1)) &amp; StreamOpFlag.INITIAL_OPS_VALUE;
+        this.depth = 0;
+        this.parallel = parallel;
+    }
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0e6bb4ba6d9042e3a1f6b4547b68edec~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="疑问解答">疑问解答</h3>
+<ol>
+<li><strong>官方说Stream不存储数据，那么数据保存在那里呢？</strong>
+<ul>
+<li>Head中保存数据源的Spliterator对象，后续操作Spliterator的方式操作数据</li>
+</ul>
+</li>
+</ol>
+<p>参考引用：</p>
+<ul>
+<li><a href="https://colobu.com/2014/11/18/Java-8-Stream/">Java 8 Stream探秘 (colobu.com)</a></li>
+<li><a href="">原来你是这样的 Stream：浅析 Java Stream 实现原理 (https_toutiao.io)</a></li>
+</ul>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[从字节码剖析泛型]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/nL7teffDj/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/nL7teffDj/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/">
         </link>
         <updated>2021-05-06T08:30:29.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="泛型">泛型</h2>
+<p>Java里泛型，与c#比起来，更算是一种语法糖。关于语法糖，是编译时的一种“小把戏”，目的是让使用者可以有更多的手段是编写代码。</p>
+<p>好处是效率，了解Rust的可以感受到，编写Rust的代码极其高效的，代价就是学习成本非常高，原因之一就是大量的语法糖。</p>
+<p>在java 中:</p>
+<pre><code class="language-java">public void foo(Person&lt;String&gt; p){}
+
+public void foo(Person&lt;Long&gt; p){}
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8b95e4b789e245b581f3159d90c25eec~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="泛型擦除-字节码分析">泛型擦除-字节码分析</h3>
+<pre><code class="language-java">public void foo(Person&lt;String&gt; p){}  ==&gt; public void foo(Person&lt;Object&gt; p){}
+
+public void foo(Person&lt;Long&gt; p){} ==&gt; public void foo(Person&lt;Object&gt; p){}
+</code></pre>
+<p>下面这个类</p>
+<pre><code class="language-java">public class Person&lt;T&gt;{
+
+    T name;
+
+    public static void main(String[] args) {
+        Person&lt;String&gt; p = new Person&lt;String&gt;();
+        p.name = &quot;张三&quot;;
+        GvmOut.to(p.name);
+    }
+
+    public void foo(T t){}
+}
+</code></pre>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/356e67eb94044e85bc0270e8dbd05805~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/498461b0cf404349baaf98ca47e5f2c7~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>字段的签名和方法的签名都是Object对象，那为什么还需要范型，直接用Object声明不就好了吗。答案是约束，使用泛型可以保证类型符合要求。</p>
+<p>在字节码指令中，会添加checkcast命令去检查类型是否匹配。</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6a2ceac67b4b4b8e98e3725639bbca97~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d997841902ca4fb9b4c1473a45265c7b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<h3 id="泛型上下边界-字节码分析">泛型上下边界-字节码分析</h3>
+<p>泛型常见的场景之一是使用extends，可以约束参数的范围。</p>
+<pre><code class="language-java">public class Son&lt;T extends Person&gt;{
+
+    T father;
+
+    public static void main(String[] args) {
+        Son&lt;Person&gt; son = new Son&lt;&gt;();
+        son.father = new Person();
+    }
+
+    public T name(T t){
+        return t;
+    }
+}
+</code></pre>
+<h2 id=""><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6005fb3ea7494860b1a9669d34bda1c5~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bc1e578969da44529d65f459c4baf301~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h2>
+<p>本质上，编译后，泛型依然被擦除了，但是不再是Object类，而是Person类。</p>
+<h3 id="为什么选择这种方式实现范型">为什么选择这种方式实现范型</h3>
+<p>向下兼容。向下兼容。向下兼容。</p>
+<h2 id="参考">参考：</h2>
+<p>-《虚拟机规范(SE8)》<br>
+-《自己动手些虚拟机》</p>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[JVM 指令运行 解析]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/l7YU2lRvP/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/l7YU2lRvP/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/">
         </link>
         <updated>2021-02-17T03:19:49.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="jvm指令集">JVM指令集</h2>
+<p>在jvm中，定义了有205条指令，从0x00 -&gt; 0xCA , 0xFE -&gt; 0xFF。我们在方法中写的所有逻辑，最终都会转换成这些指令，而虚拟机的最重要的一个任务就是解释执行这些指令。</p>
+<p>指令类型种类很多</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9ebfd1be8ab947b1b8452e46405b1839~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>比较常见的类型有：</p>
+<ul>
+<li>load ： 数据从局部变量表 -&gt; 操作数栈中</li>
+<li>store ： 数据从操作数栈 -&gt; 局部变量表中</li>
+</ul>
+<!---->
+<ul>
+<li>references : 方法调用、类型强转、monitor锁等</li>
+<li>math ：运算操作相关</li>
+</ul>
+<!---->
+<ul>
+<li>comparisons : 逻辑操作，if，while，for，goto等</li>
+</ul>
+<h3 id="指令格式">指令格式</h3>
+<p>指令都是由两部分组成，<strong>操作码</strong>和<strong>操作数。</strong></p>
+<ul>
+<li><strong>操作码：</strong> 用于表示是什么指令. 0x1a , 0x45 ,0x57 是操作码</li>
+<li><strong>操作数：</strong> 有些指令需要操作局部变量表和操作数栈，需要知道索引的位置.</li>
+</ul>
+<pre><code class="language-go">//匹配指令
+switch opcode {
+    ...
+    case 0x1a:
+		return iload_0
+    ...
+	case 0x45:
+		return fstore_2
+    ...
+    case 0x57:
+		return pop
+}
+</code></pre>
+<h3 id="超级指令">超级指令</h3>
+<p>解释的速度通常比较慢，原因之一是解释器在判断指令类型的时候涉及到分支，cpu层面分支预测失败和指令缓存未命中的开销都很大。</p>
+<p>解决办法很容易想到，把两个或者多个代码合并成一个代码，在一趟处理中可以直接获取然后执行指令，这样就减少了分支的次数，这些指令便称为超级指令、快速指令、虚拟指令。</p>
+<pre><code class="language-go">...
+case 0x59:
+	return dup
+...
+case 0x60:
+	return iadd
+...
+case 0x84:
+	return iinc
+...
+</code></pre>
+<p>例如</p>
+<ul>
+<li>dup: 指令表示将操作数栈顶的元素复制一份。</li>
+<li>iinc: 表示局部变量表+1，省略了经过操作数栈+1，然后再保存的过程。</li>
+</ul>
+<h3 id="指令流获取">指令流获取</h3>
+<p>在类加载过程-加载步骤。在字节码文件中，指令的数据保存在在methods的的属性表的code字段中。在类加载阶段，读取字节码文件时候会生成一份等价的对象，对象的构建就是从头到尾的把所有数据都进行读取，然后解析。每个不同组件都有不同的方法读取。</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a5bde907abd949a4a154053757390bf2~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">// 读取length长度的数据
+func parseMethod(count uint16, reader *loader.ClassReader, pool *constant_pool.ConstantPool, k *Klass) Methods {
+	methods := make([]*MethodKlass, count)
+	for i := range methods {
+		method := &amp;MethodKlass{}
+		//设置常量池
+		method.ConstantPool = pool
+		//设置访问标记
+		method.accessFlag = reader.ReadUint16()
+		//name常量池索引
+		method.nameIdx = reader.ReadUint16()
+		//描述符常量池索引
+		method.descriptorIdx = reader.ReadUint16()
+		//属性表数量
+		method.attrCount = reader.ReadUint16()
+		// 解析方法表中的属性表字段
+		method.AttributesInfo = attribute.ParseAttributes(method.attrCount, reader, pool)
+		// 绑定klass&amp;method
+		method.Klass = k
+		// 本地方法注入字节码
+		method.InjectCodeAttrIfNative()
+	}
+	return methods
+}
+
+func (c *AttrCode) parse(reader *loader.ClassReader) {
+	c.MaxStack = reader.ReadUint16()
+	c.MaxLocals = reader.ReadUint16()
+	//code长度
+	c.codeLen = reader.ReadUint32()
+	//读取len长度的字节
+	c.code = reader.ReadBytes(c.codeLen)
+	c.ExceptionTable = parseExceptionTable(reader)
+	c.attrCount = reader.ReadUint16()
+	c.AttributesInfo = ParseAttributes(c.attrCount, reader, c.ConstantPool)
+}
+</code></pre>
+<h3 id="指令的解释过程">指令的解释过程</h3>
+<p>指令的执行是由解释器负责的，解析器的流程简单说就是:</p>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h0e47eze27j211s03cq3e.jpg" alt="" loading="lazy"></figure>
+<p>指令解释就是将这三步重复循环，其中要注意的点是栈帧中的pc和整体pc寄存器的值要保持一致。</p>
+<pre><code class="language-go">//循环解释
+func loop(thread *runtime.Thread) {
+    methodReader := &amp;base.MethodCodeReader{}
+        for {
+        // 更新pc寄存器
+        updatePC(thread)
+        // 更新方法code
+        updateCodeArrt(thread, methodReader)
+        //执行指令
+        execInst(thread, methodReader)
+        if finished(thread) {
+                break
+        }
+    }
+}
+
+//执行
+func execInst(thread *runtime.Thread, reader *base.MethodCodeReader) {
+    curFrame := thread.PeekFrame()
+    //获取操作码
+    opcode := reader.ReadOpenCdoe()
+    //创建指令
+    inst := instructions.NewInstruction(opcode)
+    //获取操作数
+    inst.FetchOperands(reader)
+    curFrame.SetFramePC(reader.MethodReaderPC())
+    //执行指令
+    inst.Execute(curFrame)
+}
+</code></pre>
+<h3 id="指令解释执行">指令解释执行</h3>
+<p>获取到指令后，<code>inst.Execute(curFrame)</code> 执行指令。每条指令都有各自的执行逻辑</p>
+<p>每条指令都有不同的执行逻辑。</p>
+<pre><code class="language-go">func iload_0(frame *runtime.Frame) {
+	val := frame.LocalVars().GetInt(0)
+	frame.OperandStack().PushInt(val)
+}
+
+func iload_1(frame *runtime.Frame) {
+	val := frame.LocalVars().GetInt(1)
+	frame.OperandStack().PushInt(val)
+}
+</code></pre>
+<h4 id="i-i">i++ &amp; ++i</h4>
+<pre><code class="language-go">int i = 1;
+print(i++);  
+print(++i);  
+</code></pre>
+<p>编译后字节码两者是不同的，原因与java编译器的遍历AST（javac采用逆波兰表达算法）有关。</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/268c4ab96e09427194ff1d0ac6ff94d3~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">func (i *IINC) Execute(frame *runtime.Frame) {
+	idx := i.Index &gt;&gt; 8         //局部变量表下标
+	toAdd := i.Index &amp; 0x0011   //值
+	old := frame.LocalVars().GetInt(uint(idx)) 
+	frame.LocalVars().SetInt(uint(idx), int32(toAdd)+old) //设置新的值
+}
+</code></pre>
+<p>i++ ：先把i保存到了操作数栈，然后再对局部变量表的i+1。</p>
+<p>++i ：先对局部变量表的i+1，然后再把i保存到了操作数栈。</p>
+<h4 id="ifelse关键字">if..else..关键字</h4>
+<pre><code class="language-go">public static void if_test() {
+    int n = 10;
+    GvmOut.to(&quot;testing if&quot;);
+    GvmOut.to(&quot;10 &gt; 9 ?&quot;);
+    if (n &gt; 9) {
+        GvmOut.to(&quot;yes&quot;);
+    } else {
+        GvmOut.to(&quot;no&quot;);
+    }
+}
+</code></pre>
+<figure data-type="image" tabindex="5"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5de568db80345d2ba675a334dc78683~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h4 id="for关键字">for..关键字</h4>
+<pre><code class="language-go">public static void for_test() {
+    GvmOut.to(&quot;testing for&quot;);
+    for (int i = 0; i &lt; 5; i++) {
+        GvmOut.to(i);
+	}
+}
+    
+</code></pre>
+<figure data-type="image" tabindex="6"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f9b03ddacdcc42b2ac9061589646298b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">// Execute to branch if and only if val1 great or equals val2
+func (icmp *IfIcmpge) Execute(frame *runtime.Frame) {
+	val2 := frame.PopInt()      //弹出栈顶的int
+	val1 := frame.PopInt()      //弹出栈顶的int
+	goNext := icmp.Index        //获取挑战地址
+	if val1 &gt;= val2 {           //比较
+		base.Branch(frame, int(goNext))  
+	}
+</code></pre>
+<h4 id="while">while</h4>
+<pre><code class="language-java">public static void while_test() {
+    GvmOut.to(&quot;testing while&quot;);
+    int x = 100;
+    while (x &lt; 105) {
+        x++;
+        GvmOut.to(x);
+    }
+}
+</code></pre>
+<figure data-type="image" tabindex="7"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd42f104f9fd43079416b393a2624003~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[JVM 方法调用与执行]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/65lQ_SxQ1/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/65lQ_SxQ1/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/">
         </link>
         <updated>2021-02-02T14:31:28.000Z</updated>
+        <content type="html"><![CDATA[<blockquote>
+<p>项目代码：<a href="https://github.com/zexho994/gvm">https://github.com/zexho994/gvm</a></p>
+</blockquote>
+<h2 id="虚拟机整体的流程">虚拟机整体的流程</h2>
+<h2 id="不同类型的虚拟机">不同类型的虚拟机</h2>
+<p>从解释器的实现方式上来看，有两种类型的虚拟机执行架构。</p>
+<ol>
+<li>基于栈结构</li>
+<li>基于寄存器</li>
+</ol>
+<p>jvm家族的虚拟机基本都是基于栈的，基于栈的实现稍微简单，移植性高。基于寄存器的虚拟机和cpu的执行方式类似，性能更快，例如v8。Lua虚拟机从5.0之前是栈虚拟机，5.0时转变为寄存器虚拟机</p>
+<blockquote>
+<p>Lars Bak 是v8的作者，也是hotspot的作者之一，还是Dart语言的作者。</p>
+</blockquote>
+<h3 id="栈虚拟机">栈虚拟机</h3>
+<p>一段java代码</p>
+<pre><code class="language-java">public void foo(){
+	int a = 1;  
+    int b = 2;  
+    int c = a*b;
+}
+</code></pre>
+<p>在不同类型的虚拟机中，要执行这段代码，首先编译的方式也会有不同,在基于栈的虚拟机中，编译后的指令为</p>
+<pre><code class="language-java">public void fooj();
+    Code:
+       0: iconst_1   //常量1存入到操作数栈
+       1: istore_1   //操作数栈顶pop到局部变量表1
+       2: iconst_2   
+       3: istore_2
+       4: iload_1    //局部变量表索引1数push到操作数栈
+       5: iload_2    
+       6: iadd       //操作数栈顶两个数相加
+       7: iconst_5
+       8: imul       //操作数栈顶两个数相乘
+       9: istore_3
+      10: return  
+          
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dffe4e0c06c44ec1a3d74146ab023cd1~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="寄存器虚拟机">寄存器虚拟机</h3>
+<p>和汇编的风格类似，因为cpu本质上也是一个基于寄存器的解释器。寄存器虚拟机最大的优点就是性能好，支持随机访问，相比起来栈虚拟机的指令执行就显得十分麻烦的。</p>
+<p>在基于寄存器的虚拟机中：</p>
+<pre><code>add ax bx	//其中AX寄存器的值为1,BX寄存器的值为2，将结果放入AX
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/63c9bd9e740241a3b9e8154f39a15106~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="虚拟机类型的抉择">虚拟机类型的抉择</h3>
+<p>为什么JVM选择了使用栈虚拟机的方式? 原因有很多，从历史的角度上看：</p>
+<ul>
+<li>栈虚拟机中，指令的平台无关性好。</li>
+</ul>
+<!---->
+<ul>
+<li>栈虚拟机的优点之一是指令更短，只用1字节，而基于寄存器的需要额外保存地址，一般为2字节。在当时，内存是比较重要的。</li>
+<li>James Gosling 对这种方式的实现比较熟悉（之前他实现了PostScript虚拟机）。</li>
+</ul>
+<h3 id="对java的影响">对Java的影响</h3>
+<p>指令重排序之一的编译器重排序，是IR优化阶段的一种手段，叫表达式提升、表达式下沉。</p>
+<p>优化的原因之一就是考虑栈的特性。</p>
+<pre><code>a=1;         b=2;
+b=2;         a=1;
+c=a+1;  ==&gt;  c=a+1;
+</code></pre>
+<h2 id="方法执行">方法执行</h2>
+<h3 id="栈帧">栈帧</h3>
+<p>栈帧是方法的执行单位，一个方法对应一个栈帧。</p>
+<pre><code class="language-go">//栈帧
+type Frame struct {
+	framePC   uint
+	nextFrame *Frame
+	*LocalVars
+	*OperandStack
+	*klass.MethodKlass
+	*Thread
+}
+</code></pre>
+<h3 id=""><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1478dbbbd6704bbe98da7eea1d55b726~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h3>
+<h3 id="虚拟机栈">虚拟机栈</h3>
+<p>虚拟机栈是线程私有的，用于存放栈帧。当一个方法准备执行时候，栈帧push进行，完成</p>
+<pre><code class="language-go">//线程模型
+type Thread struct {
+    ...
+	*Stack  //虚拟机栈,存放栈帧
+    ...
+}
+//虚拟机栈
+type Stack struct {
+    ...
+	// 栈最大大小
+	maxSize uint
+	// 当前栈的大小
+	size uint
+	// 顶层帧
+	top *Frame
+    ...
+}
+</code></pre>
+<h3 id="-2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/edf832f25aed447c87e2fc26fd868add~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></h3>
+<h3 id="局部变量表和操作数栈size">局部变量表和操作数栈size</h3>
+<p>局部变量表和操作数栈的大小如何确定？在code属性表中，MaxStack表示栈的最大深度，MaxLocals表示局部变量表的最大深度。</p>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5dc1b27cd5c64897ba2677d8cdaffe6f~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-go">type Attr_Code struct {
+	NameIdx uint16
+	name    string
+	AttrLen uint32
+	cp      constant_pool.ConstantPool
+	// 方法的操作数栈在任何时间点的最大深度，在编译期就可以确定
+	MaxStack uint16
+	// 局部变量表大小，包括方法的参数
+	MaxLocals uint16
+	codeLen   uint32
+	code      []byte
+	// 异常表
+	ExceptionTable []*ExceptionTable
+	// 属性表
+	attrCount uint16
+	attrInfo  AttributesInfo
+}
+</code></pre>
+<p>两个值的大小已经在编译期间确定，在字节码中保存，最后在类加载过程中，获取这两个字段。</p>
+<pre><code class="language-go">func (c *Attr_Code) parse(reader *classfile.ClassReader) {
+	c.MaxStack = reader.ReadUint16()
+	c.MaxLocals = reader.ReadUint16()
+	c.codeLen = reader.ReadUint32()
+	c.code = reader.ReadBytes(c.codeLen)
+	c.ExceptionTable = parseExceptionTable(reader)
+	c.attrCount = reader.ReadUint16()
+	c.attrInfo = ParseAttributes(c.attrCount, reader, c.cp)
+}
+</code></pre>
+<h2 id="方法调用">方法调用</h2>
+<h3 id="invoke-指令簇">Invoke 指令簇</h3>
+<ul>
+<li>invokeinterface : 调用接口方法</li>
+<li>invokespecial : 调用实例方法，（父类方法、私有方法、实例初始化方法）</li>
+</ul>
+<!---->
+<ul>
+<li>invokevirtual : 调用虚方法，会根据实例的类型进行分派</li>
+<li>invokestatic : 调用静态方法</li>
+</ul>
+<!---->
+<ul>
+<li>invokedynamic : 调用动态方法(java7新增，支持动态语言的方法调用)</li>
+</ul>
+<h3 id="调用执行逻辑">调用执行逻辑</h3>
+<pre><code class="language-java">public class Invokevirtual {
+    
+    public static void main(String[] args) {
+        Invokevirtual invokevirtual = new Invokevirtual();
+        int res = invokevirtual.additive(1, 2);
+        GvmOut.to(res);
+    }
+
+    public int additive(int x, int y) {
+        int r = x + y;
+        return r;
+    }
+
+}
+</code></pre>
+<p>java中函数调用如何实现？<br>
+main方法的code指令流：<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9610b89aa564ef08ab23c577af54559~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>additive方法的code指令流：</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c31c3e99e2c04fd2b774172edde8fd13~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="5"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/91cbecea94264be485a5a7dc87f010df~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h2 id="静态绑定与动态绑定">静态绑定与动态绑定</h2>
+<p>网上很多文章对于这两者的解释为重载是静态绑定（编译时多态），重写是动态绑定。其实不完全正确，重载也可能被子类重写的情况，一样需要在运行期间判断。</p>
+<p>准确地说，Java 虚拟机中的静态绑定指的是在解析时便能够直接识别目标方法的情况，而动态绑定则指的是需要在运行过程中根据调用者的动态类型来识别目标方法的情况。概括就是</p>
+<ul>
+<li><strong>静态绑定</strong>只在编译期间就可以知道具体要调用的方法。</li>
+<li><strong>动态绑定</strong>指要到运行期间才能知道要调用的方法。</li>
+</ul>
+<p>在invoke命令中，invokestatic对应的为静态绑定（使用static修饰），invokevirtual、invokeinterface为动态绑定的。</p>
+<p>用代码进行说明就是</p>
+<h4 id="invokestatic的逻辑">invokestatic的逻辑</h4>
+<pre><code class="language-go">func (i *INVOKE_STATIC) Execute(frame *runtime.Frame) {
+	cp := frame.Method().CP()
+	contantMethod := cp.GetConstantInfo(i.Index).(*constant_pool.ConstantMethod)
+	className := contantMethod.ClassName()
+	perm := jclass.GetPerm()
+	class := perm.Space[className]
+	if class == nil {
+		class = jclass.ParseInstanceByClassName(className)
+	}
+	name, _type := contantMethod.NameAndDescriptor()
+	methodInfo, err := class.FindStaticMethod(name, _type)        //获取目标方法
+	if err != nil {
+		panic(&quot;[gvm]&quot; + err.Error())
+	}
+	if !jclass.IsStatic(methodInfo.AccessFlag()) {
+		panic(&quot;[gvm] invoke static error&quot;)
+	}
+	methodInfo.SetJClass(class)
+	base.InvokeMethod(frame, methodInfo, true)
+}
+
+func (j JClass_Instance) FindStaticMethod(name, descriptor string) (*MethodInfo, error) {       // 在本类中获取
+	for i := range j.Methods {
+		methodInfo := j.Methods[i]
+		if !IsStatic(methodInfo.accessFlag) {
+			continue
+		}
+		mName := j.ConstantPool.GetUtf8(methodInfo.nameIdx)
+		mDesc := j.ConstantPool.GetUtf8(methodInfo.descriptorIdx)
+		if name != mName || mDesc != descriptor {
+			continue
+		}
+		return j.Methods[i], nil
+	}
+	return nil, exception.GvmError{Msg: &quot;not find static method it name &quot; + name}
+}
+</code></pre>
+<h4 id="invokevirtual的逻辑">invokevirtual的逻辑</h4>
+<pre><code class="language-go">func (i *INVOKE_VIRTUAL) Execute(frame *runtime.Frame) {
+	constantMethod := frame.Method().CP().GetConstantInfo(i.Index).(*constant_pool.ConstantMethod)
+	methodNameStr, methodDescStr := constantMethod.NameAndDescriptor()
+	exception.AssertTrue(methodNameStr != &quot;&lt;init&gt;&quot; &amp;&amp; methodNameStr != &quot;&lt;clinit&gt;&quot;, &quot;IncompatibleClassChangeError&quot;)
+
+	classNameStr := constantMethod.ClassName()
+	permSpace := jclass.GetPerm().Space
+	jc := permSpace[classNameStr]
+	if jc == nil {
+		jc = jclass.ParseInstanceByClassName(classNameStr)
+	}
+	exception.AssertTrue(jc != nil, &quot;NullPointerException&quot;)
+    
+    //*****查找目标实例方法*****
+	methodInfo, err, _ := jc.FindMethod(methodNameStr, methodDescStr)     
+	exception.AssertTrue(err == nil, &quot;no find the method of &quot;+methodNameStr)
+	exception.AssertFalse(jclass.IsStatic(methodInfo.AccessFlag()), &quot;IncompatibleClassChangeError&quot;)
+
+	if jclass.IsProteced(methodInfo.AccessFlag()) {
+		// todo if is proteced , need to judge the relation between caller and called
+	}
+
+	base.InvokeMethod(frame, methodInfo, false)
+}
+
+
+func (j *JClass_Instance) FindMethod(name, descriptor string) (*MethodInfo, error, *JClass_Instance) {
+	for i := range j.Methods {
+		methodInfo := j.Methods[i]
+		if IsStatic(methodInfo.accessFlag) {
+			continue
+		}
+		mName := j.ConstantPool.GetUtf8(methodInfo.nameIdx)
+		mDesc := j.ConstantPool.GetUtf8(methodInfo.descriptorIdx)
+		if mName == name &amp;&amp; mDesc == descriptor {
+			return j.Methods[i], nil, j
+		}
+	}
+	// 在父类中遍历查找
+	m, err, jc := j.SuperClass.FindMethod(name, descriptor)
+	if err == nil {
+		return m, nil, jc
+	}
+	// 在接口中遍历查找
+	for i := range j.Interfaces {
+		m, err, jc := j.Interfaces[i].FindMethod(name, descriptor)
+		if err == nil {
+			return m, nil, jc
+		}
+	}
+	return nil, exception.GvmError{Msg: &quot;not find method it name &quot; + name}, nil
+}
+</code></pre>
+<h2 id="jni方法简述">JNI方法简述</h2>
+<p>有一些场景中，java本身没有能力去完成，最常见的就是当要系统调用时候,就要使用JNI（Java Native Interface）这种方式。</p>
+<p>例如nio中的Selector</p>
+<pre><code class="language-java">private native int poll0(long var1, int var3, long var4);
+</code></pre>
+<p>unsafe.cas</p>
+<pre><code class="language-java">public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);
+</code></pre>
+<p>这种方式本质上也是调用另一个地方的函数，链接的工作由虚拟机完成。GvmOut是invoke调用时基于Go的Print方法实现，使用native方法可以进行非常多的扩展操作。</p>
+<pre><code class="language-java">public class GvmOut{
+    public native static void to(int i);
+    public native static void to(float i);
+    public native static void to(double i);
+    public native static void to(boolean i);
+    public native static void to(long i);
+    public native static void to(String i);
+}
+</code></pre>
+<h2 id="参考">参考：</h2>
+<ul>
+<li><a href="https://www.zhihu.com/question/35777031">栈式虚拟机和寄存器式虚拟机？</a></li>
+<li><a href="https://www.iteye.com/blog/rednaxelafx-492667">虚拟机随谈（一）：解释器，树遍历解释器，基于栈与基于寄存器，大杂烩 - Script Ahead, Code Behind - ITeye博客</a><br>
+-《虚拟机规范(SE8)》<br>
+-《自己动手些虚拟机》</li>
+</ul>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[参考Spring实现 IOC（下）]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/ioc_2/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/ioc_2/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/ioc_2/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/">
         </link>
         <updated>2020-10-30T11:36:08.000Z</updated>
+        <content type="html"><![CDATA[<p>github地址：https://github.com/zexho994/IOC-AOP</p>
+<h1 id="核心实现">核心实现</h1>
+<h3 id="流程">流程</h3>
+<figure data-type="image" tabindex="1"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9ba70855125c48d280678e5d1538979d~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="bean的声明">Bean的声明</h3>
+<p>以注解的方式为例，在类上添加@Bean注解即表示该Class为一个Bean，例如：</p>
+<pre><code class="language-java">@Bean
+public class BeanTest1 implements BeanTest {
+
+    @Override
+    public void print() {
+        System.out.println(&quot;BeanTest1&quot;);
+    }
+
+}
+</code></pre>
+<p>在项目启动的时候会扫描目录下所有的Class，流程如下:</p>
+<figure data-type="image" tabindex="2"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/585f5fd3ead84ba491753ffa4276d292~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<pre><code class="language-java">public static List&lt;Class&lt;?&gt;&gt; findAllBean() {
+    ClassLoader contextClassLoader = getDefaultClassLoader();  //获取默认类加载器
+    List&lt;String&gt; classes = scanClasses(contextClassLoader);    //扫描所有Class类
+    return filtersAndLoadBeans(classes, contextClassLoader);   //过滤，获取所有Bean
+}
+
+public void loadBean() {
+    BeanScanner
+        .findAllBean()
+        .forEach(bean -&gt; AnnotationDefinitionLoaderRegistry.
+                 this.register(bean.getSimpleName(), bean));  //注册所有的bean
+}
+</code></pre>
+<p>具体的的代码细节不详细展开，需要的可以看源码。</p>
+<p>到此，所有的Bean都已经保存到了map结构中，当需要使用Bean的时候根据bean name进行获取就好了。</p>
+<h3 id="autowired实现">@Autowired实现</h3>
+<figure data-type="image" tabindex="3"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7d52d41f1d9d4b7fa7da3e63563931e7~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<pre><code class="language-java">@Bean
+public class AutowiredTest {
+
+    @Autowired
+    public BeanTest1 beanTest1;
+    @Autowired
+    public BeanTest2 beanTest2;
+
+    public void print1() {
+        beanTest1.print();
+    }
+
+    public void print2() {
+        beanTest2.print();
+    }
+}
+</code></pre>
+<pre><code class="language-java">// 初始化bean
+private void initBean(BeanDefinition beanDefinition) throws IllegalAccessException {
+    Object instance = beanDefinition.getInstance();
+
+    // 初始化Autowired
+    this.initAutowire(instance);
+
+    beanDefinition.setStatusInitialized();
+}
+
+/** 
+* 设置bean里面的注入字段
+*/
+private void initAutowire(Object instance) throws IllegalAccessException {
+    // 获取所有字段，如果有Autowired注解，获取该bean，然后赋值给字段
+    for (Field field : instance.getClass().getFields()) {
+        if (field.getDeclaredAnnotationsByType(Autowired.class).length == 0) {
+            continue;
+        }
+        Class&lt;?&gt; fieldType = field.getType();
+        Object bean = this.getBean(fieldType.getSimpleName());
+        field.set(instance, bean);
+    }
+}
+</code></pre>
+<h1 id="解决循环依赖">解决循环依赖</h1>
+<p>在spring中使用“3级缓存”来解决循环依赖问题，不要纠结spring为何要使用3个map来实现，抛开实现的细节，从问题原因着手，这个问题其实使用很好理解。</p>
+<h2 id="何为循环依赖">何为循环依赖？</h2>
+<p>下面的A和B就互相依赖彼此，这样就会有一个问题，在创建A的时候需要创建B，但是创建B的时候又需要创建A，看起来像是一个先有鸡还是蛋的问题。</p>
+<pre><code>@Bean
+public class ClassA {
+    @Autowired
+    public ClassB ib;
+
+}
+
+@Bean
+public class ClassB {
+    @Autowired
+    public ClassA ia;
+    
+}
+</code></pre>
+<p>但是要知道Bean的创建其实是分为多个步骤的，就好理解了。</p>
+<pre><code class="language-mermaid">graph LR
+n0(start) --&gt; n1(创建instance) --&gt; n2(填充需要注入的fields字段) --&gt; n3(end)
+</code></pre>
+<p>在创建完instance后，里面的字段其实都还是null的,例如已经创建ClassA实例a，和ClassB实例b，此时<code>a.ib = null</code>和<code>b.ia = null</code>. 然后赋值 <code>a.ib = b</code> 和 <code>b.ia = a</code>，这之后，a和b中的字段都赋值完了，且都是完整可用的对象了。</p>
+<pre><code class="language-java">public Object getBean(String beanName) {
+    BeanDefinition bean = this.getBeanInstance(beanName);
+    if (!bean.isInit()) {
+        try {
+            this.initBean(bean);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+    return bean.getInstance();
+}
+
+// 初始化bean
+private void initBean(BeanDefinition beanDefinition) throws IllegalAccessException {
+    Object instance = beanDefinition.getInstance(); // 获取bean的isntance
+    beanDefinition.setStatusInitialized();  //设置为已初始化
+    this.initAutowire(instance);
+}
+
+// 遍历所有字段，为有@Authwired注解的实现注入
+private void initAutowire(Object instance) throws IllegalAccessException {
+    Field[] fields = instance.getClass().getFields();
+    for (Field field : fields) {
+        if (field.getDeclaredAnnotationsByType(Autowired.class).length == 0) {
+            continue;
+        }
+        Class&lt;?&gt; fieldType = field.getType();
+        Object bean = this.getBean(fieldType.getSimpleName());
+        field.set(instance, bean);  //field赋值
+    }
+}
+</code></pre>
+<p>有一个比较好的类比，leetcode的一道算法题two sum <a href="https://leetcode-cn.com/problems/two-sum/">https://leetcode-cn.com/problems/two-sum/</a>，其中一种题解就是遍历一边，存储所有值和索引到map中，然后遍历一次map，每次判断是否有要的数。</p>
+<p>这个也是，先讲instance存到map中，然后把map中instance的fields都进行填充，就可以了。</p>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[参考Spring实现 IOC（上）]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/ioc_1/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/ioc_1/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/ioc_1/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/ioc_1/">
         </link>
         <updated>2020-10-17T07:29:12.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="基本概念">基本概念</h1>
+<h3 id="控制反转和依赖注入">控制反转和依赖注入</h3>
+<blockquote>
+<p>控制反转（IOC），依赖注入（DI）</p>
+</blockquote>
+<p>什么是控制反转？简单的说，控制反转就是一种思想，目的是将对象的创建由主动变成被动。<br>
+下面的实例就是主动new了一个对象。</p>
+<pre><code class="language-java">public class Service{
+    public DependObject object1 = new DenpendObject();
+}
+</code></pre>
+<p>那么如何做到不使用new呢？依赖注入便是其中一种实现方式。</p>
+<p>依赖注入的方式有三种</p>
+<ul>
+<li>构造器注入</li>
+<li>setter注入</li>
+<li>接口注入</li>
+</ul>
+<pre><code class="language-java">public class Service{
+    public DependObject object;
+
+    // 构造器注入
+    public Service (DependObject obj){
+        this.object = obj;
+    }
+
+    // setter注入
+    public void setDependObject(DependObject obj){
+        this.object = obj;
+    }
+}
+</code></pre>
+<p>可以看到，对象的生命周期不再由Service类中主动创建，而是通过注入的方式赋值。<br>
+顺便比较一下3中方式的优劣：</p>
+<ul>
+<li><strong>接口注入：</strong> 从注入方式的使用上来说，接口注入是现在不甚提倡的一种方式，基本处于“退 役状态”。因为它强制被注入对象实现不必要的接口，带有侵入性。而构造方法注入和setter 方法注入则不需要如此。</li>
+<li><strong>构造方法注入：</strong> 这种注入方式的优点就是，对象在构造完成之后，即已进入就绪状态，可以 马上使用。缺点就是，当依赖对象比较多的时候，构造方法的参数列表会比较长。而通过反 射构造对象的时候，对相同类型的参数的处理会比较困难，维护和使用上也比较麻烦。而且 在Java中，构造方法无法被继承，无法设置默认值。对于非必须的依赖处理，可能需要引入多 个构造方法，而参数数量的变动可能造成维护上的不便。</li>
+<li><strong>setter方法注入：</strong> 因为方法可以命名，所以setter方法注入在描述性上要比构造方法注入好一些。 另外， setter方法可以被继承， 允许设置默认值，而且有良好的IDE支持。缺点当然就是对象无 法在构造完成后马上进入就绪状态。</li>
+</ul>
+<h3 id="ioc容器">IOC容器</h3>
+<p>为了所有对象的统一管理，需要有一个角色负责将这些相互依赖的对象绑定到一起，IOC容器就是这样一个角色。它的主要职责可以分为两个：</p>
+<ol>
+<li>业务对象的构建管理：例如如何加载类，管理类的生命周期等。</li>
+<li>业务对象间的依赖绑定：提供构建好的对象给业务方使用。<br>
+总结就是创建和绑定</li>
+</ol>
+<p>IOC容器如何知道管理哪些对象呢？本系列将实现两种方式：1.使用编码申明，2. 使用注解@Bean声明，熟悉Spring的知道常用的还有XML的方式，这个可以自行实现。</p>
+<p>在Spring中，使用Bean的概念表示IOC管理的对象，在这里依然采用这种定义方式，下篇文章介绍IOC模块的结构设计。</p>
+<h3 id="拓展阅读">拓展阅读</h3>
+<p>对IOC的基本概念不熟悉的可以阅读：<br>
+《spring揭密》2.1 IOC基本概念</p>
+<h1 id="预期实现效果">预期实现效果</h1>
+<h2 id="bean的声明方式">Bean的声明方式</h2>
+<h3 id="通过编码方式进行声明">通过编码方式进行声明</h3>
+<p>继承CodeDefinitionLoderRegistry类，重写loadBean()方法</p>
+<pre><code class="language-java">public class MyCodeBeanDefinition extends CodeDefinitionLoaderRegistry {
+
+    @Override
+    public void loadBean() {
+        this.register(&quot;BeanTest1&quot;, BeanTest1.class);
+        this.register(&quot;BeanTest2&quot;, BeanTest2.class);
+    }
+
+}
+</code></pre>
+<p>然后编码使用register(bean的名称，bean所对应类)进行注册，和XML的声明方式是类似的。</p>
+<h3 id="通过注解bean的方式声明">通过注解@Bean的方式声明</h3>
+<pre><code class="language-java">@Bean
+public class BeanTest1 implements BeanTest {
+
+    @Override
+    public void print() {
+        System.out.println(&quot;BeanTest1&quot;);
+    }
+
+}
+
+@Bean
+public class BeanTest2 implements BeanTest {
+
+    @Override
+    public void print() {
+        System.out.println(&quot;BeanTest2&quot;);
+    }
+
+}
+</code></pre>
+<h2 id="获取bean">获取Bean</h2>
+<h3 id="从工厂中获取bean">从工厂中获取Bean</h3>
+<pre><code class="language-java">public static void foo() {
+
+    // 第一步：c根据声明的方式选择 1 or 2
+    // 方式一： 创建注册类,注册类中使用编码实现注册逻辑
+    AbstractDefinitionLoaderRegistry registry = new MyCodeBeanDefinition();
+    // 方式二： 创建注册类,Bean通过注解的方式自动注入
+    AbstractDefinitionLoaderRegistry registry = new AnnotationDefinitionLoaderRegistry();
+    
+    // 第二步：注册类添加到工厂中
+    ApplicationContext factory = new ApplicationContext(registry);
+
+    // 第三步：获取Bean
+    BeanTest obj1 = factory.getBeanInstance(&quot;BeanTest1&quot;, BeanTest1.class);
+    BeanTest obj2 = factory.getBeanInstance(&quot;BeanTest2&quot;, BeanTest2.class);
+    
+    obj1.print();
+    obj2.print();
+}
+</code></pre>
+<h3 id="通过注解自动注入bean">通过注解自动注入Bean</h3>
+<p>使用@Autowired自动注入</p>
+<pre><code class="language-java">@Bean
+public class AutowiredTest {
+
+    @Autowired
+    public BeanTest1 beanTest1;
+    @Autowired
+    public BeanTest2 beanTest2;
+
+    public void print1() {
+        beanTest1.print();
+    }
+
+    public void print2() {
+        beanTest2.print();
+    }
+
+}
+</code></pre>
+<h1 id="项目组织结构">项目组织结构</h1>
+<h2 id="spring中的ioc设计">Spring中的IOC设计</h2>
+<p>spring中ioc模块可以分为3中角色，分别对应3个最顶层接口：<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b1c03834b5a348a18794a7ee8aed7546~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>通俗的理解：</p>
+<ul>
+<li>BeanDefinition: 就是我们常说的Bean，理解为图书。</li>
+<li>BeanDefinitionRegistry: 书架，存放书的地方。</li>
+<li>BeanFactory: 图书馆，借书的地方。</li>
+</ul>
+<p>在我们的实现中，同样使用了这3个概念，看下3个接口都有哪些方法：</p>
+<h3 id="beandefinition">BeanDefinition</h3>
+<pre><code class="language-java">public interface BeanDefinition {
+    // 0表示未初始化
+    int STATUS_UNINITIALIZED = 0;
+    // 1表示已初始化
+    int STATUS_INITIALIZED = 1;
+
+    /**
+     * Sets name.
+     *
+     * @param beanClassName the bean class name
+     */
+    void setName(String beanClassName);
+
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
+    String getName();
+
+    /**
+     * Sets instance.
+     *
+     * @param instance the instance
+     */
+    void setInstance(Object instance);
+
+    /**
+     * Gets instance.
+     *
+     * @return the instance
+     */
+    Object getInstance();
+
+    /**
+     * Gets bean class.
+     *
+     * @return bean class
+     */
+    Class&lt;?&gt; getBeanClass();
+
+    /**
+     * 判断bean是否有初始化
+     *
+     * @return status == {@link #STATUS_INITIALIZED} ?
+     */
+    Boolean isInit();
+
+    /**
+     * set status to {@link #STATUS_INITIALIZED}
+     */
+    void setStatusInitialized();
+}
+</code></pre>
+<h3 id="beandefinitionregistry">BeanDefinitionRegistry</h3>
+<pre><code class="language-java">public interface BeanDefinitionRegistry {
+
+    /**
+     * 注册一个新的Bean
+     *
+     * @param beanName       bean的注册使用名称
+     * @param beanDefinition bean的类型
+     */
+    void registerBean(String beanName, BeanDefinition beanDefinition);
+
+    /**
+     * 移除一个Bean
+     *
+     * @param beanName 要移除的Bean的名称
+     */
+    void removeBean(String beanName);
+
+    /**
+     * 根据名称获取Bean
+     *
+     * @param beanName bean名称
+     * @return 已注册的 {@link BeanDefinition} 对象
+     */
+    BeanDefinition getBean(String beanName);
+
+    /**
+     * 获取Bean
+     * {@link BeanDefinition}
+     *
+     * @param beanName     bean名称
+     * @param requiredType bean类型，会进行校验
+     * @return 已注册的 {@link BeanDefinition} 对象
+     */
+    &lt;T&gt; BeanDefinition getBean(String beanName, Class&lt;T&gt; requiredType);
+
+}
+</code></pre>
+<h3 id="beanfactory">BeanFactory</h3>
+<pre><code class="language-java">public interface BeanFactory {
+
+    /**
+     * 根据名称获取bean
+     *
+     * @param beanName bean名称
+     * @return bean名称对应的Bean
+     */
+    BeanDefinition getBeanInstance(String beanName);
+
+    /**
+     * 根据名称获取一个bean
+     *
+     * @param beanName     bean的名称
+     * @param requiredType bean类型
+     * @return bean名称对应的Bean
+     */
+    &lt;T&gt; T getBeanInstance(String beanName, Class&lt;T&gt; requiredType);
+}
+</code></pre>
+<h3 id="我们的ioc类图">我们的IOC类图</h3>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3a49e7bfb13849aeb2e2c96eccd438cb~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><br>
+对3个顶层接口都添加了默认实现类，其中比较重要的几个点：</p>
+<ul>
+<li>BeanDefinitionRegistry 使用Map进行Bean的存储，Key为Bean的名称，Val为BeanDefinition</li>
+<li>BeanDefinition中有3个字段<pre><code class="language-java">private String beanName;  //bean名称
+private T beanInstance = null; // bean的实例
+private final Class&lt;T&gt; beanClass; //bean对应的class
+</code></pre>
+</li>
+<li>BeanFactory中存储BeanDefinitionRegistry类，封装获取bean的接口，工厂对外提供</li>
+</ul>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[反编译+字节码注入破解 Aspose Words 20.6]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/u5bZtrIU8/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/u5bZtrIU8/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/">
         </link>
         <updated>2020-08-13T03:06:19.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="1-找到licenseclass">1. 找到License.class</h2>
+<p>在words的jar包中找到License类.验证方法入口在这里<br>
+虽然有两个setLicense（）方法，细心点看，最后调用的都是zzV方法，只是不同的重载。</p>
+<pre><code class="language-java">public class License {
+    private zz2B zzYIM = zz2B.zzoF();
+
+    public License() {
+    }
+
+    public void setLicense(String licenseName) throws Exception {
+        if (licenseName == null) {
+            throw new NullPointerException(this.zzYIM.zzZu(new byte[]{108, 105, 99, 101, 110, 115, 101, 78, 97, 109, 101}));
+        } else {
+            (new zzZJ5()).zzV(licenseName, zzZY2.zzkc());
+        }
+    }
+
+    public void setLicense(InputStream stream) throws Exception {
+        if (stream == null) {
+            throw new NullPointerException(this.zzYIM.zzZu(new byte[]{115, 116, 114, 101, 97, 109}));
+        } else {
+            (new zzZJ5()).zzV(stream);
+        }
+    }
+}
+</code></pre>
+<p>进入zzV()方法<br>
+在zzV()方法下面有两个方法，类似于下面这样。</p>
+<p><strong>zzZaQ就是要修改的方法。让他始终返回1就好了</strong>。</p>
+<pre><code class="language-java">static int zzZaQ() {
+        boolean var0 = zzYIF == null || zzYIF.zzYIH == 0 || (new Date()).after(zzYIF.zzYII) || zzYNP.zzYlS() == 4096;
+        boolean var1 = zzZE1.zzYZQ() == 0;
+        int var2 = var0 &amp;&amp; var1 ? 0 : 1;
+        return var2; // update , return 1
+    }
+
+    static int zzZaP() {
+        boolean var0 = zzYIF == null || zzYIF.zzYIH == 0 || (new Date()).after(zzYIF.zzYII) || zzYNP.zzYlS() == 4096;
+        boolean var1 = zzZE1.zzYZQ() == 0;
+        int var2 = var0 &amp;&amp; var1 ? 0 : 1;
+        return var2;
+    }
+</code></pre>
+<h2 id="2-利用javassist修改字节码">2. 利用Javassist修改字节码</h2>
+<h3 id="maven添加依赖">Maven添加依赖</h3>
+<pre><code class="language-java">&lt;dependency&gt;
+    &lt;groupId&gt;org.javassist&lt;/groupId&gt;
+    &lt;artifactId&gt;javassist&lt;/artifactId&gt;
+    &lt;version&gt;${javaassist.version}&lt;/version&gt;
+&lt;/dependency&gt;
+ 
+&lt;properties&gt;
+    &lt;javaassist.version&gt;3.21.0-GA&lt;/javaassist.version&gt;
+&lt;/properties&gt;
+</code></pre>
+<h3 id="编写方法">编写方法</h3>
+<pre><code class="language-java">public void removeWatermark() throws NotFoundException, CannotCompileException, IOException {
+        ClassPool.getDefault().insertClassPath(&quot;xxxx&quot;); // jar包的绝对路径
+        CtClass targetClass = ClassPool.getDefault().getCtClass(&quot;com.aspose.words.zzZJ5&quot;); //类路径
+        CtMethod targetMethod = targetClass.getDeclaredMethod(&quot;zzZaQ&quot;); //方法路径
+        targetMethod.setBody(&quot;{return 1;}&quot;); //修改方法体，始终返回1
+        targetClass.writeFile(&quot;/Users/zexho/Documents/&quot;); //保存修改，内容为保存的路径。
+    }
+</code></pre>
+<h2 id="3-更新jar包">3. 更新Jar包</h2>
+<ol>
+<li>将.jar包名后缀改为其他压缩格式。mac的改为tar，win可以改为zip</li>
+<li>解压tar,将新生成class文件替换旧的</li>
+<li>删除META-INF文件中的RSA和SF文件</li>
+<li>确保当前位置在一级目录中，看到这两个文件的位置。<br>
+<img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi3x36zscbj306403zdfo.jpg" alt="" loading="lazy"></li>
+<li>重新打包Jar <code>jar cvf [新文件的名字.jar] .</code>例如<code>jar cvf aspose-slides-20.5-jdk16.jar .</code></li>
+</ol>
+<h2 id="4-maven重新导入jar包">4. Maven重新导入Jar包</h2>
+<p>在maven中导入该jar包。然后刷新就可以用了。<br>
+<img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi3x5s3oxsj307n04bjre.jpg" alt="" loading="lazy"></p>
+<blockquote>
+<p>只能个人使用，不可商用</p>
+</blockquote>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[Java中二进制的补码，反码，正负数]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/g8YKXeC-j/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/g8YKXeC-j/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/">
         </link>
         <updated>2020-08-08T13:00:26.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="java负数的计算过程">Java负数的计算过程</h2>
+<p>java中最高位表示符号位,0表示正数，1表示负数</p>
+<h3 id="根据十进制推算二进制">根据十进制推算二进制</h3>
+<p>以-5为例子</p>
+<ol>
+<li>-5的原码：<code>1000 0101</code></li>
+<li>求反码 : <code>1111 1010</code> ，符号位不进行取反</li>
+<li>求补码（+1）：<code>1111 1011</code></li>
+</ol>
+<p>所以-5用二进制表示为<code>1111 1011</code></p>
+<h3 id="根据二进制逆推十进制">根据二进制逆推十进制</h3>
+<p>以<code>10001010</code>为例子</p>
+<ol>
+<li>
+<p>获取补码,（-1操作）</p>
+<p><code>10001010 - 1 = 10001001</code></p>
+</li>
+<li>
+<p>获取反码</p>
+<p><code>10001001</code> 的反码 <code>11110110</code></p>
+</li>
+<li>
+<p>不看符号位，算出大小</p>
+<p><code>1110110</code>  对应的值为 <code>118</code>，所以10001010的值就是-118</p>
+</li>
+</ol>
+<p>可以看出来，对于负数而言，因为<code>1000 0000</code> 后七位因为要取反，所以后七位越大反而绝对值越小，例如<code>1111 1111</code> 等于-1，而<code>1111 1110</code> 等于-2</p>
+<p>那么对于负数而言 <code>1000 0000</code> 就是绝对值最大，相对值最小的了，等于-128</p>
+<h2 id="为什么要这样设计">为什么要这样设计</h2>
+<p>首先在计算机中减法实际上是加法，2-1 == 2 + (-1)，那么进行推理一下</p>
+<h3 id="如果都用原码">如果都用原码</h3>
+<p><code>2</code> 的原码：<code>0000 0010</code></p>
+<p><code>-1</code> 的原码: <code>1000 0001</code></p>
+<p><code>2 + (-1)</code>= <code>10000 0011</code></p>
+<p>答案是是 -3，答案错误</p>
+<h3 id="如果正数用原码负数用补码">如果正数用原码，负数用补码</h3>
+<p>事例1</p>
+<p><code>2</code>原码:<code>0000 0010</code></p>
+<p><code>-1</code>补码: <code>1111 1111</code></p>
+<p>相加 =<code>0000 0001</code> ，就等于1</p>
+<p>事例2</p>
+<p><code>10</code>原码:<code>0000 1010</code></p>
+<p><code>-20</code>补码: <code>1110 1100</code></p>
+<p><code>10 + (-20)</code> =  <code>1111 0110</code> 等于-10</p>
+<h3 id="为什么要用补码表示负数而不是反码">为什么要用补码表示负数，而不是反码</h3>
+<p>或者换个说法，为什么要进行+1操作</p>
+<p>如果不用补码,而用反码</p>
+<p>1的原码: <code>0000 0001</code></p>
+<p>-1的反码:<code>1111 1110</code></p>
+<p>1 + (-1) = <code>1111 1111</code> = -128</p>
+<p>很明显答案错误</p>
+<p>那么为什么要进行+1操作，如果你对<code>1111 11111</code> +1可以发现 = <code>0001 0000 0000</code>，而因为byte的大小只有8位，第9位要舍弃也就是<code>0000 0000</code></p>
+<p>因为负数最高位存在一个1，也就是说负数天然要比正数多一个1，对于正数而言，你就得额外+1才能保证正数和负数是一样大的。</p>
+<h2 id="关于byte取值范围">关于byte取值范围</h2>
+<p>byte的取值范围为<code>-128 ~ 127</code></p>
+<p>为什么负值要大于正值？</p>
+<p>对于最大值很容易得出：<code>0111 1111</code> 就等于127</p>
+<p>但是负数不同，在<code>1000 0000</code>这个特殊情况下符号位是参与运算的，也就是说，<code>1000 0000</code> 是最小值，转化成十进制就是-128了</p>
+<h2 id="java代码测试">Java代码测试</h2>
+<pre><code class="language-java">public static void main(String[] args) {
+        byte x1 = (byte)0b00000010;
+        byte x2 = (byte)0b11111111;
+
+        System.out.println(&quot;x1 = &quot; + x1);
+        System.out.println(&quot;x2 = &quot; + x2);
+        System.out.println(&quot;x1 + x2 = &quot; +  (x1 + x2));
+
+        byte x3 = (byte)0b11111110;
+        System.out.println(&quot;x3 = &quot; + x3);
+
+        byte negative20 = (byte)0b11101100;
+        System.out.println(&quot;negative20 : &quot; + negative20);
+
+        byte negative10 = (byte)0b11110110;
+        System.out.println(&quot;negative10:&quot;+negative10);
+
+    }
+</code></pre>
+]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[Docker 中搭建 Neo4j 图数据库 ]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/docker_1/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/docker_1/">
+        <id>https://zexho994.github.io/blog.zexho.life/post/docker_1/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/docker_1/">
         </link>
         <updated>2020-02-15T08:43:43.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="1-在-docker-hub-下查看-neo4j-镜像">1. 在 docker hub 下查看 neo4j 镜像</h2>
+<pre><code class="language-shell">docker search neo4j
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf6017aa71~tplv-t2oaga2asx-image.image" alt="image-20200215164627841" loading="lazy"></figure>
+<h2 id="2-拉取-neo4j-镜像">2. 拉取 neo4j 镜像</h2>
+<pre><code class="language-shell">docker pull neo4j
+</code></pre>
+<p>拉取完成后输入命令可以看到镜像已经存在</p>
+<pre><code class="language-shell">docker images
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf6284ad96~tplv-t2oaga2asx-image.image" alt="image-20200215164707134" loading="lazy"></figure>
+<h2 id="3-启动-neo4j-镜像">3. 启动 neo4j 镜像</h2>
+<p>执行命令</p>
+<pre><code class="language-docker">docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --rm -d neo4j
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480f43959d204~tplv-t2oaga2asx-image.image" alt="image-20200215164756361" loading="lazy"></figure>
+<p>​	<em>参数说明：</em></p>
+<ul>
+<li>
+<p><strong>publish</strong>: 配置本机与容器之间的映射端口,</p>
+</li>
+<li>
+<p><strong>volume</strong>:配置共享的宗卷，用于数据持久化</p>
+</li>
+</ul>
+<h2 id="4-启动-neo4j-自带的前端页面">4. 启动 neo4j 自带的前端页面</h2>
+<p>在浏览器中输入</p>
+<pre><code class="language-txt">http://localhost:7474/browser
+</code></pre>
+<p>可以看到,这里的端口是7474,是我们 run 命令里面设置的.还有一个端口7687用来连接数据库</p>
+<h2 id="5-连接neo4j">5. 连接neo4j</h2>
+<figure data-type="image" tabindex="4"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf628a5e65~tplv-t2oaga2asx-image.image" alt="image-20200215165022204" loading="lazy"></figure>
+<p>账号密码默认都是 neo4j</p>
+<p><strong>至此就连接上了neo4j</strong></p>
+]]></content>
     </entry>
 </feed>
