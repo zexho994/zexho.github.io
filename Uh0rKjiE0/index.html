@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Mysql UTF-8 编码注意事项 | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647589973680">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647589973680" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">Mysql UTF-8 编码注意事项</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-06-14</span>
+            
+          </div>
+          <div class="post-content">
+            <p>今天看到一篇文章，觉得不错。</p>
+<p>原文链接：https://medium.com/@adamhooper/in-mysql-never-use-utf8-use-utf8mb4-11761243e434</p>
+<p>译文：https://www.jianshu.com/p/ab9aa8d4df7d</p>
+<p>最近我遇到了一个bug，我试着通过Rails在以“utf8”编码的MariaDB中保存一个UTF-8字符串，然后出现了一个离奇的错误：</p>
+<p>Incorrect string value:‘ð&lt;…’for column ‘summary’ at row 1<br>
+我用的是UTF-8编码的客户端，服务器也是UTF-8编码的，数据库也是，就连要保存的这个字符串“???? &lt;…”也是合法的UTF-8。</p>
+<p>问题的症结在于，MySQL的“utf8”实际上不是真正的UTF-8。</p>
+<p>“utf8”只支持每个字符最多三个字节，而真正的UTF-8是每个字符最多四个字节。</p>
+<p>MySQL一直没有修复这个bug，他们在2010年发布了一个叫作“utf8mb4”的字符集，绕过了这个问题。</p>
+<p>当然，他们并没有对新的字符集广而告之（可能是因为这个bug让他们觉得很尴尬），以致于现在网络上仍然在建议开发者使用“utf8”，但这些建议都是错误的。</p>
+<p>简单概括如下：</p>
+<p>1.MySQL的“utf8mb4”是真正的“UTF-8”。</p>
+<p>2.MySQL的“utf8”是一种“专属的编码”，它能够编码的Unicode字符并不多。</p>
+<p>我要在这里澄清一下：所有在使用“utf8”的MySQL和MariaDB用户都应该改用“utf8mb4”，永远都不要再使用“utf8”。</p>
+<p>那么什么是编码？什么是UTF-8？</p>
+<p>我们都知道，计算机使用0和1来存储文本。比如字符“C”被存成“01000011”，那么计算机在显示这个字符时需要经过两个步骤：</p>
+<p>1、计算机读取“01000011”，得到数字67，因为67被编码成“01000011”。</p>
+<p>2、计算机在Unicode字符集中查找67，找到了“C”。</p>
+<p>同样的：</p>
+<p>1、我的电脑将“C”映射成Unicode字符集中的67。</p>
+<p>2、我的电脑将67编码成“01000011”，并发送给Web服务器。</p>
+<p>几乎所有的网络应用都使用了Unicode字符集，因为没有理由使用其他字符集。</p>
+<p>Unicode字符集包含了上百万个字符。最简单的编码是UTF-32，每个字符使用32位。这样做最简单，因为一直以来，计算机将32位视为数字，而计算机最在行的就是处理数字。但问题是，这样太浪费空间了。</p>
+<p>UTF-8可以节省空间，在UTF-8中，字符“C”只需要8位，一些不常用的字符，比如“”需要32位。其他的字符可能使用16位或24位。一篇类似本文这样的文章，如果使用UTF-8编码，占用的空间只有UTF-32的四分之一左右。</p>
+<p>MySQL的“utf8”字符集与其他程序不兼容，它所谓的“”，可能真的是一坨……<br>
+MySQL简史</p>
+<p>为什么MySQL开发者会让“utf8”失效？我们或许可以从提交日志中寻找答案。<br>
+MySQL从4.1版本开始支持UTF-8，也就是2003年，而今天使用的UTF-8标准（RFC3629）是随后才出现的。</p>
+<p>旧版的UTF-8标准（RFC2279）最多支持每个字符6个字节。2002年3月28日，MySQL开发者在第一个MySQL4.1预览版中使用了RFC2279。</p>
+<p>同年9月，他们对MySQL源代码进行了一次调整：“UTF8现在最多只支持3个字节的序列”。<br>
+是谁提交了这些代码？他为什么要这样做？这个问题不得而知。在迁移到Git后（MySQL最开始使用的是BitKeeper），MySQL代码库中的很多提交者的名字都丢失了。2003年9月的邮件列表中也找不到可以解释这一变更的线索。</p>
+<p>不过我可以试着猜测一下。</p>
+<p>2002年，MySQL做出了一个决定：如果用户可以保证数据表的每一行都使用相同的字节数，那么MySQL就可以在性能方面来一个大提升。为此，用户需要将文本列定义为“CHAR”，每个“CHAR”列总是拥有相同数量的字符。如果插入的字符少于定义的数量，MySQL就会在后面填充空格，如果插入的字符超过了定义的数量，后面超出部分会被截断。</p>
+<p>MySQL开发者在最开始尝试UTF-8时使用了每个字符6个字节，CHAR(1)使用6个字节，CHAR(2)使用12个字节，并以此类推。</p>
+<p>应该说，他们最初的行为才是正确的，可惜这一版本一直没有发布。但是文档上却这么写了，而且广为流传，所有了解UTF-8的人都认同文档里写的东西。</p>
+<p>不过很显然，MySQL开发者或厂商担心会有用户做这两件事：</p>
+<p>1、使用CHAR定义列（在现在看来，CHAR已经是老古董了，但在那时，在MySQL中使用CHAR会更快，不过从2005年以后就不是这样子了）。</p>
+<p>2、将CHAR列的编码设置为“utf8”。</p>
+<p>我的猜测是MySQL开发者本来想帮助那些希望在空间和速度上双赢的用户，但他们搞砸了“utf8”编码。</p>
+<p>所以结果就是没有赢家。那些希望在空间和速度上双赢的用户，当他们在使用“utf8”的CHAR列时，实际上使用的空间比预期的更大，速度也比预期的慢。而想要正确性的用户，当他们使用“utf8”编码时，却无法保存像“”这样的字符。</p>
+<p>在这个不合法的字符集发布了之后，MySQL就无法修复它，因为这样需要要求所有用户重新构建他们的数据库。最终，MySQL在2010年重新发布了“utf8mb4”来支持真正的UTF-8。</p>
+<p>为什么这件事情会让人如此抓狂？</p>
+<p>因为这个问题，我整整抓狂了一个礼拜。我被“utf8”愚弄了，花了很多时间才找到这个bug。但我一定不是唯一的一个，网络上几乎所有的文章都把“utf8”当成是真正的UTF-8。<br>
+“utf8”只能算是个专有的字符集，它给我们带来了新问题，却一直没有得到解决。</p>
+<p>总结</p>
+<p>如果你在使用MySQL或MariaDB，不要用“utf8”编码，改用“utf8mb4”。这里（https://mathiasbynens.be/notes/mysql-utf8mb4#utf8-to-utf8mb4）提供了一个指南用于将现有数据库的字符编码从“utf8”转成“utf8mb4”。</p>
+<ul>
+<li>
+<p>编号3722，输入编号直达本文</p>
+</li>
+<li>
+<p>输入m获取文章目录</p>
+</li>
+</ul>
+<h2 id="个人总结">个人总结</h2>
+<p>对于作者说的不要再使用utf-8，本人不完全认同，完全可以在需要的时候才使用utf8mb4（毕竟utf-8更省空间）像微信小程序，编码的坑大家应该都踩过，可是除了这个外，似乎也没遇到过什么问题。所以了解这么一个问题后，以后完全可以按需要来确定使用何种编码。</p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/Qh3b7MWAh/">
+              <h3 class="post-title">
+                下一篇：给实验室学弟分享 WireShark 
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
