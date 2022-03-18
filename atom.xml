@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-03-18T11:13:36.625Z</updated>
+    <updated>2022-03-18T11:14:50.067Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,17 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[快速看清lambda的本质]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">
+        </link>
+        <updated>2022-02-11T11:13:57.000Z</updated>
+        <summary type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[实现一致性Hash算法]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/</id>
@@ -162,27 +173,6 @@
 <li>如何转换流类型，怎么实现的？</li>
 <li>如何切分任务的？</li>
 <li>如何合并任务结果的？</li>
-</ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[深入解析Java Stream（下）：终结操作]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/">
-        </link>
-        <updated>2021-08-06T03:13:20.000Z</updated>
-        <summary type="html"><![CDATA[<h3 id="几个疑问">几个疑问</h3>
-<ol>
-<li>终结方法是如何进行操作的？</li>
-<li>如何实现由终结操作触发流的运作的？</li>
-<li>如何保证一个流一次只能执行一个终结方法？</li>
-</ol>
-]]></summary>
-        <content type="html"><![CDATA[<h3 id="几个疑问">几个疑问</h3>
-<ol>
-<li>终结方法是如何进行操作的？</li>
-<li>如何实现由终结操作触发流的运作的？</li>
-<li>如何保证一个流一次只能执行一个终结方法？</li>
 </ol>
 ]]></content>
     </entry>

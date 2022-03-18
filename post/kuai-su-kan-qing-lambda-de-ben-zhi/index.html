@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>快速看清lambda的本质 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602085909">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。
+
+先看下lambda表达式是什么。在J..." />
+    <meta name="keywords" content="Java" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602085909" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">快速看清lambda的本质</h2>
+            <div class="post-date">2022-02-11</div>
+            
+            <div class="post-content" v-pre>
+              <p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
+<!-- more -->
+<p>先看下lambda表达式是什么。在JDK8中，我们可以对接口添加一个注解<code>@FunctionalInterface</code>,我们看下JDK中<code>Runnalble</code>接口</p>
+<pre><code class="language-java">@FunctionalInterface
+public interface Runnable {
+    
+    void run();
+    
+}
+</code></pre>
+<p>接口内有一个抽象方法<code>run()</code>，要注意一点，如果我们自己要实现一个lambda接口，那么接口内有且仅有一个抽象方法（<code>default</code>修饰的不算），为什么要这么限制？看完后文就知道了。</p>
+<p>与<code>Runnable</code>常常一起出现的是<code>Thread</code>类，看下Thread中是如何使用<code>Runnable</code>的</p>
+<pre><code class="language-java">public Thread(Runnable target) {
+    init(null, target, &quot;Thread-&quot; + nextThreadNum(), 0);
+}
+</code></pre>
+<p>构造方法中可以传入一个<code>Runnable</code>对象，在JDK8之前可以使用匿名类的方式</p>
+<pre><code class="language-java">Thread thread = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        // 编写运行逻辑
+    }
+});
+</code></pre>
+<p>这就相当于传入了一个Runnalble实例对象了。</p>
+<p>现在思考一下，我们知道接口的参数对象是Runnable，知到Runnable仅有一个抽象方法（上文提到的限制），那我们可以简化这个表达式吗？</p>
+<p>尝试去掉多余的参数声明语句</p>
+<p><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d806efa7ee00439bacd42920b680277c~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"><br>
+接着去掉多余的方法声明语句</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/32b0646872074fac998da89e8225d212~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<p>是的，最后剩下的就是实际有效的部分，方法的参数和方法的逻辑。</p>
+<p>最后我们加个箭头</p>
+<figure data-type="image" tabindex="2"><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2af1d6ea86aa4f34982b8b8040fb658c~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<p>没错，这个就是lambda表达式了，就是这么变化过来的。</p>
+<p>考虑有参数的情况，加入Runnable接口的run方法是有参数的，例如</p>
+<pre><code class="language-java">@FunctionalInterface
+public interface Runnable {
+    
+    void run(String key,int val);
+    
+}
+</code></pre>
+<p>那么对应，lambda表达式就变成</p>
+<pre><code class="language-java">new Thread((&quot;hello&quot;,20) -&gt; {
+    String k = key; // k == &quot;hello&quot;
+    int v = val;    // v == 20
+});
+</code></pre>
+<p>如果方法的代码只有一行，我们可以省略中括号</p>
+<pre><code class="language-java">new Thread((&quot;hello&quot;,20) -&gt; log.info(&quot;key = {}&quot;,key));
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="tag">
+                    Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/">
+                  <h3 class="post-title">
+                    实现一致性Hash算法
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
