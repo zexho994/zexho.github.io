@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>深入解析Java Stream（下）：终结操作 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647598484459">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="几个疑问
+
+终结方法是如何进行操作的？
+如何实现由终结操作触发流的运作的？
+如何保证一个流一次只能执行一个终结方法？
+
+
+使用方式
+列举四种终结操作，在Stream提供的API中，也是四类：
+
+// 计算流中元素数量，FindOP
+long..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647598484459" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">深入解析Java Stream（下）：终结操作</h2>
+            <div class="post-date">2021-08-06</div>
+            
+            <div class="post-content" v-pre>
+              <h3 id="几个疑问">几个疑问</h3>
+<ol>
+<li>终结方法是如何进行操作的？</li>
+<li>如何实现由终结操作触发流的运作的？</li>
+<li>如何保证一个流一次只能执行一个终结方法？</li>
+</ol>
+<!-- more -->
+<h3 id="使用方式">使用方式</h3>
+<p>列举四种终结操作，在Stream提供的API中，也是四类：</p>
+<figure data-type="image" tabindex="1"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f302257d5bb44e519c5bb32da6fb5daa~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<pre><code class="language-java">// 计算流中元素数量，FindOP
+long count = afterLimit.count();
+
+// 遍历所有元素,ForEachOp
+afterLimit.forEach(System.out::printl);
+
+// 获取第一个元素,MatchOp
+Optional&lt;Integer&gt; any = afterLimit.findFirst();
+
+// 判断是否,ReduceOp
+boolean flag = afterLimit.anyMatch(i -&gt; i == 1);
+</code></pre>
+<h3 id="count">count()</h3>
+<p>在<code>ReferencePipeline</code>类中实现</p>
+<pre><code class="language-java">@Override
+public final long count() {
+ 	// 调用mapToLong将所有元素变成1，然后计算sum
+    return mapToLong(e -&gt; 1L).sum();
+}
+</code></pre>
+<h4 id="maotolong">maoToLong()</h4>
+<p>mapToLong()方法，是一个中间操作</p>
+<pre><code class="language-java">@Override
+    public final LongStream mapToLong(ToLongFunction&lt;? super P_OUT&gt; mapper) {
+        Objects.requireNonNull(mapper);
+        return new LongPipeline.StatelessOp&lt;P_OUT&gt;(this, StreamShape.REFERENCE,
+                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink&lt;P_OUT&gt; opWrapSink(int flags, Sink&lt;Long&gt; sink) {
+                return new Sink.ChainedReference&lt;P_OUT, Long&gt;(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        //
+                        downstream.accept(mapper.applyAsLong(u));
+                    }
+                };
+            }
+        };
+    }
+</code></pre>
+<p>ToLongFunction是一个函数式接口类, accept()里的逻辑便是<code>e -&gt; 1L</code>.</p>
+<pre><code class="language-java">@FunctionalInterface
+public interface ToLongFunction&lt;T&gt; {
+
+    /**
+     * Applies this function to the given argument.
+     *
+     * @param value the function argument
+     * @return the function result
+     */
+    long applyAsLong(T value);
+}
+</code></pre>
+<p>看下Sum()方法,在LongPipeline类中，传入参数是一个Long::sum, sum的作用是相加两个值。</p>
+<pre><code class="language-java">@Override
+public final long sum() {
+    // use better algorithm to compensate for intermediate overflow?
+    return reduce(0, Long::sum);
+}
+
+//public static long sum(long a, long b) {
+//    return a + b;
+//}
+</code></pre>
+<h4 id="reduce">reduce()</h4>
+<p>reduce方法,将操作函数op封装成一个Sink，makeLong()的作用就是会生产一个Sink</p>
+<pre><code class="language-java">@Override
+public final long reduce(long identity, LongBinaryOperator op) {
+    return evaluate(ReduceOps.makeLong(identity, op));
+}
+</code></pre>
+<pre><code class="language-java">    /**
+     * Constructs a {@code TerminalOp} that implements a functional reduce on
+     * {@code long} values.
+     *
+     * @param identity the identity for the combining function
+     * @param operator the combining function
+     * @return a {@code TerminalOp} implementing the reduction
+     */
+    public static TerminalOp&lt;Long, Long&gt;
+    makeLong(long identity, LongBinaryOperator operator) {
+        Objects.requireNonNull(operator);
+        class ReducingSink
+                implements AccumulatingSink&lt;Long, Long, ReducingSink&gt;, Sink.OfLong {
+                
+            //state是一个用作记录的值
+            private long state;
+
+            @Override
+            public void begin(long size) {
+                state = identity;
+            }
+
+			//参数传进来的就是sun(),所以这里的accept()的作用就是对state不断进行累加
+            @Override
+            public void accept(long t) {
+                state = operator.applyAsLong(state, t);
+            }
+
+            @Override
+            public Long get() {
+                return state;
+            }
+
+            @Override
+            public void combine(ReducingSink other) {
+                accept(other.state);
+            }
+        }
+        return new ReduceOp&lt;Long, Long, ReducingSink&gt;(StreamShape.LONG_VALUE) {
+            @Override
+            public ReducingSink makeSink() {
+                return new ReducingSink();
+            }
+        };
+    }
+</code></pre>
+<h4 id="evaluate">evaluate()</h4>
+<p>看回evaluate()方法，这个方法用来执行终结操作的</p>
+<pre><code class="language-java">final &lt;R&gt; R evaluate(TerminalOp&lt;E_OUT, R&gt; terminalOp) {
+    assert getOutputShape() == terminalOp.inputShape();
+    //判断流是否已被使用
+    if (linkedOrConsumed)
+        throw new IllegalStateException(MSG_STREAM_LINKED);
+    //设置使用标记为true
+    linkedOrConsumed = true;
+
+    //根据流类型，执行相应的推断操作
+    return isParallel()
+        ? terminalOp.evaluateParallel(this, sourceSpliterator(terminalOp.getOpFlags()))
+        : terminalOp.evaluateSequential(this, sourceSpliterator(terminalOp.getOpFlags()));
+}
+</code></pre>
+<p>关注时序流的推断方法，可以看到这个方法的实现分为四种，对应上面提到的四类类型操作，count属于ReduceOp，进去看下。</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/140540bd57794266af310e7c016400f5~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<pre><code class="language-java">
+@Override
+public &lt;P_IN&gt; R evaluateSequential(PipelineHelper&lt;T&gt; helper,
+                                   Spliterator&lt;P_IN&gt; spliterator) {
+    //调用wrapAndCopyInto()方法
+    return helper.wrapAndCopyInto(makeSink(), spliterator).get();
+}
+</code></pre>
+<h4 id="wrapandcopyinto">wrapAndCopyInto()</h4>
+<p>保证所有stage -&gt; sink链表，然后执行copyInto()方法</p>
+<pre><code class="language-java">	@Override
+    final &lt;P_IN, S extends Sink&lt;E_OUT&gt;&gt; S wrapAndCopyInto(S sink, Spliterator&lt;P_IN&gt; spliterator) {
+        copyInto(wrapSink(Objects.requireNonNull(sink)), spliterator);
+        return sink;
+    }
+</code></pre>
+<h4 id="warpsink">warpSink()</h4>
+<p>就是在这里，从后向前，包装所有的stage阶段，形成一条sink链表。这样将之前一个个stage的链表结构包装成一个个Sink。</p>
+<pre><code class="language-java">	@Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    final &lt;P_IN&gt; Sink&lt;P_IN&gt; wrapSink(Sink&lt;E_OUT&gt; sink) {
+        Objects.requireNonNull(sink);
+		
+        //从后向前遍历
+        for ( @SuppressWarnings(&quot;rawtypes&quot;) AbstractPipeline p=AbstractPipeline.this; p.depth &gt; 0; p=p.previousStage) {
+            //执行每个opWrapSink()方法，这个方法在每个操作类中都进行了重写
+            sink = p.opWrapSink(p.previousStage.combinedFlags, sink);
+        }
+        //返回头sink
+        return (Sink&lt;P_IN&gt;) sink;
+    }
+</code></pre>
+<h4 id="copyinto">copyInto()</h4>
+<p>这个方法是整个流水线的启动开关，流程如下：</p>
+<ol>
+<li>调用第一个sink的begin()方法</li>
+<li>执行数据源的spliterator.forEachRemaining(wrappendSink)方法遍历调用accept()方法</li>
+<li>end() 通知结束</li>
+</ol>
+<pre><code class="language-java">	@Override
+    final &lt;P_IN&gt; void copyInto(Sink&lt;P_IN&gt; wrappedSink, Spliterator&lt;P_IN&gt; spliterator) {
+        Objects.requireNonNull(wrappedSink);
+
+        if (!StreamOpFlag.SHORT_CIRCUIT.isKnown(getStreamAndOpFlags())) {
+            //通知第一个sink，做好准备接受流
+            wrappedSink.begin(spliterator.getExactSizeIfKnown());
+            //执行
+            spliterator.forEachRemaining(wrappedSink);
+            wrappedSink.end();
+        }
+        else {
+            copyIntoWithCancel(wrappedSink, spliterator);
+        }
+    }
+</code></pre>
+<h4 id="foreachremaining">forEachRemaining()</h4>
+<p>在各个容器中都有实现forEachRemaining()这个方法，在ArrayList中:</p>
+<pre><code class="language-java">public boolean tryAdvance(Consumer&lt;? super E&gt; action) {
+    if (action == null)
+        throw new NullPointerException();
+    int hi = getFence(), i = index;
+    if (i &lt; hi) {
+        index = i + 1;
+        @SuppressWarnings(&quot;unchecked&quot;) E e = (E)list.elementData[i];
+        //执行accept()方法
+        action.accept(e);
+        if (list.modCount != expectedModCount)
+            throw new ConcurrentModificationException();
+        return true;
+    }
+    return false;
+}
+</code></pre>
+<h3 id="其他终结操作">其他终结操作</h3>
+<h4 id="foreach">forEach()</h4>
+<p>在<code>ReferencePipeline</code>类中，实现了forEach()方法，</p>
+<pre><code class="language-java">// from ReferencePipeline.class
+
+@Override
+public void forEach(Consumer&lt;? super P_OUT&gt; action) {
+    // ForEachOps..
+    evaluate(ForEachOps.makeRef(action, false));
+}
+</code></pre>
+<p>evaluate后面的逻辑与count后面的一样了，略。</p>
+<h4 id="findfirst-anymatch">findFirst() anyMatch()</h4>
+<p>findFirst()和anyMatch()的逻辑也不再多说了，一个套路，看下实现</p>
+<pre><code class="language-java">@Override
+public final Optional&lt;P_OUT&gt; findFirst() {
+    return evaluate(FindOps.makeRef(true));
+}
+
+@Override
+public final boolean anyMatch(Predicate&lt;? super P_OUT&gt; predicate) {
+    return evaluate(MatchOps.makeRef(predicate, MatchOps.MatchKind.ANY));
+}
+</code></pre>
+<h3 id="疑问解答">疑问解答</h3>
+<ol>
+<li>终结方法是如何进行操作的？
+<ul>
+<li>终结操作的实现里面都有调用evaluate()方法，这个方法最后会warp所有操作变成一串sink，然后从头开始执行begin(),accept(),end()方法</li>
+</ul>
+</li>
+<li>如何实现由终结操作触发流的运作的？
+<ul>
+<li>触发的开关是wrapAndCopyInto(),这个方法只有在终结操作中才有被调用。</li>
+</ul>
+</li>
+<li>如何保证一个流一次只能执行一个终结方法？
+<ul>
+<li>evaluate()方法中执行一次后<code>linkedOrConsumed</code>设为true，后续再出发evaluate()方法就会异常。</li>
+</ul>
+</li>
+</ol>
+<p>参考引用：</p>
+<ul>
+<li><a href="https://colobu.com/2014/11/18/Java-8-Stream/">Java 8 Stream探秘 (colobu.com)</a></li>
+<li><a href="">原来你是这样的 Stream：浅析 Java Stream 实现原理 (https_toutiao.io)</a></li>
+</ul>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/">
+                  <h3 class="post-title">
+                    深入解析Java Stream（中）：OP操作流
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
