@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>实现一致性Hash算法 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647602001405">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="
+假设已经了解一致性Hash的相关知识，如果不了解可以先看https://www.zsythink.net/archives/1182
+代码地址：https://github.com/zexho994/ConsistentHash
+
+我们知..." />
+    <meta name="keywords" content="分布式,造轮子" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647602001405" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">实现一致性Hash算法</h2>
+            <div class="post-date">2022-02-02</div>
+            
+            <div class="post-content" v-pre>
+              <blockquote>
+<p>假设已经了解一致性Hash的相关知识，如果不了解可以先看<a href="https://www.zsythink.net/archives/1182">https://www.zsythink.net/archives/1182</a><br>
+代码地址：<a href="https://github.com/zexho994/ConsistentHash">https://github.com/zexho994/ConsistentHash</a></p>
+</blockquote>
+<p>我们知道一致性hash的核心思想是对2^32进行取模，然后保存到一个Hash环上:</p>
+<!-- more -->
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/20726d0655964e89a79dbb2f4d91e809~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>要实现一致性Hash，先解决几个问题：</p>
+<ul>
+<li>如何表示这个环？</li>
+<li>如何在环上插入节点、删除节点、查找最近的节点？</li>
+<li>虚拟节点如何表示，怎么插入到环中？</li>
+</ul>
+<h2 id="hash环">Hash环</h2>
+<p>思考下这个hash环的特点，我们的节点要插入到哪个位置由节点的hash值决定，现在加入有两个节点A和B，<code>A.hashcode = 50</code>,<code>B.hashcode = 100</code>,由于环是按顺时针方向查找，那么查找的逻辑就是:</p>
+<ul>
+<li>[0,50] , (50,2^32] 的数据会找到A</li>
+<li>(50,100] 的数据会找到B<br>
+可以发现一个特点，就是要有序，以及可以支持快速找到下一个节点，<code>TreeMap</code>就十分契合, 每个节点的右子树就是最小的最近的大于某个hashcode的节点。<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6f70674010c44788ba3189a9a3522965~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><br>
+整个算法核心的部分也是基于<code>TreeMap</code>实现的，首先声明<code>ring</code>，后面所有的节点数据都将存储到ring上。</li>
+</ul>
+<pre><code class="language-java">public class ConsistentHashManager {
+
+    private final SortedMap&lt;Integer/*索引大小*/, Node/*节点*/&gt; ring = new TreeMap();
+
+}
+</code></pre>
+<p><code>ring</code>中<code>key</code>存储的节点的<code>索引</code>值（后面会讲计算方式），<code>val</code>中存储节点对象实例<code>Node</code>，其中<code>Node</code>是模拟表示现实服务器信息的对象，需要重写<code>equals()</code>和<code>hashcode()</code>方法：</p>
+<pre><code class="language-java">public class Node {
+
+    //服务器名称
+    private String name;
+    //服务器域名
+    private String host;
+    //服务器端口
+    private Integer port;
+
+    public Node(String name, String host, int port) {
+        this.name = name;
+        this.host = host;
+        this.port = port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Node)) return false;
+        Node node = (Node) o;
+        return getPort() == node.getPort() &amp;&amp; getName().equals(node.getName()) &amp;&amp; getHost().equals(node.getHost());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getHost(), getPort());
+    }
+    
+}
+</code></pre>
+<h2 id="添加新节点">添加新节点</h2>
+<p>要将一个节点存储到环上，首先是要知道存储到哪个位置上，位置由索引的大小决定，这就需要计算<code>Node对象</code>的索引值<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/349fd9c6f8ca43268c9abdaf5e1d92c5~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><br>
+先声明一个接口对象，因为以后可能会有各种计算方式，那么会有各种不同的具体实现类，所以这里采用基于接口而非实例的方式：</p>
+<pre><code class="language-java">public interface HashUtil {
+
+    int hash(String key);
+
+}
+</code></pre>
+<p>下面是使用MD5的方式，这肯定不是最好的方法，重点是表达<code>hash()</code>的作用</p>
+<pre><code class="language-java">public class Md5HashUtil implements HashUtil {
+
+    private MessageDigest messageDigest;
+
+    public Md5HashUtil() {
+        try {
+            this.messageDigest = MessageDigest.getInstance(&quot;MD5&quot;);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public int hash(String key) {
+        this.messageDigest.update(String.valueOf(key).getBytes();
+        byte[] digest = this.messageDigest.digest();
+        int h = 0;
+        for (int i = 0; i &lt; 4; i++) {
+            h |= ((int) digest[i]) &amp; 0xFF;
+            // 循环4次，每次移动8位，正好32次
+            h &lt;&lt;= 8;
+        }
+        return h;
+    }
+
+}
+</code></pre>
+<p>有了<code>hash()</code>方法，可以知道节点的索引值了，就可以将Node存储到ring中了</p>
+<pre><code class="language-java">public void addNode(Node node) {
+    ring.put(hashUtil.hash(node.getKey()), node);
+}
+</code></pre>
+<p>那么这时候还有一件事要做，如何添加虚拟节点呢？刚开始的时候我认为为了保证平均分布，那么虚拟节点的分布特征应该如下：</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/07ff31e6502b4cc195d50224ce7951a7~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>但是会发现一个问题，要继续增加更多物理节点时，如何继续保持平均分布？这很难实现，从另一个方面再想，虚拟节点的作用是什么？是为了让分配更平均，防止血崩的概率，其实哪怕这些虚拟节点的位置都是随机的，只要节点数量够多，就已经达到了目的。</p>
+<p>完善一下<code>addNode()</code>方法</p>
+<pre><code class="language-java">public void addNode(Node node) {
+    ring.put(hashUtil.hash(node.getKey()), node);
+    for (int i = 0; i &lt; this.virNodeCount; i++) {
+        this.ring.put(hashUtil.hash(node.getKey() + i), node);
+    }
+}
+</code></pre>
+<h2 id="删除节点">删除节点</h2>
+<p><code>ring</code>中存储的val是Node，这样在遍历ring的匹配node进行删除即可</p>
+<pre><code class="language-java">public void removeNote(Node node) {
+    ring.entrySet().removeIf(next -&gt; next.getValue().equals(node));
+}
+</code></pre>
+<h2 id="获取下一个节点">获取下一个节点</h2>
+<p>这部分看代码了解下<code>TreeMap</code>的<code>api</code>就可以理解，没什么难度</p>
+<pre><code class="language-java">public Node getNextNode(String key) {
+    SortedMap&lt;Integer, Node&gt; longNodeSortedMap = ring.tailMap(hashUtil.hash(key));
+    if (longNodeSortedMap.isEmpty()) {
+        return ring.get(ring.firstKey());
+    }
+    return longNodeSortedMap.get(longNodeSortedMap.firstKey());
+}
+</code></pre>
+<h1 id="测试">测试</h1>
+<h2 id="负载均衡">负载均衡</h2>
+<pre><code class="language-java">@Test
+void loadBalancingTest() {
+    ConsistentHashManager consistentHashManager = new ConsistentHashManager();
+    // 添加四个节点
+    consistentHashManager.addNode(new Node(&quot;node1&quot;, &quot;192.0.0.1&quot;, 8080));
+    consistentHashManager.addNode(new Node(&quot;node2&quot;, &quot;192.0.0.2&quot;, 8080));
+    consistentHashManager.addNode(new Node(&quot;node3&quot;, &quot;192.0.0.3&quot;, 8080));
+    consistentHashManager.addNode(new Node(&quot;node4&quot;, &quot;192.0.0.4&quot;, 8080));
+
+    String preKey = &quot;Data_&quot;;
+    // map用来记录每个节点命中的次数
+    Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;(200000);
+    map.put(&quot;node1&quot;, 0);
+    map.put(&quot;node2&quot;, 0);
+    map.put(&quot;node3&quot;, 0);
+    map.put(&quot;node4&quot;, 0);
+    // 假设有20w个数据
+    for (int i = 0; i &lt; 200000; i++) {
+        Node nextNote = consistentHashManager.getNextNote(preKey + i);
+        // 累加命中次数
+        map.computeIfPresent(nextNote.getName(), (k, v) -&gt; v + 1);
+    }
+    // 打印
+    map.entrySet().forEach(System.out::println);
+}
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/88147670d09b40c8aab81a41269e700d~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>整体的比例是 <code>5 : 6 : 4.5 : 4.5</code></p>
+<h2 id="删除节点后的命中率">删除节点后的命中率</h2>
+<pre><code class="language-java">@Test
+void removeNodeTest() {
+    // 省略添加节点的代码 ...
+    
+    // 移除一个节点
+    consistentHashManager.removeNote(node4);
+    // 测试下移除节点后的命中率
+    AtomicInteger n1 = new AtomicInteger(0);
+    AtomicInteger n2 = new AtomicInteger(0);
+    AtomicInteger n3 = new AtomicInteger(0);
+    for (int i = 0; i &lt; 200000; i++) {
+        Node nextNode = consistentHashManager.getNextNode(preKey + i);
+        if (nextNode.getName().equals(&quot;node1&quot;)) {
+            n1.incrementAndGet();
+        } else if (nextNode.getName().equals(&quot;node2&quot;)) {
+            n2.incrementAndGet();
+        } else if (nextNode.getName().equals(&quot;node3&quot;)) {
+            n3.incrementAndGet();
+        } else {
+            throw new RuntimeException(&quot;node4 未清理干净&quot;);
+        }
+    }
+
+    // 打印命中率, 原本的次数/删除后的次数
+    statistic.forEach((key, value) -&gt; {
+        if (key.equals(&quot;node1&quot;)) {
+            System.out.println(&quot;Node1,总访问次数=&quot; + n1 + &quot;,有效访问 &quot; + value + &quot; 命中率 = &quot; + (double) (value) / n1.get());
+        } else if (key.equals(&quot;node2&quot;)) {
+            System.out.println(&quot;Node2,总访问次数=&quot; + n2 + &quot;,有效访问 &quot; + value + &quot; 命中率 = &quot; + (double) (value) / n2.get());
+        } else if (key.equals(&quot;node3&quot;)) {
+            System.out.println(&quot;Node3,总访问次数=&quot; + n3 + &quot;,有效访问 &quot; + value + &quot; 命中率 = &quot; + (double) (value) / n3.get());
+        }
+    });
+}
+</code></pre>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f72b63651f134c3eade1c41a75fdd122~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="tag">
+                    分布式
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="tag">
+                    造轮子
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/">
+                  <h3 class="post-title">
+                    利用Cglib和JDK动态代理实现AOP
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
