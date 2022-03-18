@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>Git 中指针与树的实现 | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647590548731">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647590548731" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">Git 中指针与树的实现</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2019-07-05</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/THZXOECNJ/">
+                    Git
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <p>在刚开始学习git的时候，我很疑惑git可以同时管理这么多分支，而且切换分支都是瞬间完成。尽管Git官方推荐我们多使用分支去开发，但是天真的我很担心分支太多，导致文件数量会剧增，所以一直不敢使用太多分支。</p>
+<p>直到有一天想要去揭开心中的疑惑，git是怎么样管理这些不同分支的，最后发现和git里面的3个对象有关，搞懂3个对象的关系，相信在以后使用git命令的时候，头脑里会自然而然的浮现这些对象的关系网图</p>
+<p>在命令行中，可以使用 <code>git cat-file -p &lt;object id&gt;</code>去查看每个对象里面的内容</p>
+<ul>
+<li>
+<p>Commit对象</p>
+<p>由3部分组成，parent存储父commit对象的ID，每一个commit对象都一个ID，使用<code>git log</code>可以查看。Tree部分存储一个Tree对象的ID，下面部分存储的就是<code>git commit -m &quot;xxx&quot;</code>里面的注释内容了。</p>
+</li>
+</ul>
+<h6 id="img-srchttpsp1-jjbyteimgcomtos-cn-i-t2oaga2asxgold-user-assets202011216f9a15b6f68a02e~tplv-t2oaga2asx-imageimage-altimage-20200112200749581-stylezoom50"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/12/16f9a15b6f68a02e~tplv-t2oaga2asx-image.image" alt="image-20200112200749581" style="zoom:50%;" /></h6>
+<ul>
+<li>
+<p><mark>Tree 对象</mark></p>
+<p>可以把Tree对象理解为一个文件夹，每一个commit对象对应一个Tree，可以把这个Tree当作根目录。这个Tree里面存储了根目录下的子Tree的ID，以及BlobId。</p>
+</li>
+<li>
+<p><mark>Blob 对象</mark></p>
+<p>一个Tree对应一个文件夹，Blob对应的是文件，Blog里面存储的也真的是文件的内容。</p>
+</li>
+</ul>
+<h4 id="举个">举个🌰</h4>
+<h6 id="img-srchttpsp1-jjbyteimgcomtos-cn-i-t2oaga2asxgold-user-assets202011216f9a15b7661d997~tplv-t2oaga2asx-imageimage-altimage-20200112202046245-stylezoom50"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/12/16f9a15b7661d997~tplv-t2oaga2asx-image.image" alt="image-20200112202046245" style="zoom:50%;" /></h6>
+<p>git的根目录是Java，Java文件夹里有一个test.class文件和一个JDK文件夹，JDK文件夹下面还有一个java8.class文件，那么我们第一次<code>git commit</code>后的关系图就是这样</p>
+<h6 id="img-srchttpsp1-jjbyteimgcomtos-cn-i-t2oaga2asxgold-user-assets202011216f9a15b78581bba~tplv-t2oaga2asx-imageimage-altimage-20200112202700139-stylezoom-25"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/12/16f9a15b78581bba~tplv-t2oaga2asx-image.image" alt="image-20200112202700139" style="zoom: 25%;" /></h6>
+<p>此时我们修改了test.class文件的内容后，重新<code>git add test.class</code>再<code>git commit -m'update'</code>，这时候就会产生一个新的commit对象，结构就像这样:</p>
+<h6 id="img-srchttpsp1-jjbyteimgcomtos-cn-i-t2oaga2asxgold-user-assets202011216f9a15b7b5e4a69~tplv-t2oaga2asx-imageimage-altimage-20200112203735217-stylezoom25"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/12/16f9a15b7b5e4a69~tplv-t2oaga2asx-image.image" alt="image-20200112203735217" style="zoom:25%;" /></h6>
+<p>发现只是保存了一个新的test.class的快照，java8.class没有发生改变，就没有生成生成新的快照。这样看来，真的是很节省磁盘了。</p>
+<p>git还有许许多多的使用场景，如果你能理解以上的关系，那么其他的情况下，都是一样的，不妨自己去命令行 <code>git cat-file -p &lt;object id&gt;</code> 验证验证吧～</p>
+<h3 id="img-srchttpsp1-jjbyteimgcomtos-cn-i-t2oaga2asxgold-user-assets202011216f9a15b80651833~tplv-t2oaga2asx-imageimage-alt目录-stylezoom65-推荐阅读"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/12/16f9a15b80651833~tplv-t2oaga2asx-image.image" alt="目录" style="zoom:65%;" />推荐阅读</h3>
+<p><a href="https://ruby-china.org/topics/20723">理解git对象</a></p>
+
+          </div>
+        </div>
+
+        
+          <div class="next-post">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/Uh0rKjiE0/">
+              <h3 class="post-title">
+                下一篇：Mysql UTF-8 编码注意事项
+              </h3>
+            </a>
+          </div>
+          
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
