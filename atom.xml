@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-03-18T11:10:39.979Z</updated>
+    <updated>2022-03-18T11:12:08.666Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,19 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[利用Cglib和JDK动态代理实现AOP]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/">
+        </link>
+        <updated>2021-11-11T11:11:07.000Z</updated>
+        <summary type="html"><![CDATA[<p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
+项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
+]]></summary>
+        <content type="html"><![CDATA[<p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
+项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[RocketMQ4.9.1源码分析-Namesrv服务注册&路由发现]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-namesrv-fu-wu-zhu-ce-andlu-you-fa-xian/</id>
@@ -175,21 +188,6 @@
 <li><strong>有状态的中间操作是怎么保存状态的？</strong></li>
 <li><strong>懒加载如何实现的</strong></li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[深入解析Java Stream源码（上）：初始化 Sink]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/">
-        </link>
-        <updated>2021-07-09T05:09:05.000Z</updated>
-        <summary type="html"><![CDATA[<blockquote>
-<p>了解Stream中Sink和Pipline的概念，以及剖析Stream是如何创建。</p>
-</blockquote>
-]]></summary>
-        <content type="html"><![CDATA[<blockquote>
-<p>了解Stream中Sink和Pipline的概念，以及剖析Stream是如何创建。</p>
-</blockquote>
 ]]></content>
     </entry>
 </feed>
