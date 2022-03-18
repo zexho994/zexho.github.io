@@ -5,7 +5,7 @@
     
 <meta charset="utf-8" >
 
-<title>分布式里的CAP | zexho&#39; blog</title>
+<title>Docker 中搭建 Neo4j 图数据库  | zexho&#39; blog</title>
 <meta name="description" content="日积跬步，以致千里">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -80,21 +80,58 @@
       <div class="content-container">
         <div class="post-detail">
           
-          <h2 class="post-title">分布式里的CAP</h2>
+          <h2 class="post-title">Docker 中搭建 Neo4j 图数据库 </h2>
           <div class="post-info post-detail-info">
-            <span><i class="icon-calendar-outline"></i> 2022-03-18</span>
+            <span><i class="icon-calendar-outline"></i> 2020-02-15</span>
             
           </div>
           <div class="post-content">
-            
+            <h2 id="1-在-docker-hub-下查看-neo4j-镜像">1. 在 docker hub 下查看 neo4j 镜像</h2>
+<pre><code class="language-shell">docker search neo4j
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf6017aa71~tplv-t2oaga2asx-image.image" alt="image-20200215164627841" loading="lazy"></figure>
+<h2 id="2-拉取-neo4j-镜像">2. 拉取 neo4j 镜像</h2>
+<pre><code class="language-shell">docker pull neo4j
+</code></pre>
+<p>拉取完成后输入命令可以看到镜像已经存在</p>
+<pre><code class="language-shell">docker images
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf6284ad96~tplv-t2oaga2asx-image.image" alt="image-20200215164707134" loading="lazy"></figure>
+<h2 id="3-启动-neo4j-镜像">3. 启动 neo4j 镜像</h2>
+<p>执行命令</p>
+<pre><code class="language-docker">docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --rm -d neo4j
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480f43959d204~tplv-t2oaga2asx-image.image" alt="image-20200215164756361" loading="lazy"></figure>
+<p>​	<em>参数说明：</em></p>
+<ul>
+<li>
+<p><strong>publish</strong>: 配置本机与容器之间的映射端口,</p>
+</li>
+<li>
+<p><strong>volume</strong>:配置共享的宗卷，用于数据持久化</p>
+</li>
+</ul>
+<h2 id="4-启动-neo4j-自带的前端页面">4. 启动 neo4j 自带的前端页面</h2>
+<p>在浏览器中输入</p>
+<pre><code class="language-txt">http://localhost:7474/browser
+</code></pre>
+<p>可以看到,这里的端口是7474,是我们 run 命令里面设置的.还有一个端口7687用来连接数据库</p>
+<h2 id="5-连接neo4j">5. 连接neo4j</h2>
+<figure data-type="image" tabindex="4"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/2/15/170480cf628a5e65~tplv-t2oaga2asx-image.image" alt="image-20200215165022204" loading="lazy"></figure>
+<p>账号密码默认都是 neo4j</p>
+<p><strong>至此就连接上了neo4j</strong></p>
+
           </div>
         </div>
 
         
           <div class="next-post">
-            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/ioc_2/">
+            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/git_1/">
               <h3 class="post-title">
-                下一篇：参考Spring实现 IOC（下）
+                下一篇：Git 中指针与树的实现
               </h3>
             </a>
           </div>
