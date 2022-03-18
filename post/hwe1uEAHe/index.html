@@ -1,102 +1,100 @@
-
 <!DOCTYPE html>
 <html>
   <head>
-    
-<meta charset="utf-8" >
+    <meta charset="utf-8" >
 
 <title>微信小程序：预览页实现与后台通信 | Zexho&#39; blog</title>
-<meta name="description" content="日积跬步，以致千里">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647595070507">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647598375789">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
 
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 
 
+    <meta name="description" content="我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了..." />
+    <meta name="keywords" content="微信小程序" />
   </head>
   <body>
     <div id="app" class="main">
-      <div class="site-header-container">
-  <div class="site-header">
-    <div class="left">
-      <a href="https://zexho994.github.io/blog.zexho.life">
-        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647595070507" alt="" width="32px" height="32px">
-      </a>
-      <a href="https://zexho994.github.io/blog.zexho.life">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647598375789" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
     </div>
-    <div class="right">
-      <transition name="fade">
-        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
-      </transition>
-    </div>
-  </div>
-</div>
-
-<transition name="fade">
-  <div class="menu-container" style="display: none;" v-show="menuVisible">
-    <div class="menu-list">
+    <div>
       
         
-          <a href="/" class="menu purple-link">
+          <a href="/" class="site-nav">
             首页
           </a>
         
       
         
-          <a href="/archives" class="menu purple-link">
+          <a href="/archives" class="site-nav">
             归档
           </a>
         
       
         
-          <a href="/tags" class="menu purple-link">
+          <a href="/tags" class="site-nav">
             标签
           </a>
         
       
         
-          <a href="/post/about" class="menu purple-link">
+          <a href="/post/about" class="site-nav">
             关于
           </a>
         
       
     </div>
   </div>
-</transition>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
 
 
-      <div class="content-container">
-        <div class="post-detail">
-          
-          <h2 class="post-title">微信小程序：预览页实现与后台通信</h2>
-          <div class="post-info post-detail-info">
-            <span><i class="icon-calendar-outline"></i> 2019-04-19</span>
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">微信小程序：预览页实现与后台通信</h2>
+            <div class="post-date">2019-04-19</div>
             
-              <span>
-                <i class="icon-pricetags-outline"></i>
-                
-                  <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/">
-                    微信小程序
-                    
-                  </a>
-                
-              </span>
-            
-          </div>
-          <div class="post-content">
-            <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
+            <div class="post-content" v-pre>
+              <p>我们在写小程序的时候，手机端预览发现获取不到后台数据，只能用真机调试才可以，可是mac端的开发者工具对于真机调试的体验苦不堪言，各种bug（官方bug）。所以我想有没有什么办法直接使用预览也可以一样获取到数据呢。花了一天的时间，终于是成功了。ps：我室友预览的时候一样可也以有数据。</p>
 <h2 id="关键点">关键点：</h2>
 <p><strong>手机，服务器，保持同一局域网。</strong></p>
 <h2 id="第一步开启局域网">第一步：开启局域网</h2>
@@ -129,45 +127,39 @@ ok，可以获取到数据。<br>
 <p><strong>网页手机截图：</strong></p>
 <figure data-type="image" tabindex="1"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/5/30/16b073aa9f2958a9~tplv-t2oaga2asx-image.image" alt="" loading="lazy"></figure>
 
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="tag">
+                    微信小程序
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
+                  <h3 class="post-title">
+                    微信小程序：POST 传输 List 数据
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
           </div>
+
         </div>
-
-        
-          <div class="next-post">
-            <a class="purple-link" href="https://zexho994.github.io/blog.zexho.life/post/dU5Kti6_I/">
-              <h3 class="post-title">
-                下一篇：微信小程序：POST 传输 List 数据
-              </h3>
-            </a>
-          </div>
-          
       </div>
-
-      
-
-      <div class="site-footer">
-  <div class="slogan">日积跬步，以致千里</div>
-  <div class="social-container">
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-  </div>
-   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
-</div>
-
-
     </div>
-    <script type="application/javascript">
 
-hljs.initHighlightingOnLoad()
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
 
 var app = new Vue({
   el: '#app',
@@ -177,6 +169,13 @@ var app = new Vue({
 })
 
 </script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
 
 
 

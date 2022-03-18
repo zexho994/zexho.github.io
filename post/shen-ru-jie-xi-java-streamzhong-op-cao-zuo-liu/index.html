@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>深入解析Java Stream（中）：OP操作流 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647598375789">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="几个疑问
+
+各个中间操作是如何进行关联的？
+如何执行完一个中间操作，然后执行下一个？
+有状态的中间操作是怎么保存状态的？
+懒加载如何实现的
+
+
+使用方式
+Stream&lt;Integer&gt; st = headStream.filte..." />
+    <meta name="keywords" content="Java" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647598375789" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">深入解析Java Stream（中）：OP操作流</h2>
+            <div class="post-date">2021-07-22</div>
+            
+            <div class="post-content" v-pre>
+              <h3 id="几个疑问">几个疑问</h3>
+<ol>
+<li><strong>各个中间操作是如何进行关联的？</strong></li>
+<li><strong>如何执行完一个中间操作，然后执行下一个？</strong></li>
+<li><strong>有状态的中间操作是怎么保存状态的？</strong></li>
+<li><strong>懒加载如何实现的</strong></li>
+</ol>
+<!-- more -->
+<h3 id="使用方式">使用方式</h3>
+<pre><code class="language-java">Stream&lt;Integer&gt; st = headStream.filter(e-&gt; e=1).distinct().sort();
+//等同于
+Stream&lt;Integer&gt; afterFilter = headStream.filter(e -&gt; e != 2);
+Stream&lt;Integer&gt; afterDistinct = afterFilter.distinct();
+Stream&lt;Integer&gt; afterSort = afterDistinct.sort();
+</code></pre>
+<h3 id="filter">Filter</h3>
+<p>执行filter(op)会发生什么？</p>
+<pre><code class="language-java">Stream&lt;Integer&gt; afterFilter = head.filter(e -&gt; e = 1);
+</code></pre>
+<p>filter()方法定义在<code>Stream</code>类，实现在<code>ReferencePipeline</code>类。</p>
+<pre><code class="language-java">//ReferencePipeline.class
+
+@Override
+public final Stream&lt;P_OUT&gt; filter(Predicate&lt;? super P_OUT&gt; predicate) {
+    Objects.requireNonNull(predicate);
+
+    // 返回一个StatelessOp类
+    // 构造函数参数为(this,)
+    return new StatelessOp&lt;P_OUT, P_OUT&gt;(this, StreamShape.REFERENCE,
+                                         StreamOpFlag.NOT_SIZED) {
+        @Override
+        Sink&lt;P_OUT&gt; opWrapSink(int flags, Sink&lt;P_OUT&gt; sink) {
+            return new Sink.ChainedReference&lt;P_OUT, P_OUT&gt;(sink) {
+                @Override
+                public void begin(long size) {
+                    downstream.begin(-1);
+                }
+
+                @Override
+                public void accept(P_OUT u) {
+                    if (predicate.test(u))
+                        downstream.accept(u);
+                }
+            };
+        }
+    };
+}
+</code></pre>
+<p>返回一个<code>StatelessOp</code>类(因为filter是一个无状态操作)，看下<code>StatelessOp</code>类,是一个静态抽象内部类，继承了<code>ReferencePipeline</code>类。</p>
+<pre><code class="language-java">//ReferencePipeline.class
+
+    /**
+     * Base class for a stateless intermediate stage of a Stream.
+     *
+     * @param &lt;E_IN&gt; type of elements in the upstream source
+     * @param &lt;E_OUT&gt; type of elements in produced by this stage
+     * @since 1.8
+     */
+    abstract static class StatelessOp&lt;E_IN, E_OUT&gt;
+            extends ReferencePipeline&lt;E_IN, E_OUT&gt; {
+        /**
+         * Construct a new Stream by appending a stateless intermediate
+         * operation to an existing stream.
+         *
+         * @param upstream The upstream pipeline stage
+         * @param inputShape The stream shape for the upstream pipeline stage
+         * @param opFlags Operation flags for the new stage
+         */
+        StatelessOp(AbstractPipeline&lt;?, E_IN, ?&gt; upstream,
+                    StreamShape inputShape,
+                    int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return false;
+        }
+    }
+</code></pre>
+<p>中间super()会执行<code>AbstractPipeline</code>类的构造方法, 连接stage之间的关系</p>
+<pre><code class="language-java">//AbstractPipeline.class
+
+    /**
+     * Constructor for appending an intermediate operation stage onto an
+     * existing pipeline.
+     *
+     * @param previousStage the upstream pipeline stage
+     * @param opFlags the operation flags for the new stage, described in
+     * {@link StreamOpFlag}
+     */
+    AbstractPipeline(AbstractPipeline&lt;?, E_IN, ?&gt; previousStage, int opFlags) {
+        if (previousStage.linkedOrConsumed)
+            throw new IllegalStateException(MSG_STREAM_LINKED);
+        previousStage.linkedOrConsumed = true;
+        previousStage.nextStage = this;
+
+        this.previousStage = previousStage;
+        this.sourceOrOpFlags = opFlags &amp; StreamOpFlag.OP_MASK;
+        this.combinedFlags = StreamOpFlag.combineOpFlags(opFlags, previousStage.combinedFlags);
+        this.sourceStage = previousStage.sourceStage;
+        if (opIsStateful())
+            sourceStage.sourceAnyStateful = true;
+        this.depth = previousStage.depth + 1;
+    }
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f83eb7d9726541b5826f8d5bcfef7538~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<h3 id="distinct">Distinct</h3>
+<p>示例</p>
+<pre><code class="language-java">Stream&lt;Integer&gt; afterDistinct = afterFilter.distinct();
+</code></pre>
+<p>distinct的方法实现在<code>ReferencePipeline</code>类下</p>
+<pre><code class="language-java">@Override
+public final Stream&lt;P_OUT&gt; distinct() {
+    return DistinctOps.makeRef(this);
+}
+</code></pre>
+<p>调用DistinctOps类的makeRef()方法，返回一个StatefulOp类，并重写了4个方法，实现逻辑在opWrapSink()中:</p>
+<pre><code class="language-java">    /**
+     * Appends a &quot;distinct&quot; operation to the provided stream, and returns the
+     * new stream.
+     *
+     * @param &lt;T&gt; the type of both input and output elements
+     * @param upstream a reference stream with element type T
+     * @return the new stream
+     */
+    static &lt;T&gt; ReferencePipeline&lt;T, T&gt; makeRef(AbstractPipeline&lt;?, T, ?&gt; upstream) {
+        // 返回一个StatefulOp类
+        return new ReferencePipeline.StatefulOp&lt;T, T&gt;(upstream, StreamShape.REFERENCE,
+                                                      StreamOpFlag.IS_DISTINCT | StreamOpFlag.NOT_SIZED) {
+
+            // 重写了以下几个方法，内容省略...
+            &lt;P_IN&gt; Node&lt;T&gt; reduce(PipelineHelper&lt;T&gt; helper, Spliterator&lt;P_IN&gt; spliterator) {...}
+
+            @Override
+            &lt;P_IN&gt; Node&lt;T&gt; opEvaluateParallel(PipelineHelper&lt;T&gt; helper,
+                                              Spliterator&lt;P_IN&gt; spliterator,
+                                              IntFunction&lt;T[]&gt; generator) {...}
+
+            @Override
+            &lt;P_IN&gt; Spliterator&lt;T&gt; opEvaluateParallelLazy(PipelineHelper&lt;T&gt; helper, Spliterator&lt;P_IN&gt; spliterator) {...}
+
+            @Override
+            Sink&lt;T&gt; opWrapSink(int flags, Sink&lt;T&gt; sink) {
+                Objects.requireNonNull(sink);
+
+                if (StreamOpFlag.DISTINCT.isKnown(flags)) {
+                    ...
+                } else if (StreamOpFlag.SORTED.isKnown(flags)) {
+                    ...
+                } else {
+                    // 返回一个SinkChainedReference类
+                    return new Sink.ChainedReference&lt;T, T&gt;(sink) {
+                        //使用一个Set缓存数据，进行去重
+                        Set&lt;T&gt; seen;
+
+                        //当上游通知begin的时候，初始化Set
+                        @Override
+                        public void begin(long size) {
+                            seen = new HashSet&lt;&gt;();
+                            downstream.begin(-1);
+                        }
+
+                        //略
+                        @Override
+                        public void end() {
+                            seen = null;
+                            downstream.end();
+                        }
+
+                        //如果已经存在，之间抛弃
+                        @Override
+                        public void accept(T t) {
+                            if (!seen.contains(t)) {
+                                seen.add(t);
+                                downstream.accept(t);
+                            }
+                        }
+                    };
+                }
+            }
+        };
+    }
+</code></pre>
+<p>StatefulOp类与StatelessOp类相似,都是继承了<code>ReferencePipeline</code>类，然后中间super()页会执行<code>AbstractPipeline</code>类的构造方法, 连接stage之间的关系</p>
+<pre><code class="language-java">    /**
+     * Base class for a stateful intermediate stage of a Stream.
+     *
+     * @param &lt;E_IN&gt; type of elements in the upstream source
+     * @param &lt;E_OUT&gt; type of elements in produced by this stage
+     * @since 1.8
+     */
+    abstract static class StatefulOp&lt;E_IN, E_OUT&gt; extends ReferencePipeline&lt;E_IN, E_OUT&gt; {
+ 		//省略
+    }
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6c1bb602651a41efb5b38673063b1523~tplv-k3u1fbpfcp-watermark.image" alt="image.png" loading="lazy"></figure>
+<p>至于其他的中间操作，套路都是类似的，操作逻辑封装在<code>opWrapSink()</code>方法里, 可以慢慢的看。</p>
+<h3 id="疑问解答">疑问解答</h3>
+<ol>
+<li><strong>各个中间操作是如何进行关联的？</strong>
+<ul>
+<li>一个个的操作封装成了一个个的<code>statelessOp</code>或<code>stateFulOp</code>对象，以双向链表的方法串起来。</li>
+</ul>
+</li>
+<li><strong>如何执行完一个中间操作，然后执行下一个？</strong>
+<ul>
+<li>Sink类负责流水线操作的承接上下游和执行操作的任务，核心方法为begain()、accept()、end()。</li>
+</ul>
+</li>
+<li><strong>有状态的中间操作是怎么保存状态的？</strong>
+<ul>
+<li>有状态的中间操作封装成<code>stateFulOp</code>对象，各自都有独立的逻辑，具体的参考<code>sort()</code>的实现逻辑。</li>
+</ul>
+</li>
+<li><strong>懒加载如何实现的</strong>
+<ul>
+<li>每个中间操作调用后，只是append在流程的尾部，保存了关联关系而已。</li>
+<li>流水线操作的启动，要交给wrapAndCopyInto()方法调用Head的Sink()操作，而wrapAndCopyInto()方法都需要由终结操作进行触发。</li>
+</ul>
+</li>
+</ol>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="tag">
+                    Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/">
+                  <h3 class="post-title">
+                    深入解析Java Stream源码（上）：初始化 Sink
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
