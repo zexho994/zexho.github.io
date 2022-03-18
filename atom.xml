@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-03-18T10:31:47.884Z</updated>
+    <updated>2022-03-18T10:58:56.463Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,27 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[深入解析 Java Parallel Stream]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
+        </link>
+        <updated>2021-08-11T12:56:48.000Z</updated>
+        <summary type="html"><![CDATA[<h2 id="提出疑问">提出疑问</h2>
+<ol>
+<li>如何转换流类型，怎么实现的？</li>
+<li>如何切分任务的？</li>
+<li>如何合并任务结果的？</li>
+</ol>
+]]></summary>
+        <content type="html"><![CDATA[<h2 id="提出疑问">提出疑问</h2>
+<ol>
+<li>如何转换流类型，怎么实现的？</li>
+<li>如何切分任务的？</li>
+<li>如何合并任务结果的？</li>
+</ol>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[深入解析Java Stream（下）：终结操作]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/</id>
@@ -110,12 +131,5 @@
         <link href="https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/">
         </link>
         <updated>2020-08-13T03:06:19.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Java中二进制的补码，反码，正负数]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/g8YKXeC-j/">
-        </link>
-        <updated>2020-08-08T13:00:26.000Z</updated>
     </entry>
 </feed>

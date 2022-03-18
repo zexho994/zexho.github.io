@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>深入解析 Java Parallel Stream | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601120506">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="提出疑问
+
+如何转换流类型，怎么实现的？
+如何切分任务的？
+如何合并任务结果的？
+
+
+任务切分
+并行流的底层执行是基于ForkJoin框架的，了解的都知道ForkJoin框架要执行的任务逻辑需要使用者重写，重写内容包括如果切分任务，所以去看..." />
+    <meta name="keywords" content="源码,Java" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601120506" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">深入解析 Java Parallel Stream</h2>
+            <div class="post-date">2021-08-11</div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="提出疑问">提出疑问</h2>
+<ol>
+<li>如何转换流类型，怎么实现的？</li>
+<li>如何切分任务的？</li>
+<li>如何合并任务结果的？</li>
+</ol>
+<!-- more -->
+<h2 id="任务切分">任务切分</h2>
+<p>并行流的底层执行是基于ForkJoin框架的，了解的都知道ForkJoin框架要执行的任务逻辑需要使用者重写，重写内容包括如果切分任务，所以去看ForkJoinTask的实现子类如何实现Compute()方法就可以知道如何进行任务切分的。<br>
+在AbstractTask类中实现了核心方法。<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ec498e18d90a4c11bb046b48ce762f02~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><br>
+其中最核心的方法是compute()方法，定义了计算算法的逻辑：</p>
+<pre><code class="language-java">    /**
+    * 决定是否进一步拆分一个任务或直接计算它。
+    * 如果直接计算,调用doLeaf并将结果传递给setRawResult。
+    * 否则就拆分子任务，分叉一个，继续作为另一个。
+	* 该方法的结构是为了在一系列的使用中节约资源。循环在分裂时继续进行其中一个子任务，
+    * 以避免深度递归。为了应对可能系统性地偏向于左重或右重拆分的拆分器，我们在循环中交替使用哪个子任务被分叉或继续。
+    **/
+    @Override
+    public void compute() {
+        Spliterator&lt;P_IN&gt; rs = spliterator, ls; // right, left spliterators
+        //估计rs的元素数量
+        long sizeEstimate = rs.estimateSize();
+        //获取大小阈值
+        long sizeThreshold = getTargetSize(sizeEstimate);
+        //
+        boolean forkRight = false;
+        @SuppressWarnings(&quot;unchecked&quot;) K task = (K) this;
+        // 判断条件
+        // 1. 元素数量 &gt; 阈值
+        // 2. rs可以进行切割
+        while (sizeEstimate &gt; sizeThreshold &amp;&amp; (ls = rs.trySplit()) != null) {
+            K leftChild, rightChild, taskToFork;
+            // 使用ls,rs构造两个新的任务
+            task.leftChild  = leftChild = task.makeChild(ls);
+            task.rightChild = rightChild = task.makeChild(rs);
+            //设置等待数量为1
+            task.setPendingCount(1);
+            
+            // 轮流执行左/右两个任务
+            if (forkRight) {
+                forkRight = false;
+                rs = ls;
+                task = leftChild;
+                taskToFork = rightChild;// rightChild.fork()
+            }
+            else { 
+                forkRight = true;
+                task = rightChild;
+                taskToFork = leftChild;//leftChild.fork()
+            }
+            // 递归
+            taskToFork.fork();
+            sizeEstimate = rs.estimateSize();
+        }
+        task.setLocalResult(task.doLeaf());
+        task.tryComplete();
+    }
+</code></pre>
+<p>本质上理解，就是将一个Spliterator进行切分成两部分，然后两部分再进行切分，直到while()条件无法再满足，然后对该部分进行运算，将运算结果保存在节点的LocalResult字段上。这部分就是分支的切分阶段。</p>
+<h2 id="结果合并">结果合并</h2>
+<p>测试代码：</p>
+<pre><code class="language-java">long count = Stream.of(1, 2, 3, 4, 5).parallel().reduce((x, y) -&gt; x + y + 10).get();
+</code></pre>
+<p><code>AbstractPipeline.evaluate()</code>方法是并行流与串行流的分叉点：</p>
+<pre><code class="language-java">final &lt;R&gt; R evaluate(TerminalOp&lt;E_OUT, R&gt; terminalOp) {
+        assert getOutputShape() == terminalOp.inputShape();
+        if (linkedOrConsumed)
+            throw new IllegalStateException(MSG_STREAM_LINKED);
+        linkedOrConsumed = true;
+
+        return isParallel()
+               ? terminalOp.evaluateParallel(this, sourceSpliterator(terminalOp.getOpFlags()))  //并行流执行点
+               : terminalOp.evaluateSequential(this, sourceSpliterator(terminalOp.getOpFlags()));
+    }
+</code></pre>
+<p><code>ReduceOps.evaluateParallel()</code>方法是其实现之一</p>
+<pre><code class="language-java">@Override
+public &lt;P_IN&gt; R evaluateParallel(PipelineHelper&lt;T&gt; helper,
+                                 Spliterator&lt;P_IN&gt; spliterator) {
+    return new ReduceTask&lt;&gt;(this, helper, spliterator).invoke().get();
+}
+</code></pre>
+<p>主要做了两件事：</p>
+<ul>
+<li>创建一个ReduceTask任务</li>
+<li>任务调用invoke()执行</li>
+</ul>
+<p>创建的逻辑没有额外的操作，就是将三个参数赋值到实例变量中。</p>
+<p>invoke()是ForkJoinTask的方法，方法这里主要关注<code>invoke()</code>方法的逻辑：</p>
+<pre><code class="language-java">/**
+* Commences performing this task, awaits its completion if
+* necessary, and returns its result, or throws an (unchecked)
+* {@code RuntimeException} or {@code Error} if the underlying
+* computation did so.
+*
+* @return the computed result
+*/
+public final V invoke() {
+    int s;
+    //执行任务
+    if ((s = doInvoke() &amp; DONE_MASK) != NORMAL)
+        reportException(s);
+
+    // 这里放回的是最终结果
+    return getRawResult();
+}
+</code></pre>
+<pre><code class="language-java">/**
+* Implementation for invoke, quietlyInvoke.
+*
+* @return status upon completion
+*/
+private int doInvoke() {
+    int s; Thread t; ForkJoinWorkerThread wt;
+    return (s = doExec()) &lt; 0 ? s :
+    ((t = Thread.currentThread()) instanceof ForkJoinWorkerThread) ?
+        (wt = (ForkJoinWorkerThread)t).pool.
+        awaitJoin(wt.workQueue, this, 0L) :
+    externalAwaitDone();
+}
+
+==&gt; JDK代码为了性能，牺牲了可读性，这里整理下：
+
+private int doInvoke() {
+    s = doExec();
+    if (s &lt; 0) return s;
+    
+	t = Thread.currentThread();
+    if (t instanceof ForkJoinWorkerThread) {
+    	ForkJoinWorkerThread wt = (ForkJoinWorkerThread)t.pool();
+        return wt.awaitJoin(wt.workQueue,this,0L);
+    }
+    
+    return externalAwaitDone();
+}
+</code></pre>
+<pre><code>    /**
+     * If the pending count is nonzero, decrements the count;
+     * otherwise invokes {@link #onCompletion(CountedCompleter)}
+     * and then similarly tries to complete this task's completer,
+     * if one exists, else marks this task as complete.
+     */
+    public final void tryComplte() {
+        CountedCompleter&lt;?&gt; a = this, s = a;
+        for (int c;;) {
+            if ((c = a.pending) == 0) {
+                a.onCompletion(s);
+                if ((a = (s = a).completer) == null) {
+                    s.quietlyComplete();
+                    return;
+                }
+            }
+            else if (U.compareAndSwapInt(a, PENDING, c, c - 1))
+                return;
+        }
+    }
+</code></pre>
+<p>在<code>ReduceOps.onCompletion()</code>的重写方法中，如果是不是叶子节点，则合并两个子节点的结果：</p>
+<pre><code>@Override
+public void onCompletion(CountedCompleter&lt;?&gt; caller) {
+    if (!isLeaf()) {
+        //如果不是叶子节点，将左右两个子节点的结果合并。
+        S leftResult = leftChild.getLocalResult();
+        leftResult.combine(rightChild.getLocalResult());
+        setLocalResult(leftResult);
+    }
+    // GC spliterator, left and right child
+    super.onCompletion(caller);
+}
+</code></pre>
+<p>关注里面3个方法:</p>
+<ul>
+<li>isLeaf()</li>
+<li>combine()</li>
+<li>super.onCompletion()<br>
+isLeaf()判断是不是叶子节点，只有非叶子节点才有两个子节点，然后才能进行合并任务：</li>
+</ul>
+<pre><code class="language-java">protected boolean isLeaf() {
+    return leftChild == null;
+}
+</code></pre>
+<p>节点在执行完后调用<code>super.onCompletionc(caller)</code>方法, 字段设为null，为了gc</p>
+<pre><code class="language-java">@Override
+public void onCompletion(CountedCompleter&lt;?&gt; caller) {
+    spliterator = null;
+    leftChild = rightChild = null;
+}
+</code></pre>
+<p>终点看下combine()方法，这个方法的作用是将结果组合</p>
+<pre><code class="language-java">@Override
+public void combine(ReducingSink other) {
+    if (!other.empty)
+        accept(other.state);
+}
+
+// 将本类的state和参数t进行一次运算，由于t是另一个部分运算的结果
+// 这里的作用就是两部分进行运算求出结果
+@Override
+public void accept(T t) {
+    if (empty) {
+        empty = false;
+        state = t;
+    } else {
+        state = operator.apply(state, t);
+    }
+}
+</code></pre>
+<p><code>apply(state,t)</code>运算的逻辑是使用者定义的，对应我们的示例即 <code>.reduce((x, y) -&gt; x + y + 10)</code></p>
+<p>通过这种方法，就可以对所有节点的结果进行两两组合，得出最终结果了。</p>
+<h2 id="疑问解答">疑问解答</h2>
+<ol>
+<li>如何转换流类型，怎么实现的？
+<ul>
+<li>可以使用<code>sequential()</code>或 <code>parallel()</code>转换流的类型，源码中是对 <code>sourceStage.parallel = true;</code>进行标记，最后在启动时候根据和这个标记决定串行or并行。</li>
+</ul>
+</li>
+<li>如何切分任务的？
+<ul>
+<li>底层利用ForkJoindPool框架实现对任务的切分和合并任务，重写<code>compute()</code>，对Splitertor进行拆分，然后递归调用<code>compute()</code>方法进行不断切分，直到Splitertor无法再切分，执行该部分。</li>
+</ul>
+</li>
+<li>如何合并任务结果的？
+<ul>
+<li>重写<code>onCompletionc()</code>，对每一个非叶子节点，都会将两个子节点的结果通过<code>combine()</code>方法进行组合，然后一直向上仿佛，知道所有节点结果都组合，最后返回根节点的结果。</li>
+</ul>
+</li>
+</ol>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="tag">
+                    Java
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/">
+                  <h3 class="post-title">
+                    深入解析Java Stream（下）：终结操作
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>
