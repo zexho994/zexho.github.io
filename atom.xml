@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>zexho&apos; blog</title>
-    <updated>2022-03-18T07:24:47.687Z</updated>
+    <updated>2022-03-18T07:36:01.963Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -16,5 +16,12 @@
         <link href="https://zexho994.github.io/blog.zexho.life/fen-bu-shi-li-de-cap/">
         </link>
         <updated>2022-03-18T07:12:38.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[参考Spring实现 IOC（上）]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/ioc_1/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/ioc_1/">
+        </link>
+        <updated>2020-08-19T07:29:12.000Z</updated>
     </entry>
 </feed>

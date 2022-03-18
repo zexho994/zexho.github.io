@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    
+<meta charset="utf-8" >
+
+<title>参考Spring实现 IOC（上） | zexho&#39; blog</title>
+<meta name="description" content="日积跬步，以致千里">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647588959846">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+      <div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647588959846" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://zexho994.github.io/blog.zexho.life">
+        <h1 class="site-title">zexho&#39; blog</h1>
+      </a>
+    </div>
+    <div class="right">
+      <transition name="fade">
+        <i class="icon" :class="{ 'icon-close-outline': menuVisible, 'icon-menu-outline': !menuVisible }" @click="menuVisible = !menuVisible"></i>
+      </transition>
+    </div>
+  </div>
+</div>
+
+<transition name="fade">
+  <div class="menu-container" style="display: none;" v-show="menuVisible">
+    <div class="menu-list">
+      
+        
+          <a href="/" class="menu purple-link">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="menu purple-link">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="menu purple-link">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="menu purple-link">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+</transition>
+
+
+      <div class="content-container">
+        <div class="post-detail">
+          
+          <h2 class="post-title">参考Spring实现 IOC（上）</h2>
+          <div class="post-info post-detail-info">
+            <span><i class="icon-calendar-outline"></i> 2020-08-19</span>
+            
+              <span>
+                <i class="icon-pricetags-outline"></i>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/P-ZT7Pj1-8/">
+                    Spring
+                    
+                      ，
+                    
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/KrLfgh9WlS/">
+                    造轮子
+                    
+                  </a>
+                
+              </span>
+            
+          </div>
+          <div class="post-content">
+            <h1 id="基本概念">基本概念</h1>
+<h3 id="控制反转和依赖注入">控制反转和依赖注入</h3>
+<blockquote>
+<p>控制反转（IOC），依赖注入（DI）</p>
+</blockquote>
+<p>什么是控制反转？简单的说，控制反转就是一种思想，目的是将对象的创建由主动变成被动。<br>
+下面的实例就是主动new了一个对象。</p>
+<pre><code class="language-java">public class Service{
+    public DependObject object1 = new DenpendObject();
+}
+</code></pre>
+<p>那么如何做到不使用new呢？依赖注入便是其中一种实现方式。</p>
+<p>依赖注入的方式有三种</p>
+<ul>
+<li>构造器注入</li>
+<li>setter注入</li>
+<li>接口注入</li>
+</ul>
+<pre><code class="language-java">public class Service{
+    public DependObject object;
+
+    // 构造器注入
+    public Service (DependObject obj){
+        this.object = obj;
+    }
+
+    // setter注入
+    public void setDependObject(DependObject obj){
+        this.object = obj;
+    }
+}
+</code></pre>
+<p>可以看到，对象的生命周期不再由Service类中主动创建，而是通过注入的方式赋值。<br>
+顺便比较一下3中方式的优劣：</p>
+<ul>
+<li><strong>接口注入：</strong> 从注入方式的使用上来说，接口注入是现在不甚提倡的一种方式，基本处于“退 役状态”。因为它强制被注入对象实现不必要的接口，带有侵入性。而构造方法注入和setter 方法注入则不需要如此。</li>
+<li><strong>构造方法注入：</strong> 这种注入方式的优点就是，对象在构造完成之后，即已进入就绪状态，可以 马上使用。缺点就是，当依赖对象比较多的时候，构造方法的参数列表会比较长。而通过反 射构造对象的时候，对相同类型的参数的处理会比较困难，维护和使用上也比较麻烦。而且 在Java中，构造方法无法被继承，无法设置默认值。对于非必须的依赖处理，可能需要引入多 个构造方法，而参数数量的变动可能造成维护上的不便。</li>
+<li><strong>setter方法注入：</strong> 因为方法可以命名，所以setter方法注入在描述性上要比构造方法注入好一些。 另外， setter方法可以被继承， 允许设置默认值，而且有良好的IDE支持。缺点当然就是对象无 法在构造完成后马上进入就绪状态。</li>
+</ul>
+<h3 id="ioc容器">IOC容器</h3>
+<p>为了所有对象的统一管理，需要有一个角色负责将这些相互依赖的对象绑定到一起，IOC容器就是这样一个角色。它的主要职责可以分为两个：</p>
+<ol>
+<li>业务对象的构建管理：例如如何加载类，管理类的生命周期等。</li>
+<li>业务对象间的依赖绑定：提供构建好的对象给业务方使用。<br>
+总结就是创建和绑定</li>
+</ol>
+<p>IOC容器如何知道管理哪些对象呢？本系列将实现两种方式：1.使用编码申明，2. 使用注解@Bean声明，熟悉Spring的知道常用的还有XML的方式，这个可以自行实现。</p>
+<p>在Spring中，使用Bean的概念表示IOC管理的对象，在这里依然采用这种定义方式，下篇文章介绍IOC模块的结构设计。</p>
+<h3 id="拓展阅读">拓展阅读</h3>
+<p>对IOC的基本概念不熟悉的可以阅读：<br>
+《spring揭密》2.1 IOC基本概念</p>
+<h1 id="预期实现效果">预期实现效果</h1>
+<h2 id="bean的声明方式">Bean的声明方式</h2>
+<h3 id="通过编码方式进行声明">通过编码方式进行声明</h3>
+<p>继承CodeDefinitionLoderRegistry类，重写loadBean()方法</p>
+<pre><code class="language-java">public class MyCodeBeanDefinition extends CodeDefinitionLoaderRegistry {
+
+    @Override
+    public void loadBean() {
+        this.register(&quot;BeanTest1&quot;, BeanTest1.class);
+        this.register(&quot;BeanTest2&quot;, BeanTest2.class);
+    }
+
+}
+</code></pre>
+<p>然后编码使用register(bean的名称，bean所对应类)进行注册，和XML的声明方式是类似的。</p>
+<h3 id="通过注解bean的方式声明">通过注解@Bean的方式声明</h3>
+<pre><code class="language-java">@Bean
+public class BeanTest1 implements BeanTest {
+
+    @Override
+    public void print() {
+        System.out.println(&quot;BeanTest1&quot;);
+    }
+
+}
+
+@Bean
+public class BeanTest2 implements BeanTest {
+
+    @Override
+    public void print() {
+        System.out.println(&quot;BeanTest2&quot;);
+    }
+
+}
+</code></pre>
+<h2 id="获取bean">获取Bean</h2>
+<h3 id="从工厂中获取bean">从工厂中获取Bean</h3>
+<pre><code class="language-java">public static void foo() {
+
+    // 第一步：c根据声明的方式选择 1 or 2
+    // 方式一： 创建注册类,注册类中使用编码实现注册逻辑
+    AbstractDefinitionLoaderRegistry registry = new MyCodeBeanDefinition();
+    // 方式二： 创建注册类,Bean通过注解的方式自动注入
+    AbstractDefinitionLoaderRegistry registry = new AnnotationDefinitionLoaderRegistry();
+    
+    // 第二步：注册类添加到工厂中
+    ApplicationContext factory = new ApplicationContext(registry);
+
+    // 第三步：获取Bean
+    BeanTest obj1 = factory.getBeanInstance(&quot;BeanTest1&quot;, BeanTest1.class);
+    BeanTest obj2 = factory.getBeanInstance(&quot;BeanTest2&quot;, BeanTest2.class);
+    
+    obj1.print();
+    obj2.print();
+}
+</code></pre>
+<h3 id="通过注解自动注入bean">通过注解自动注入Bean</h3>
+<p>使用@Autowired自动注入</p>
+<pre><code class="language-java">@Bean
+public class AutowiredTest {
+
+    @Autowired
+    public BeanTest1 beanTest1;
+    @Autowired
+    public BeanTest2 beanTest2;
+
+    public void print1() {
+        beanTest1.print();
+    }
+
+    public void print2() {
+        beanTest2.print();
+    }
+
+}
+</code></pre>
+<h1 id="项目组织结构">项目组织结构</h1>
+<h2 id="spring中的ioc设计">Spring中的IOC设计</h2>
+<p>spring中ioc模块可以分为3中角色，分别对应3个最顶层接口：<br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b1c03834b5a348a18794a7ee8aed7546~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></p>
+<p>通俗的理解：</p>
+<ul>
+<li>BeanDefinition: 就是我们常说的Bean，理解为图书。</li>
+<li>BeanDefinitionRegistry: 书架，存放书的地方。</li>
+<li>BeanFactory: 图书馆，借书的地方。</li>
+</ul>
+<p>在我们的实现中，同样使用了这3个概念，看下3个接口都有哪些方法：</p>
+<h3 id="beandefinition">BeanDefinition</h3>
+<pre><code class="language-java">public interface BeanDefinition {
+    // 0表示未初始化
+    int STATUS_UNINITIALIZED = 0;
+    // 1表示已初始化
+    int STATUS_INITIALIZED = 1;
+
+    /**
+     * Sets name.
+     *
+     * @param beanClassName the bean class name
+     */
+    void setName(String beanClassName);
+
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
+    String getName();
+
+    /**
+     * Sets instance.
+     *
+     * @param instance the instance
+     */
+    void setInstance(Object instance);
+
+    /**
+     * Gets instance.
+     *
+     * @return the instance
+     */
+    Object getInstance();
+
+    /**
+     * Gets bean class.
+     *
+     * @return bean class
+     */
+    Class&lt;?&gt; getBeanClass();
+
+    /**
+     * 判断bean是否有初始化
+     *
+     * @return status == {@link #STATUS_INITIALIZED} ?
+     */
+    Boolean isInit();
+
+    /**
+     * set status to {@link #STATUS_INITIALIZED}
+     */
+    void setStatusInitialized();
+}
+</code></pre>
+<h3 id="beandefinitionregistry">BeanDefinitionRegistry</h3>
+<pre><code class="language-java">public interface BeanDefinitionRegistry {
+
+    /**
+     * 注册一个新的Bean
+     *
+     * @param beanName       bean的注册使用名称
+     * @param beanDefinition bean的类型
+     */
+    void registerBean(String beanName, BeanDefinition beanDefinition);
+
+    /**
+     * 移除一个Bean
+     *
+     * @param beanName 要移除的Bean的名称
+     */
+    void removeBean(String beanName);
+
+    /**
+     * 根据名称获取Bean
+     *
+     * @param beanName bean名称
+     * @return 已注册的 {@link BeanDefinition} 对象
+     */
+    BeanDefinition getBean(String beanName);
+
+    /**
+     * 获取Bean
+     * {@link BeanDefinition}
+     *
+     * @param beanName     bean名称
+     * @param requiredType bean类型，会进行校验
+     * @return 已注册的 {@link BeanDefinition} 对象
+     */
+    &lt;T&gt; BeanDefinition getBean(String beanName, Class&lt;T&gt; requiredType);
+
+}
+</code></pre>
+<h3 id="beanfactory">BeanFactory</h3>
+<pre><code class="language-java">public interface BeanFactory {
+
+    /**
+     * 根据名称获取bean
+     *
+     * @param beanName bean名称
+     * @return bean名称对应的Bean
+     */
+    BeanDefinition getBeanInstance(String beanName);
+
+    /**
+     * 根据名称获取一个bean
+     *
+     * @param beanName     bean的名称
+     * @param requiredType bean类型
+     * @return bean名称对应的Bean
+     */
+    &lt;T&gt; T getBeanInstance(String beanName, Class&lt;T&gt; requiredType);
+}
+</code></pre>
+<h3 id="我们的ioc类图">我们的IOC类图</h3>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3a49e7bfb13849aeb2e2c96eccd438cb~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"><br>
+对3个顶层接口都添加了默认实现类，其中比较重要的几个点：</p>
+<ul>
+<li>BeanDefinitionRegistry 使用Map进行Bean的存储，Key为Bean的名称，Val为BeanDefinition</li>
+<li>BeanDefinition中有3个字段<pre><code class="language-java">private String beanName;  //bean名称
+private T beanInstance = null; // bean的实例
+private final Class&lt;T&gt; beanClass; //bean对应的class
+</code></pre>
+</li>
+<li>BeanFactory中存储BeanDefinitionRegistry类，封装获取bean的接口，工厂对外提供</li>
+</ul>
+
+          </div>
+        </div>
+
+        
+      </div>
+
+      
+
+      <div class="site-footer">
+  <div class="slogan">日积跬步，以致千里</div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+   | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+</div>
+
+
+    </div>
+    <script type="application/javascript">
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
