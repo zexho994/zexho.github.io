@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理 | Zexho&#39; blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601725642">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="接着上一篇 RocketMQv4.9.1源码分析-HA主从 Master读写处理 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。
+对于slave，我们有如下一些疑惑：
+
+slave如何获取master的路由信..." />
+    <meta name="keywords" content="RocketMQ,源码" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601725642" class="site-logo">
+        <h1 class="site-title">Zexho&#39; blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      日积跬步，以致千里
+    </div>
+    <div class="site-footer">
+       | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理</h2>
+            <div class="post-date">2021-10-14</div>
+            
+            <div class="post-content" v-pre>
+              <p>接着上一篇 <a href="https://juejin.cn/post/7056785456301768717">RocketMQv4.9.1源码分析-HA主从 Master读写处理</a> 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
+<p>对于slave，我们有如下一些疑惑：</p>
+<ol>
+<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
+<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
+<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
+</ol>
+<!-- more -->
+<p>在整体的类图布局中，slave相关的代码都在HAClient类中</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ed3a2d9fc0214105b8bbf8f96114a677~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<h2 id="haclient">HAClient</h2>
+<p>HAClient部分是Slave处理的核心，其中包括三部分：</p>
+<ol>
+<li>slave与master建立连接</li>
+<li>slave向master汇报同步进度</li>
+<li>slave接收master的同步数据并处理</li>
+</ol>
+<figure data-type="image" tabindex="2"><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/49ce7b1d1f3a4b6bb097e0aef244cc56~tplv-k3u1fbpfcp-watermark.image?" alt="image.png" loading="lazy"></figure>
+<h3 id="haclient-启动">HAClient 启动</h3>
+<p>之前提到了，HAClient启动的触发时机是HAService启动的方法中，在<code>store/src/main/java/org/apache/rocketmq/store/ha/HAService.start()</code>中。</p>
+<pre><code class="language-java">// HAService 启动
+public void start() throws Exception {
+    this.acceptSocketService.beginAccept();
+    this.acceptSocketService.start();
+    this.groupTransferService.start();
+    this.haClient.start();
+}
+</code></pre>
+<p>HAClient的启动代码在<code>store/src/main/java/org/apache/rocketmq/store/ha/HAService$HAClient.run()</code>路径下。</p>
+<p>其中3个核心的步骤在代码注释中有进行标记</p>
+<pre><code class="language-java">@Override
+public void run() {
+    log.info(this.getServiceName() + &quot; service started&quot;);
+
+    while (!this.isStopped()) {
+        try {
+            // 步骤一：连接到master
+            if (this.connectMaster()) {
+                // 步骤二：如果距离上次报告的时间间隔到了最大等待时间,立刻执行一次报告
+                if (this.isTimeToReportOffset()) {
+                    // 报告slave offset
+                    boolean result = this.reportSlaveMaxOffset(this.currentReportedOffset);
+                    if (!result) {
+                        this.closeMaster();
+                    }
+                }
+                // 检查是否有读事件
+                this.selector.select(1000);
+                //步骤三：处理master返回的消息
+                boolean ok = this.processReadEvent();
+                if (!ok) {
+                    this.closeMaster();
+                }
+                // 处理完读事件后，如果slave offset更新，需要再次发送新的slave offset
+                if (!reportSlaveMaxOffsetPlus()) {
+                    continue;
+                }
+
+                long interval = HAService.this.getDefaultMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
+                if (interval &gt; HAService.this.getDefaultMessageStore().getMessageStoreConfig().getHaHousekeepingInterval()) {
+                    log.warn(&quot;HAClient, housekeeping, found this connection[&quot; + this.masterAddress + &quot;] expired, &quot; + interval);
+                    this.closeMaster();
+                    log.warn(&quot;HAClient, master not response some time, so close connection&quot;);
+                }
+            } else {
+                this.waitForRunning(1000 * 5);
+            }
+        } catch (Exception e) {
+            log.warn(this.getServiceName() + &quot; service has exception. &quot;, e);
+            this.waitForRunning(1000 * 5);
+        }
+    }
+
+    log.info(this.getServiceName() + &quot; service end&quot;);
+}
+</code></pre>
+<h3 id="slave连接master">Slave连接Master</h3>
+<p><code>connectMaster()</code>方法的目的是与master进行连接。</p>
+<pre><code class="language-java">// master 地址(master的地址在配置文件中配置)
+private final AtomicReference&lt;String&gt; masterAddress = new AtomicReference&lt;&gt;();
+
+private boolean connectMaster() throws ClosedChannelException {
+    if (null == socketChannel) {
+        String addr = this.masterAddress.get();
+        if (addr != null) {
+            SocketAddress socketAddress = RemotingUtil.string2SocketAddress(addr);
+            if (socketAddress != null) {
+                this.socketChannel = RemotingUtil.connect(socketAddress);
+                if (this.socketChannel != null) {
+                    // 读事件,用于监听master的返回消息
+                    this.socketChannel.register(this.selector, SelectionKey.OP_READ);
+                }
+            }
+        }
+        // 设置为当前commitlog的偏移量
+        this.currentReportedOffset = HAService.this.defaultMessageStore.getMaxPhyOffset();
+        this.lastWriteTimestamp = System.currentTimeMillis();
+    }
+
+    return this.socketChannel != null;
+}
+</code></pre>
+<p>有一个点关注下，就是<code>currentReportedOffset</code>字段，这个字段的目的是表示当前slave已同步的进度，后续在向master进行汇报时也是使用该字段的值。这里进行初始化的时候直接设置为commitlog文件的最大偏移量，如果没有commitlog文件则为0。</p>
+<h3 id="slave汇报offset">Slave汇报offset</h3>
+<pre><code class="language-java">// 步骤二：如果距离上次报告的时间间隔到了最大等待时间,立刻执行一次报告
+if (this.isTimeToReportOffset()) {
+    // 报告slave offset
+    boolean result = this.reportSlaveMaxOffset(this.currentReportedOffset);
+    if (!result) {
+        this.closeMaster();
+    }
+}
+</code></pre>
+<p><code>isTimeToReportOffset()</code>的作用是判断上一次进行汇报的时间与当前时间差是否大于最大等待间隔（默认5s），这意味着即使5s没有收到master的任何消息，slave也会发送一个汇报请求给master，作用相对于一个心跳包。</p>
+<p>看下<code>reportSlaveMaxOffset()</code>方法：</p>
+<pre><code class="language-java">private boolean reportSlaveMaxOffset(final long maxOffset) {
+    // 写位置设为0
+    this.reportOffset.position(0);
+    // 可写长度为8字节
+    this.reportOffset.limit(8);
+    // 数据内容为slave当前的offset
+    this.reportOffset.putLong(maxOffset);
+    // 写模式切换到模式
+    // 将读位置设为0
+    this.reportOffset.position(0);
+    // 可读长度为8字节
+    this.reportOffset.limit(8);
+
+    for (int i = 0; i &lt; 3 &amp;&amp; this.reportOffset.hasRemaining(); i++) {
+        try {
+            // 将数据写入channel中
+            this.socketChannel.write(this.reportOffset);
+        } catch (IOException e) {
+            log.error(this.getServiceName() + &quot;reportSlaveMaxOffset this.socketChannel.write exception&quot;, e);
+            return false;
+        }
+    }
+
+    lastWriteTimestamp = HAService.this.defaultMessageStore.getSystemClock().now();
+    return !this.reportOffset.hasRemaining();
+}
+</code></pre>
+<p>可以知道slave的汇报请求的数据包内容很简单，就是一个8字节大小的offset数据。</p>
+<p>这里代码中有一个细节，rocketmq的作用再进行写模式切换到读模式时没有使用<code>flip()</code>方法，而是手动设置<code>position</code>和<code>limit</code>,这是由于NIO是一个非阻塞IO，write方法不一定会一次将ByteBuffer的数据全部写入。</p>
+<h3 id="slave处理同步数据">Slave处理同步数据</h3>
+<p>步骤三中，调用<code>processReadEvent()</code>对master返回的数据进行处理，看代码前，我们已经知道master返回的数据是未同步的消息，那么slave要做的事情是什么？当然就是把这个未同步的数据保存到本地的commitlog文件中。</p>
+<pre><code class="language-java">private boolean processReadEvent() {
+    // 连续读取到数据大小为0的次数
+    int readSizeZeroTimes = 0;
+    // 一直读取缓冲区的数据，直到没有剩余
+    while (this.byteBufferRead.hasRemaining()) {
+        try {
+            int readSize = this.socketChannel.read(this.byteBufferRead);
+            if (readSize &gt; 0) {
+                readSizeZeroTimes = 0;
+                boolean result = this.dispatchReadRequest();
+                if (!result) {
+                    log.error(&quot;HAClient, dispatchReadRequest error&quot;);
+                    return false;
+                }
+            } else if (readSize == 0) {
+                // 如果连续三次读到为空,则跳出方法,这里的作用？
+                if (++readSizeZeroTimes &gt;= 3) {
+                    break;
+                }
+            } else {
+                log.info(&quot;HAClient, processReadEvent read socket &lt; 0&quot;);
+                return false;
+            }
+        } catch (IOException e) {
+            log.info(&quot;HAClient, processReadEvent read socket exception&quot;, e);
+            return false;
+        }
+    }
+
+    return true;
+}
+</code></pre>
+<p>代码里调用了<code>dispatchReadRequest()</code>方法进行请求的处理，看下这个方法：</p>
+<pre><code class="language-java">private boolean dispatchReadRequest() {
+    final int msgHeaderSize = 8 + 4; // phyoffset + size
+
+    while (true) {
+        int diff = this.byteBufferRead.position() - this.dispatchPosition;
+        if (diff &gt;= msgHeaderSize) {
+            // master commitlog 偏移量
+            long masterPhyOffset = this.byteBufferRead.getLong(this.dispatchPosition);
+            // 消息大小
+            int bodySize = this.byteBufferRead.getInt(this.dispatchPosition + 8);
+            // 本地  commitlog 偏移量
+            long slavePhyOffset = HAService.this.defaultMessageStore.getMaxPhyOffset();
+            if (slavePhyOffset != 0) {
+                // 如果slave的offset和master的offset不一样，说明数据同步过程发生了问题，不再继续同步。
+                if (slavePhyOffset != masterPhyOffset) {
+                    log.error(&quot;master pushed offset not equal the max phy offset in slave, SLAVE: &quot; + slavePhyOffset + &quot; MASTER: &quot; + masterPhyOffset);
+                    return false;
+                }
+            }
+
+            // 剩余空间够用,将消息追加到commitlog中
+            if (diff &gt;= (msgHeaderSize + bodySize)) {
+                // 消息数组
+                byte[] bodyData = byteBufferRead.array();
+                // 消息的
+                int dataStart = this.dispatchPosition + msgHeaderSize;
+                // 添加数据到本地commitlog中
+                HAService.this.defaultMessageStore.appendToCommitLog(masterPhyOffset, bodyData, dataStart, bodySize);
+                this.dispatchPosition += msgHeaderSize + bodySize;
+
+                if (!reportSlaveMaxOffsetPlus()) {
+                    return false;
+                }
+
+                continue;
+            }
+        }
+
+        if (!this.byteBufferRead.hasRemaining()) {
+            this.reallocateByteBuffer();
+        }
+
+        break;
+    }
+
+    return true;
+}
+</code></pre>
+<p>整体的逻辑可以分为俩部分，第一部分是解析请求包，获取消息数据，第二部分是把消息数据写入到commitlog文件中。</p>
+<p>这两部分代码已经写的很清楚了，比较容易理解，就不再赘述。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="tag">
+                    RocketMQ
+                  </a>
+                
+                  <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="tag">
+                    源码
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/">
+                  <h3 class="post-title">
+                    RocketMQ4.9.1源码分析(HA模块) Master读写处理
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+
+  </body>
+</html>

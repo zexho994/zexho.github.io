@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601639754">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647601725642">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 
 
@@ -27,7 +27,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://zexho994.github.io/blog.zexho.life">
-        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601639754" class="site-logo">
+        <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647601725642" class="site-logo">
         <h1 class="site-title">Zexho&#39; blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -89,6 +89,28 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <h2 class="current-tag">标签: 源码</h2>
+          
+            <article class="post-item">
+              <div class="left">
+                <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/">
+                  <h2 class="post-title">RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理</h2>
+                </a>
+                <div class="post-date">
+                  2021-10-14
+                </div>
+                <div class="post-abstract">
+                  <p>接着上一篇 <a href="https://juejin.cn/post/7056785456301768717">RocketMQv4.9.1源码分析-HA主从 Master读写处理</a> 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
+<p>对于slave，我们有如下一些疑惑：</p>
+<ol>
+<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
+<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
+<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
+</ol>
+
+                </div>
+              </div>
+              
+            </article>
           
             <article class="post-item">
               <div class="left">
