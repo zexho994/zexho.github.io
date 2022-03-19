@@ -976,7 +976,7 @@ td {
 }
 
       .main {
-        max-width: 64%;
+        max-width: 60%;
       }
     
       .post-detail .post .post-content p {
@@ -1000,12 +1000,16 @@ td {
         font-family: -apple-system,BlinkMacSystemFont,'Helvetica Neue','PingFang SC','Hiragino Sans GB','Droid Sans Fallback','Microsoft YaHei',sans-serif;
       }
     
-      body {
-        background: #f1f3f5;
+      .main {
+        background: #F5F5D5;
       }
     
       body {
-        color: #343a40;
+        background: #F5F5D5;
+      }
+    
+      body {
+        color: #212529;
       }
     
       a {
