@@ -1,0 +1,226 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>我理解的CAP | Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1647770165895">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="我理解的CAP | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="最近在梳理我们系统架构的时候，想从分布式领域的角度来分析架构设计，但是由于之前没系统性接触过分布式相关的知识，正好借此机会来学习分布式相关的知识，并进行自己的总结。本文的目的是搞清楚什么是CAP。
+
+分布式系统的最大难点，就是各个节点的状态..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1647770165895" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    芝兰生于幽谷，不因无人而不芳
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          时间线
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签集
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              我理解的CAP
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-03-20 05:50:28
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近在梳理我们系统架构的时候，想从分布式领域的角度来分析架构设计，但是由于之前没系统性接触过分布式相关的知识，正好借此机会来学习分布式相关的知识，并进行自己的总结。本文的目的是搞清楚什么是CAP。</p>
+<blockquote>
+<p>分布式系统的最大难点，就是各个节点的状态如何同步</p>
+</blockquote>
+<!-- more -->
+<h1 id="历史背景">历史背景</h1>
+<p>时间回到 1985 年，彼时，后来证明了 CAP 理论的 Lynch 教授此时给当时的 IT 界来了一记惊雷：她通过不可辩驳的证明告诉业界的工程师们，如果在一个不稳定（消息要么乱序要么丢了）的网络环境里（分布式异步模型），想始终保持数据一致是不可能的。这是个什么概念呢？就是她打破了那些既想提供超高质量服务，又想提供超高性能服务的技术人员的幻想。这本质是在告诉大家，在分布式系统里，需要妥协。<br>
+过了15年，在2000 年时，Eric Brewer 教授在 PODC 会议上提出了 CAP 理论，但是由于没有被证明过，所以，当时只能被称为 CAP 猜想。这个猜想引起了巨大的反响，因为 CAP 很符合人们对设计纲领的预期。在 2002 年后，经过 Seth Gilbert 和 Nancy Lynch 从理论上证明了 CAP 猜想后，CAP 理论正式成为了分布式系统理论的基石之一。</p>
+<h1 id="概念解释">概念解释</h1>
+<p>要准确的理解CAP，首先必须明白CAP中3个概念的准确定义，3个概念分别对应CAP的3个缩写 Consistency、Availability、Partition Tolerance。<br>
+<img src="https://cdn.nlark.com/yuque/0/2022/png/219287/1647658774387-a00ae95e-7bac-4977-9bc2-f201e5372499.png" alt="" loading="lazy"></p>
+<h2 id="consistency-一致性">Consistency 一致性</h2>
+<blockquote>
+<p>all nodes see the same data at the same time</p>
+</blockquote>
+<p>在服务节点进行更新操作后，所有节点同一时间的数据完全一致，也称数据一致性。</p>
+<figure data-type="image" tabindex="1"><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/219287/1647665555402-62247478-7077-4351-859b-3dc74e80d6f4.jpeg" alt="" loading="lazy"></figure>
+<p>在DB1更新完成后，步骤3的查询结果一定是最新的数据，那么步骤4的查询结果必须要和3一样，不然就是数据不一致。</p>
+<h2 id="availability-可靠性">Availability 可靠性</h2>
+<blockquote>
+<p>Reads and writes always succeed</p>
+</blockquote>
+<p>在预期的响应时间内，必须返回结果（非异常的）。这里有两个概念，一个是预期响应时间，一个是非异常的结果。</p>
+<p>预期响应时间应该是早在系统设计时就定义好的，要结合业务场景的考虑，例如我们google搜索要在0.5s内返回我们想要的结果，那么0.5就是定义好的结果，</p>
+<p>一个文件转换的服务，预期响应时间可能会是数十秒甚至以分钟计算。只要能在预期响应时间内返回，都可以算作未超时的。</p>
+<p>非异常的结果是指能被客户端接收并进行正常后续处理的，12306抢票时刷新后看到有票，点击购买又告知没票了，刷新后看到的是旧数据，但整个流程是没有发生异常，也可以说是可靠性。</p>
+<h2 id="partition-tolerance-分区容错性">Partition Tolerance 分区容错性</h2>
+<p>分布式场景下节点间都是通过网络进行通信的，网络肯定不是100%可靠的，也会有异常的时候。</p>
+<p>当两个节点间发生了异常不能正常通信了，就可以说这两个节点之间发生<strong>分区</strong>了。</p>
+<figure data-type="image" tabindex="2"><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/219287/1647666896489-7f2daa73-f220-46d4-88da-327591e29402.jpeg" alt="" loading="lazy"></figure>
+<p>那么对于A服务而言，假设B发生异常了，A是否要容忍这种情况呢？选择不容忍，那么对应的措施就是A马上对外停止服务。这对于分布式系统来说绝对是不能接受的，所以我们必须容忍网络分区的发生，即使相关服务发生了异常，服务也不能停止运行。<br>
+这么看来CAP中P是必须要的，同时也知道CAP3这不能同时满足，现在的难题就是C和A中如何进行取舍</p>
+<h1 id="为什么c和a不能同时存在">为什么C和A不能同时存在</h1>
+<p>假如必须要满足一致性，那么数据中心只能有一个，这样所有的节点拿到的数据肯定都是最新的了。</p>
+<p>那就会有一个问题，数据中心一旦发生网络分区，就导致所有节点无法处理请求，这样可靠性必然不能保证。</p>
+<p>假如必须要满足可靠性，那么我们可以采用多数据中心的方式，这样即使个别节点发生网络分区，也不会导致整个服务不可用。可是这就有一个问题，最新的数据无法同步给其他分区的节点，就可能会导致数据不一下的可能。</p>
+<h1 id="如何取舍c和a">如何取舍C和A</h1>
+<p>在没有发生网络分区的时候，CAP三者都是满足的，只有当发生网络分区这种小概率事件的时候。<br>
+先看一些开源框架是如何进行设计的<br>
+cp - Zookeeper，Redis：当zookeeper和redis会保证数据的一致性，保证任何时候获取到的数据都是最新的。<br>
+ca - Mysql，RocketMQ:  在Mysql和RocketMQ的主从架构中，当主从之间发生网络分区时<br>
+，从从库获取到的数据可能是不一致的。</p>
+<p>说到底，还是看业务场景。例如涉及到钱的系统，那么一致性是肯定要保证的，银行系统哪怕停止服务也要保证数据的一致性。用过12306，肯定遇到过页面刷新后同一车次有时候有票有时候没票的情况，这就是为了提高可用性，保证刷新操作成功，但是一致性就无法得到保证了。</p>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/6PgqyigrgVICl0JiI73oNg">https://mp.weixin.qq.com/s/6PgqyigrgVICl0JiI73oNg</a></li>
+<li><a href="https://www.zhihu.com/question/54105974/answer/1643846752">https://www.zhihu.com/question/54105974/answer/1643846752</a></li>
+<li><a href="https://www.hollischuang.com/archives/666">https://www.hollischuang.com/archives/666</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E5%8E%86%E5%8F%B2%E8%83%8C%E6%99%AF">历史背景</a></li>
+<li><a href="#%E6%A6%82%E5%BF%B5%E8%A7%A3%E9%87%8A">概念解释</a>
+<ul>
+<li><a href="#consistency-%E4%B8%80%E8%87%B4%E6%80%A7">Consistency 一致性</a></li>
+<li><a href="#availability-%E5%8F%AF%E9%9D%A0%E6%80%A7">Availability 可靠性</a></li>
+<li><a href="#partition-tolerance-%E5%88%86%E5%8C%BA%E5%AE%B9%E9%94%99%E6%80%A7">Partition Tolerance 分区容错性</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88c%E5%92%8Ca%E4%B8%8D%E8%83%BD%E5%90%8C%E6%97%B6%E5%AD%98%E5%9C%A8">为什么C和A不能同时存在</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%8F%96%E8%88%8Dc%E5%92%8Ca">如何取舍C和A</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">
+              <h3 class="post-title">
+                快速看清lambda的本质
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
