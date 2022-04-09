@@ -3,7 +3,7 @@
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>通俗理解 Basic Paxos | Zexho&#39; blog</title>
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1649521041538">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1649521263866">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="通俗理解 Basic Paxos | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
@@ -27,7 +27,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://zexho994.github.io/blog.zexho.life">
-  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1649521041538" alt="">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1649521263866" alt="">
   </a>
   <h1 class="site-title">
     Zexho&#39; blog
@@ -128,7 +128,7 @@
 <li>每个人都可以发起竞价，告诉其他人竞价的筹码。</li>
 <li>同理，其他人发起竞价时，每个人也会收到竞价信息，有两个可能<br>
 a. 假如竞价筹码 &lt;= 最大筹码，回复（no）<br>
-b. 假如竞价成功 &gt; 最大筹码，记录最大筹码 = 竞价筹码<br>
+b. 假如竞价筹码 &gt; 最大筹码，记录最大筹码 = 竞价筹码<br>
 ⅰ. 如果商品没被购买，回复（yes，null）<br>
 ⅱ. 如果商品已被购买，回复（yes，购买筹码，购买人信息）</li>
 <li>当一个人发起竞价后，会收到其他人的竞价结果的回复，超过一半人告诉你竞价成功（少数服从多数），就可以发起购买的请求了（会告诉其他所有人）。</li>
@@ -138,7 +138,7 @@ b. 假如竞价成功 &gt; 最大筹码，记录最大筹码 = 竞价筹码<br>
 <li>发起购买时候，携带两个信息（购买的筹码，个人信息）</li>
 <li>当收到其他人的购买请求后，有两种可能：<br>
 a. 如果 购买筹码 &gt;= 最大筹码，记录购买者的购买筹码和个人信息，然后回复(yes)。<br>
-b. 如果 购买抽买 &lt; 最大筹码，回复(no)。</li>
+b. 如果 购买筹码 &lt; 最大筹码，回复(no)。</li>
 <li>收到购买回复后，如果为超过半数yes，则表示购买成功，结束流程。反之，提高筹码，重新发起竞价。</li>
 </ol>
 <p>最后要到达的效果是：每个人记录的商品购买筹码和个人信息应该是相同的。</p>
