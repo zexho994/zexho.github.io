@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-04-08T07:48:28.038Z</updated>
+    <updated>2022-04-09T08:54:50.653Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[通俗理解 Basic Pasox]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/">
+        </link>
+        <updated>2022-04-09T00:45:33.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[我理解的CAP]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/</id>
@@ -157,19 +164,6 @@
 ]]></summary>
         <content type="html"><![CDATA[<h1 id="启动任务">启动任务</h1>
 <p>broker/src/main/java/org/apache/rocketmq/broker/transaction/queue/TransactionalMessageServiceImpl.java类中。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[手写实现 Java Stream]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/">
-        </link>
-        <updated>2021-09-10T13:59:28.000Z</updated>
-        <summary type="html"><![CDATA[<p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
-实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
-实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。</p>
 ]]></content>
     </entry>
 </feed>

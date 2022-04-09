@@ -1,0 +1,280 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>通俗理解 Basic Pasox | Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1649494482962">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="通俗理解 Basic Pasox | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="一个简单的分布式场景
+角色说明
+● 客户端Client，负责发起请求
+● 服务端Server，接收客户端的请求，并保存请求的数据
+现在部署了3个Server，每个Server会保存客户端请求的信息，并以日志的方式进行存储。
+当客户端向Ser..." />
+    <meta name="keywords" content="学习归纳,分布式" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://zexho994.github.io/blog.zexho.life">
+  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1649494482962" alt="">
+  </a>
+  <h1 class="site-title">
+    Zexho&#39; blog
+  </h1>
+  <p class="site-description">
+    芝兰生于幽谷，不因无人而不芳
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          时间线
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签集
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/zexho994" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              通俗理解 Basic Pasox
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-04-09 08:45:33
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="post-tag">
+                  # 学习归纳
+                </a>
+              
+                <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="post-tag">
+                  # 分布式
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="一个简单的分布式场景">一个简单的分布式场景</h1>
+<p>角色说明<br>
+● 客户端Client，负责发起请求<br>
+● 服务端Server，接收客户端的请求，并保存请求的数据</p>
+<p>现在部署了3个Server，每个Server会保存客户端请求的信息，并以日志的方式进行存储。<br>
+当客户端向Server_1发起请求后，Server_1会记录这个日志，并同步给Server_2，Server_3保持数据一致性，这个看起来没有什么问题。<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h13kbg6hlaj21ay0oqgmt.jpg" alt="" loading="lazy"><br>
+但是加入是Client同时请求多个Server呢？看下会有什么问题<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h13kbqzpbbj21a00o8mya.jpg" alt="" loading="lazy"><br>
+如何保证各Server的日志顺序保证一致？如每个服务器最后的log顺序都是log1,log2 或者 log2,log1<br>
+简单的数据复制方式肯定是不可以的，例如下面这种情况<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h13kaprlkdj21fg0pq765.jpg" alt="" loading="lazy"><br>
+最终Server_1日志顺序为log1 log2, Server_2日志顺序为log2 log1,Server_3日志顺序两种都有可能。<br>
+这就是分布式场景下经典的一致性问题，Paxos的目的就是为了解决这个问题，让所有Server的数据保持一致。<br>
+那么Paxos是如何解决这个问题的呢？也就是接下来要说明的问题。</p>
+<blockquote>
+<p>在了解paxos之前，假如对2pc的概念不太清楚，建议先了解2pc再看paxos，因为最后会发现paxos也是一种2pc的思想，不过进行了一些优化。</p>
+</blockquote>
+<h1 id="paxos">Paxos</h1>
+<p>如果直接讲paxos的各种概念，像Proposal、Proposer、Accepter等，会增加理解的难度，所以我用生活中很常见的一个示例举例说明会好很多。</p>
+<h2 id="拍卖">拍卖</h2>
+<p>拍卖，相信大家都比较熟悉，稍作修改，我们现在的拍卖流程是这样：</p>
+<h3 id="竞价部分">竞价部分：</h3>
+<ol>
+<li>每个人都可以发起竞价，告诉其他人竞价的筹码。</li>
+<li>同理，其他人发起竞价时，每个人也会收到竞价信息，有两个可能<br>
+a. 假如竞价筹码 &lt;= 最大筹码，回复（no）<br>
+b. 假如竞价成功 &gt; 最大筹码，记录最大筹码 = 竞价筹码<br>
+ⅰ. 如果商品没被购买，回复（yes，null）<br>
+ⅱ. 如果商品已被购买，回复（yes，购买筹码，购买人信息）</li>
+<li>当一个人发起竞价后，会收到其他人的竞价结果的回复，超过一半人告诉你竞价成功（少数服从多数），就可以发起购买的请求了（会告诉其他所有人）。</li>
+</ol>
+<h3 id="购买部分">购买部分：</h3>
+<ol>
+<li>发起购买时候，携带两个信息（购买的筹码，个人信息）</li>
+<li>当收到其他人的购买请求后，有两种可能：<br>
+a. 如果 购买筹码 &gt;= 最大筹码，记录购买者的购买筹码和个人信息，然后回复(yes)。<br>
+b. 如果 购买抽买 &lt; 最大筹码，回复(no)。</li>
+<li>收到购买回复后，如果为超过半数yes，则表示购买成功，结束流程。反之，提高筹码，重新发起竞价。</li>
+</ol>
+<p>最后要到达的效果是：每个人记录的商品购买筹码和个人信息应该是相同的。</p>
+<h2 id="流程说明">流程说明</h2>
+<p>先看看没有竞争对手的情况下，如何运行的，了解概念后，现在改用专用语表示。</p>
+<h3 id="概念说明">概念说明</h3>
+<p>● Propose :  等同筹码<br>
+● Proposer  : 等同发起竞价和购买请求的惧色<br>
+● Acceptor : 等同接收请求的角色</p>
+<h3 id="变量说明">变量说明</h3>
+<p>● id：表示筹码的大小<br>
+● max_id：表示当前记录的最大筹码<br>
+● acc_id：表示已购买的筹码<br>
+● acc_val：表示购买人信息</p>
+<h3 id="步骤一协商">步骤一：协商</h3>
+<p>收到yes时候，acceptor会将acc_id 和 acc_val 返回<br>
+● 假如acc_val都为null，说明还没有设置过val，则将自己的val在第二阶段发送给acceptor<br>
+● 存在acc_val不为null的情况，proposer必须无条件使用acc_id最大的acc_val作为第二阶段发送的val</p>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h13k6cy4tsj20u00vewg2.jpg" alt="" loading="lazy"></figure>
+<pre><code class="language-java">if (id &gt; max_id){    
+    max_id = id;
+    reutrn (yes, acc_id，acc_val);
+} else {
+    return (no);
+}
+</code></pre>
+<h3 id="步骤二提交">步骤二：提交</h3>
+<p>当步骤一中超过半数的yes时候，进入步骤二：<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h13k6lsqdrj20ri0ycwg9.jpg" alt="" loading="lazy"></p>
+<pre><code class="language-java">if (id &gt;= max_id){
+    max_id = id;
+    acc_id = id;
+    acc_val = val;
+    return yes;
+}else {
+    return no;
+}
+</code></pre>
+<p>接收到达响应的结果有两种<br>
+● 收到超过一半的yes，流程结束。<br>
+● 少于一般的yes，则自增id，重新执行步骤一。</p>
+<p>至此，paxos的流程就走完了，对于发生竞争的情况，paxos是如何做到保持一致的，我的建议是根据上述的判断条件，自己动手模拟下（当初也是自己模拟后，帮助我更快的理解了整个流程）。</p>
+<h1 id="参考">参考</h1>
+<p>● 《凤凰架构》周志明，第6章 Paxos<br>
+● 《软件架构设计》余春龙</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E5%9C%BA%E6%99%AF">一个简单的分布式场景</a></li>
+<li><a href="#paxos">Paxos</a>
+<ul>
+<li><a href="#%E6%8B%8D%E5%8D%96">拍卖</a>
+<ul>
+<li><a href="#%E7%AB%9E%E4%BB%B7%E9%83%A8%E5%88%86">竞价部分：</a></li>
+<li><a href="#%E8%B4%AD%E4%B9%B0%E9%83%A8%E5%88%86">购买部分：</a></li>
+</ul>
+</li>
+<li><a href="#%E6%B5%81%E7%A8%8B%E8%AF%B4%E6%98%8E">流程说明</a>
+<ul>
+<li><a href="#%E6%A6%82%E5%BF%B5%E8%AF%B4%E6%98%8E">概念说明</a></li>
+<li><a href="#%E5%8F%98%E9%87%8F%E8%AF%B4%E6%98%8E">变量说明</a></li>
+<li><a href="#%E6%AD%A5%E9%AA%A4%E4%B8%80%E5%8D%8F%E5%95%86">步骤一：协商</a></li>
+<li><a href="#%E6%AD%A5%E9%AA%A4%E4%BA%8C%E6%8F%90%E4%BA%A4">步骤二：提交</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/">
+              <h3 class="post-title">
+                我理解的CAP
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Life & Coding
+  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
