@@ -1,151 +1,107 @@
-<html>
-  <head>
-    <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
 <title>Zexho&#39; blog</title>
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1650628161089">
-<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
 <link rel="alternate" type="application/atom+xml" title="Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
+    
 
+  <meta name="description" content="芝兰生于幽谷，不因无人而不芳" />
+</head>
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
 
-    <meta name="description" content="芝兰生于幽谷，不因无人而不芳" />
-  </head>
-  <body>
-    <div class="main">
-      <div class="main-content">
-        <div class="site-header">
-  <a href="https://zexho994.github.io/blog.zexho.life">
-  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1650628161089" alt="">
-  </a>
-  <h1 class="site-title">
-    Zexho&#39; blog
-  </h1>
-  <p class="site-description">
-    芝兰生于幽谷，不因无人而不芳
-  </p>
-  <div class="menu-container">
-    
-      
-        <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
-          首页
-        </a>
-      
-    
-      
-        <a href="/archives" class="menu">
-          时间线
-        </a>
-      
-    
-      
-        <a href="/tags" class="menu">
-          标签集
-        </a>
-      
-    
+    <div class="nav py-3 md:py-8 fixed w-full z-10 bg-gray-50 dark:bg-gray-700 transition-all duration-300" :class="{ 'scroll': scrolled }">
+  <div class="flex justify-end px-4">
+    <div class="w-8 h-8 flex justify-center items-center rounded-full md:hidden" @click="showMenu = !showMenu">
+      <i class="ri-close-line" v-show="showMenu"></i>
+      <i class="ri-menu-3-line" v-show="!showMenu"></i>
+    </div>
   </div>
-  <div class="social-container">
+  <nav class="max-w-4xl w-full mx-auto text-center flex flex-col md:flex-row justify-center md:block" :class="`${ showMenu ? 'block' : 'hidden' }`">
     
-      
-        <a href="https://github.com/zexho994" target="_blank">
-          <i class="ri-github-line"></i>
-        </a>
-      
+      <a href="https://zexho994.github.io/blog.zexho.life" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        首页
+      </a>
     
-      
+      <a href="/archives" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        时间线
+      </a>
     
-      
+      <a href="/tags" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        标签集
+      </a>
     
-      
-    
-      
-    
-  </div>
+    <a href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+      RSS
+    </a>
+  </nav>
 </div>
 
-    
-        <div class="post-container">
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-broker-ding-shi-hui-cha/">
-        <h2 class="post-title">RocketMQ4.9.1源码分析_(事务)broker定时回查</h2>
-      </a>
-      <div class="post-info">
-        <span>
-          2021-10-01 09:02:08
-        </span>
-        <span>
-          14 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="post-tag">
-            # RocketMQ
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
-            # 源码
-          </a>
-        
-      </div>
+    <div class="max-w-4xl w-full mx-auto pt-32">
       
-      <div class="post-abstract">
+
+      <div class="shadow-box bg-white dark:bg-gray-600 border-gray-300 rounded-none md:rounded-lg -mx-1 md:mx-0 md:px-0">
+        
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-broker-ding-shi-hui-cha/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          RocketMQ4.9.1源码分析_(事务)broker定时回查
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-10-01 09:02:08</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <h1 id="启动任务">启动任务</h1>
 <p>broker/src/main/java/org/apache/rocketmq/broker/transaction/queue/TransactionalMessageServiceImpl.java类中。</p>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/">
-        <h2 class="post-title">手写实现 Java Stream</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-broker-ding-shi-hui-cha/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-09-10 09:59:28
-        </span>
-        <span>
-          10 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="post-tag">
-            # 造轮子
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          手写实现 Java Stream
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-09-10 09:59:28</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <p>项目地址：<a href="https://github.com/zexho994/River">https://github.com/zexho994/River</a><br>
 实现目标：支持和JDK Stream一样的功能, 提供与Stream一样的API，后续会进行更多的API扩展。</p>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/">
-        <h2 class="post-title">深入解析 Java Parallel Stream</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shou-xie-shi-xian-java-stream/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-08-11 08:56:48
-        </span>
-        <span>
-          7 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
-            # 源码
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
-            # Java
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          深入解析 Java Parallel Stream
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-08-11 08:56:48</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <h2 id="提出疑问">提出疑问</h2>
 <ol>
 <li>如何转换流类型，怎么实现的？</li>
@@ -154,31 +110,23 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/">
-        <h2 class="post-title">深入解析Java Stream（下）：终结操作</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-parallel-stream/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-08-06 11:13:20
-        </span>
-        <span>
-          7 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="post-tag">
-            # 源码
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
-            # Java
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          深入解析Java Stream（下）：终结操作
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-08-06 11:13:20</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <h3 id="几个疑问">几个疑问</h3>
 <ol>
 <li>终结方法是如何进行操作的？</li>
@@ -187,27 +135,23 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/">
-        <h2 class="post-title">深入解析Java Stream（中）：OP操作流</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamxia-zhong-jie-cao-zuo/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-07-22 06:09:33
-        </span>
-        <span>
-          6 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
-            # Java
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          深入解析Java Stream（中）：OP操作流
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-07-22 06:09:33</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <h3 id="几个疑问">几个疑问</h3>
 <ol>
 <li><strong>各个中间操作是如何进行关联的？</strong></li>
@@ -217,158 +161,144 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/">
-        <h2 class="post-title">深入解析Java Stream源码（上）：初始化 Sink</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-jie-xi-java-streamzhong-op-cao-zuo-liu/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-07-09 01:09:05
-        </span>
-        <span>
-          4 min read
-        </span>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          深入解析Java Stream源码（上）：初始化 Sink
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-07-09 01:09:05</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>了解Stream中Sink和Pipline的概念，以及剖析Stream是如何创建。</p>
 </blockquote>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/">
-        <h2 class="post-title">从字节码剖析泛型</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/1V4Hrg06J/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-05-06 04:30:29
-        </span>
-        <span>
-          2 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/" class="post-tag">
-            # JVM
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="post-tag">
-            # Java
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          从字节码剖析泛型
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-05-06 04:30:29</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <p>Java里泛型，与c#比起来，更算是一种语法糖。关于语法糖，是编译时的一种“小把戏”，目的是让使用者可以有更多的手段是编写代码。<br>
 好处是效率，了解Rust的可以感受到，编写Rust的代码极其高效的，代价就是学习成本非常高，原因之一就是大量的语法糖。</p>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/">
-        <h2 class="post-title">JVM 指令运行 解析</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-02-17 11:19:49
-        </span>
-        <span>
-          6 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/" class="post-tag">
-            # JVM
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          JVM 指令运行 解析
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-02-17 11:19:49</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <p>在jvm中，定义了有205条指令，从0x00 -&gt; 0xCA , 0xFE -&gt; 0xFF。我们在方法中写的所有逻辑，最终都会转换成这些指令，而虚拟机的最重要的一个任务就是解释执行这些指令。</p>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/">
-        <h2 class="post-title">JVM 方法调用与执行</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2021-02-02 10:31:28
-        </span>
-        <span>
-          9 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/" class="post-tag">
-            # JVM
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          JVM 方法调用与执行
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-02-02 10:31:28</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>项目代码：<a href="https://github.com/zexho994/gvm">https://github.com/zexho994/gvm</a></p>
 </blockquote>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/">
-        <h2 class="post-title">参考Spring实现 IOC（下）</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/65lQ_SxQ1/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2020-10-30 07:36:08
-        </span>
-        <span>
-          4 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/P-ZT7Pj1-8/" class="post-tag">
-            # Spring
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="post-tag">
-            # 造轮子
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          参考Spring实现 IOC（下）
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2020-10-30 07:36:08</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <p>github地址：https://github.com/zexho994/IOC-AOP</p>
 
       </div>
-    </article>
-  
-</div>
-
-    
-        <div class="pagination-container">
-  
-    <a href="https://zexho994.github.io/blog.zexho.life/" class="prev-page">上一页</a>
-  
-  
-    <a href="https://zexho994.github.io/blog.zexho.life/page/3/" class="next-page">下一页</a>
-  
-</div>
-
-    
-        <div class="site-footer">
-  Life & Coding
-  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
-    <i class="ri-rss-line"></i> RSS
-  </a>
-</div>
-
-      </div>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/ioc_2/" class="btn">
+        Read more
+      </a>
     </div>
-  </body>
+    
+  </div>
+  
+      </div>
+
+      
+  <div class="my-4 flex justify-between px-4 md:px-0">
+    
+      <a href="https://zexho994.github.io/blog.zexho.life/" class="btn btn-white">
+        <i class="ri-arrow-left-line mr-4"></i>
+        上一页
+      </a>
+    
+    
+      <a href="https://zexho994.github.io/blog.zexho.life/page/3/" class="btn btn-white">
+        下一页
+        <i class="ri-arrow-right-line ml-4"></i>
+      </a>
+    
+  </div>
+
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+</body>
+
 </html>

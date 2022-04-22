@@ -1,101 +1,67 @@
-<html>
-  <head>
-  <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>知识分享 | Zexho&#39; blog</title>
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1650628161089">
-<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="知识分享 | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+<link rel="alternate" type="application/atom+xml" title="Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
 
-
+    
 
   <meta name="description" content="芝兰生于幽谷，不因无人而不芳" />
-  </head>
-  <body>
-    <div class="main">
-      <div class="main-content">
-        <div class="site-header">
-  <a href="https://zexho994.github.io/blog.zexho.life">
-  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1650628161089" alt="">
-  </a>
-  <h1 class="site-title">
-    Zexho&#39; blog
-  </h1>
-  <p class="site-description">
-    芝兰生于幽谷，不因无人而不芳
-  </p>
-  <div class="menu-container">
-    
-      
-        <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
-          首页
-        </a>
-      
-    
-      
-        <a href="/archives" class="menu">
-          时间线
-        </a>
-      
-    
-      
-        <a href="/tags" class="menu">
-          标签集
-        </a>
-      
-    
+</head>
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+
+    <div class="nav py-3 md:py-8 fixed w-full z-10 bg-gray-50 dark:bg-gray-700 transition-all duration-300" :class="{ 'scroll': scrolled }">
+  <div class="flex justify-end px-4">
+    <div class="w-8 h-8 flex justify-center items-center rounded-full md:hidden" @click="showMenu = !showMenu">
+      <i class="ri-close-line" v-show="showMenu"></i>
+      <i class="ri-menu-3-line" v-show="!showMenu"></i>
+    </div>
   </div>
-  <div class="social-container">
+  <nav class="max-w-4xl w-full mx-auto text-center flex flex-col md:flex-row justify-center md:block" :class="`${ showMenu ? 'block' : 'hidden' }`">
     
-      
-        <a href="https://github.com/zexho994" target="_blank">
-          <i class="ri-github-line"></i>
-        </a>
-      
+      <a href="https://zexho994.github.io/blog.zexho.life" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        首页
+      </a>
     
-      
+      <a href="/archives" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        时间线
+      </a>
     
-      
+      <a href="/tags" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        标签集
+      </a>
     
-      
-    
-      
-    
-  </div>
+    <a href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+      RSS
+    </a>
+  </nav>
 </div>
 
-        <div class="current-tag-container">
-            <h2 class="title">
-                标签：# 知识分享
-            </h2> 
-        </div>
-        <div class="post-container">
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/">
-        <h2 class="post-title">几个有趣的概率问题</h2>
-      </a>
-      <div class="post-info">
-        <span>
-          2022-04-22 03:58:18
-        </span>
-        <span>
-          3 min read
-        </span>
+    <div class="max-w-4xl w-full mx-auto pt-32">
+      <h1 class="text-2xl font-bold pb-8 flex justify-center items-center">
+        <i class="ri-hashtag"></i>
+        知识分享
+      </h1>
+      <div class="shadow-box bg-white dark:bg-gray-600 border-gray-300 rounded-none md:rounded-lg -mx-1 md:mx-0 md:px-0">
         
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="post-tag">
-            # 学习归纳
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="post-tag">
-            # 知识分享
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          几个有趣的概率问题
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2022-04-22 03:58:18</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>例子来源于《悖论-破解科学史上最复杂的9大谜团》第一章</p>
 </blockquote>
@@ -107,27 +73,23 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/">
-        <h2 class="post-title">反编译+字节码注入破解 Aspose Words 20.6</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2020-08-13 11:06:19
-        </span>
-        <span>
-          3 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="post-tag">
-            # 知识分享
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          反编译+字节码注入破解 Aspose Words 20.6
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2020-08-13 11:06:19</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <ol>
 <li>找到License.class<br>
 在words的jar包中找到License类.验证方法入口在这里<br>
@@ -135,27 +97,23 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/Uh0rKjiE0/">
-        <h2 class="post-title">Mysql UTF-8 编码注意事项</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/u5bZtrIU8/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2019-06-14 03:50:24
-        </span>
-        <span>
-          7 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="post-tag">
-            # 知识分享
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/Uh0rKjiE0/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          Mysql UTF-8 编码注意事项
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2019-06-14 03:50:24</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>今天看到一篇文章，觉得不错。<br>
 原文链接：https://medium.com/@adamhooper/in-mysql-never-use-utf8-use-utf8mb4-11761243e434<br>
@@ -163,50 +121,46 @@
 </blockquote>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/gei-xue-di-men-fen-xi-wireshark/">
-        <h2 class="post-title">给学弟们分析 WireShark</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/Uh0rKjiE0/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2019-05-11 05:59:02
-        </span>
-        <span>
-          4 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="post-tag">
-            # 知识分享
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/gei-xue-di-men-fen-xi-wireshark/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          给学弟们分析 WireShark
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2019-05-11 05:59:02</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>前一阵子要给实验室的学弟们技术分享，当时收到建议给他们普及一些计算机网络的知识，可是关<br>
 有理论知识讲课肯定不够吸引人，于是便一边学习Wireshark一边做PPT一边写讲稿。忙碌了两个星期后，分享会后还是得到了不错的的评价😁，我也在博客中总结下一些使用技巧，内容主要面向新手</p>
 </blockquote>
 
       </div>
-    </article>
-  
-</div>
-
-        <div class="pagination-container">
-  
-  
-</div>
-
-        <div class="site-footer">
-  Life & Coding
-  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
-    <i class="ri-rss-line"></i> RSS
-  </a>
-</div>
-
-      </div>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/gei-xue-di-men-fen-xi-wireshark/" class="btn">
+        Read more
+      </a>
     </div>
-  </body>
+    
+  </div>
+  
+      </div>
+
+      
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+</body>
 </html>

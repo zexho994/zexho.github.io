@@ -1,101 +1,67 @@
-<html>
-  <head>
-  <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>学习归纳 | Zexho&#39; blog</title>
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1650628161089">
-<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="学习归纳 | Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+<link rel="alternate" type="application/atom+xml" title="Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
 
-
+    
 
   <meta name="description" content="芝兰生于幽谷，不因无人而不芳" />
-  </head>
-  <body>
-    <div class="main">
-      <div class="main-content">
-        <div class="site-header">
-  <a href="https://zexho994.github.io/blog.zexho.life">
-  <img class="avatar" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1650628161089" alt="">
-  </a>
-  <h1 class="site-title">
-    Zexho&#39; blog
-  </h1>
-  <p class="site-description">
-    芝兰生于幽谷，不因无人而不芳
-  </p>
-  <div class="menu-container">
-    
-      
-        <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
-          首页
-        </a>
-      
-    
-      
-        <a href="/archives" class="menu">
-          时间线
-        </a>
-      
-    
-      
-        <a href="/tags" class="menu">
-          标签集
-        </a>
-      
-    
+</head>
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+
+    <div class="nav py-3 md:py-8 fixed w-full z-10 bg-gray-50 dark:bg-gray-700 transition-all duration-300" :class="{ 'scroll': scrolled }">
+  <div class="flex justify-end px-4">
+    <div class="w-8 h-8 flex justify-center items-center rounded-full md:hidden" @click="showMenu = !showMenu">
+      <i class="ri-close-line" v-show="showMenu"></i>
+      <i class="ri-menu-3-line" v-show="!showMenu"></i>
+    </div>
   </div>
-  <div class="social-container">
+  <nav class="max-w-4xl w-full mx-auto text-center flex flex-col md:flex-row justify-center md:block" :class="`${ showMenu ? 'block' : 'hidden' }`">
     
-      
-        <a href="https://github.com/zexho994" target="_blank">
-          <i class="ri-github-line"></i>
-        </a>
-      
+      <a href="https://zexho994.github.io/blog.zexho.life" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        首页
+      </a>
     
-      
+      <a href="/archives" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        时间线
+      </a>
     
-      
+      <a href="/tags" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+        标签集
+      </a>
     
-      
-    
-      
-    
-  </div>
+    <a href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
+      RSS
+    </a>
+  </nav>
 </div>
 
-        <div class="current-tag-container">
-            <h2 class="title">
-                标签：# 学习归纳
-            </h2> 
-        </div>
-        <div class="post-container">
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/">
-        <h2 class="post-title">几个有趣的概率问题</h2>
-      </a>
-      <div class="post-info">
-        <span>
-          2022-04-22 03:58:18
-        </span>
-        <span>
-          3 min read
-        </span>
+    <div class="max-w-4xl w-full mx-auto pt-32">
+      <h1 class="text-2xl font-bold pb-8 flex justify-center items-center">
+        <i class="ri-hashtag"></i>
+        学习归纳
+      </h1>
+      <div class="shadow-box bg-white dark:bg-gray-600 border-gray-300 rounded-none md:rounded-lg -mx-1 md:mx-0 md:px-0">
         
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="post-tag">
-            # 学习归纳
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="post-tag">
-            # 知识分享
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          几个有趣的概率问题
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2022-04-22 03:58:18</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <blockquote>
 <p>例子来源于《悖论-破解科学史上最复杂的9大谜团》第一章</p>
 </blockquote>
@@ -107,85 +73,69 @@
 </ol>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/">
-        <h2 class="post-title">通俗理解 Basic Paxos</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2022-04-09 08:45:33
-        </span>
-        <span>
-          5 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="post-tag">
-            # 学习归纳
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="post-tag">
-            # 分布式
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          通俗理解 Basic Paxos
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2022-04-09 08:45:33</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <h1 id="一个简单的分布式场景">一个简单的分布式场景</h1>
 <p>角色说明<br>
 ● 客户端Client，负责发起请求<br>
 ● 服务端Server，接收客户端的请求，并保存请求的数据</p>
 
       </div>
-    </article>
-  
-    <article class="post">
-      <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/">
-        <h2 class="post-title">我理解的CAP</h2>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/" class="btn">
+        Read more
       </a>
-      <div class="post-info">
-        <span>
-          2022-03-20 05:50:28
-        </span>
-        <span>
-          6 min read
-        </span>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="post-tag">
-            # 学习归纳
-          </a>
-        
-          <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="post-tag">
-            # 分布式
-          </a>
-        
-      </div>
-      
-      <div class="post-abstract">
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          我理解的CAP
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2022-03-20 05:50:28</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
         <p>最近在梳理我们系统架构的时候，想从分布式领域的角度来分析架构设计，但是由于之前没系统性接触过分布式相关的知识，正好借此机会来学习分布式相关的知识，并进行自己的总结。本文的目的是搞清楚什么是CAP。</p>
 <blockquote>
 <p>分布式系统的最大难点，就是各个节点的状态如何同步</p>
 </blockquote>
 
       </div>
-    </article>
-  
-</div>
-
-        <div class="pagination-container">
-  
-  
-</div>
-
-        <div class="site-footer">
-  Life & Coding
-  <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">
-    <i class="ri-rss-line"></i> RSS
-  </a>
-</div>
-
-      </div>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/" class="btn">
+        Read more
+      </a>
     </div>
-  </body>
+    
+  </div>
+  
+      </div>
+
+      
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+</body>
 </html>
