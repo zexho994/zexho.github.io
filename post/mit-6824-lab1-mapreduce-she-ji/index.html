@@ -1,0 +1,420 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Mit 6.824 lab1 MapReduce 设计 - Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Mit 6.824 lab1 MapReduce 设计 - Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+
+    
+
+  <meta name="description" content="课程概述
+这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：
+
+课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.htm..." />
+  <meta property="og:title" content="Mit 6.824 lab1 MapReduce 设计 - Zexho&#39; blog">
+  <meta property="og:description" content="课程概述
+这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：
+
+课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.htm..." />
+  <meta property="og:type" content="articles">
+  <meta property="og:url" content="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/" />
+  <meta property="og:image" content="https://zexho994.github.io/blog.zexho.life/images/avatar.png">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1200">
+  <meta name="twitter:title" content="Mit 6.824 lab1 MapReduce 设计 - Zexho&#39; blog">
+  <meta name="twitter:description" content="课程概述
+这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：
+
+课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.htm...">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+ 
+  
+    <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/prism-atom-dark.css">
+  
+
+  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+  
+</head>
+
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+    <a href="https://zexho994.github.io/blog.zexho.life" class="fixed top-0 left-0 mt-4 bg-black text-white dark:text-gray-700 dark:bg-yellow-50 dark:hover:bg-black dark:hover:text-white inline-flex p-2 pl-8 hover:text-gray-700 hover:bg-yellow-50 font-bold z-10 transition-fast animated fadeInLeft">
+      Zexho&#39; blog
+    </a>
+    <div class="max-w-4xl w-full mx-auto">
+      <div class="shadow-box bg-white dark:bg-gray-600 rounded-lg pt-32 md:pt-64 px-4 md:px-8 pb-8 animated fadeIn mb-8">
+        <h1 class="text-5xl font-semibold leading-normal pb-8 mb-8 border-b-8 border-gray-700">
+          Mit 6.824 lab1 MapReduce 设计
+        </h1>
+        
+        <div class="mb-8 flex flex-wrap">
+          <div class="text-gray-400 text-sm mr-4">2022-05-15 05:22:02 · 5 min read</div>
+          
+        </div>
+        <div class="markdown mb-8" v-pre>
+          <h1 id="课程概述">课程概述</h1>
+<p>这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：</p>
+<ul>
+<li>课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.html</li>
+<li>parper: https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf</li>
+<li>https://spongecaptain.cool/post/paper/mapreduce/</li>
+<li>https://www.bilibili.com/video/BV1Vb411m7go?spm_id_from=333.337.search-card.all.click</li>
+</ul>
+<!-- more -->
+<blockquote>
+<p>因 mit 课程要求，不能提供源码等信息，所以本文不提供具体的代码实现，而是说一说部分设计思路</p>
+</blockquote>
+<p>课程中，我们是使用一台机器模拟出分布式的效果，通信使用RPC的方式，部署的方式是一个master + 多个worker。</p>
+<ul>
+<li>master的主要任务就一个：分配task给worker</li>
+<li>worker的主要任务有两个：1.向master请求task 2.判断 task 类型，使用map()或者reduce()执行。<br>
+简单的表示如下：<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h297r1790rj20mw0jgq39.jpg" alt="" loading="lazy"></li>
+</ul>
+<p>下面是详细的的要求解释：</p>
+<ul>
+<li>整个 MR 框架由一个 Master 进程及若干个 Worker 进程构成<br>
+Master 进程与 Worker 进程间通过本地 Socket 进行 Golang RPC 通信</li>
+<li>由 Master 协调整个 MR 计算的推进，并分配 Task 到 Worker 上运行</li>
+<li>在启动 Master 进程时指定 输入文件名 及 Reduce Task 数量</li>
+<li>在启动 Worker 进程时指定所用的 MR APP 动态链接库文件</li>
+<li>Master 需要留意 Worker 可能无法在合理时间内完成收到的任务（Worker 卡死或宕机），在遇到此类问题时需要重新派发任务</li>
+<li>Master 进程的入口文件为 main/mrcoordinator.go，Worker 进程的入口文件为 main/mrworker.go</li>
+<li>我们需要补充实现 mr/master.go、mr/worker.go、mr/rpc.go 这三个文件</li>
+</ul>
+<p>分析一下 ，我们要设计一下要点：</p>
+<ol>
+<li>Master 和 Wokrer 的 RPC 通信流程设计。</li>
+<li>Master 要记录task的处理情况<br>
+a. 分配给worker a的task不能再分配给worker b。<br>
+b. 如果 worker a 完成 task，则task不能再进行分配。</li>
+<li>Worker 可能有失败的情况，Master 需要进行 Worker 的故障处理。</li>
+<li>Master 的所有task都完成后，要exit()，设计 Master.Done() 方法</li>
+<li>Worker 区分 Master 分配的任务类型，然后分配执行对应的方法</li>
+</ol>
+<p>详细一些的图示如下:<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h297s3we5pj21nj0u0779.jpg" alt="" loading="lazy"></p>
+<h1 id="设计实现">设计实现</h1>
+<h2 id="rpc通信">RPC通信</h2>
+<p>先给master添加个方法，直接在master.go下添加，例如这里要添加一个申请task的方法ApplyTask()</p>
+<pre><code class="language-go">func (m *Master) ApplyTask(req *RpcReq, rep *RpcRep) error{
+	fmt.Printf(&quot;worker apply task,req %v &quot;, req.ReqType)
+	rep.RepType = 1
+	return nil
+}
+</code></pre>
+<p>这样就给master添加了一个新的方法，如何给worker进行rpc调用呢？Go 中非常方便，下面直接在worker#Worker()方法中添加</p>
+<pre><code class="language-go">func Worker(mapf func(string, string) []KeyValue, reducef func(string, []string) string) {
+
+	req := RpcReq{ReqType: 2}
+	rep := RpcRep{}
+
+    // 方法名 + 方法参数
+	call(&quot;Master.ApplyTask&quot;,&amp;req,&amp;rep)
+	fmt.Printf(&quot;rep.repType %v \n&quot;,rep.RepType)
+}
+</code></pre>
+<p>运行master和worker后，就可以看到对应的输出了。</p>
+<h2 id="master">Master</h2>
+<p>master 是任务管理者的角色，这里的管理主要有三件事</p>
+<ol>
+<li>记录每个任务的执行状态</li>
+<li>记录所有任务的整体情况</li>
+<li>决定如何分配任务</li>
+</ol>
+<p>抽象出一个任务的类似 task，负责表示每一个任务，然后任务的集中化管理使用taskPoll类进行封装。<br>
+这样master调用taskPoll的方法进行管理就好了。</p>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h297v9fzskj212i0j2789.jpg" alt="" loading="lazy"></figure>
+<p>taks的state有3种：</p>
+<ol>
+<li>ready ： 表示初始化状态</li>
+<li>running: 该任务已被获取，正在执行中</li>
+<li>done: 该任务已经完成，无法再获取</li>
+</ol>
+<p>这样commit方法相当于把task的state从running -&gt; done, rollback 相当于从running -&gt; ready。</p>
+<h3 id="过期任务的检查">过期任务的检查</h3>
+<p>每一个task中保存开始执行的时间，taskPoll通过启动一个线程每秒进行一次检查，<br>
+当有发现某个task的执行时间超过10s时，就认为该task在worker中执行失败了，所以将该任务进行rollback，保证其他worker可以获取到该task。</p>
+<h2 id="worker">worker</h2>
+<figure data-type="image" tabindex="2"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h297x24lncj20wm0u0go5.jpg" alt="" loading="lazy"></figure>
+<h1 id="遇到的一些问题">遇到的一些问题</h1>
+<h2 id="编译失败1">编译失败1:</h2>
+<p>执行go build时，报错：<br>
+build command-line-arguments: cannot find module for path _/Users/xxx/xxx/6.824/src/mr<br>
+解决办法：</p>
+<ol>
+<li>GO111MODULE=off 禁用 go module</li>
+</ol>
+<h2 id="编译失败情况2">编译失败情况2：</h2>
+<p>在执行go build时，报错<br>
+/usr/local/go/pkg/tool/darwin_amd64/link: /usr/local/go/pkg/tool/darwin_amd64/link: combining dwarf failed: unknown load command 0x80000034 (2147483700)<br>
+解决办法：下载对应的go版本</p>
+<ol>
+<li>在 https://studygolang.com/dl 下载课程需要的1.13.6</li>
+<li>下载，然后安装<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h297xu1d9zj219g0aegnd.jpg" alt="" loading="lazy"></li>
+</ol>
+<h2 id="test-mrsh-command-not-found">test-mr.sh: command not found</h2>
+<p>出现 test-mr.sh: line 40: timeout: command not found 这种语句 ，<br>
+看下第40行的代码，是一个timeout命令.<br>
+timeout -k 2s 180s ../mrmaster ../pg*txt &amp;<br>
+timeou在mac上没有默认按照，所以要安装一下<br>
+brew install coreutils<br>
+然后就可以了.</p>
+
+        </div>
+        <!-- Share to Twitter, Weibo, Telegram -->
+        <div class="flex items-center">
+          <div class="mr-4 flex items-center">
+            <i class="ri-share-forward-line text-gray-500"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTwitter">
+            <i class="ri-twitter-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 inline-flex" @click="shareToWeibo">
+            <i class="ri-weibo-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-indigo-500 hover:bg-indigo-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTelegram">
+            <i class="ri-telegram-line"></i>
+          </div>
+        </div>
+      </div>
+
+      
+
+      
+        <div id="vlaine-comment"></div>
+      
+
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+    </div>
+
+    <!-- TOC Container -->
+    <div class="fixed right-0 bottom-0 mb-16 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white dark:bg-gray-500 dark:text-gray-200 hover:shadow-lg transition-all animated fadeInRight" @click="showToc = true">
+      <i class="ri-file-list-line"></i>
+    </div>
+
+    <div class="fixed right-0 top-0 bottom-0 overflow-y-auto w-64 bg-white dark:bg-gray-800 p-4 border-l border-gray-100 dark:border-gray-600 z-10 transition-fast" :class="{ '-mr-64': !showToc }">
+      <div class="flex mb-4 justify-end">
+        <div class="w-8 h-8 inline-flex justify-center items-center rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast" @click="showToc = false">
+          <i class="ri-close-line text-lg"></i>
+        </div>
+      </div>
+      <div class="post-toc-container">
+        <ul class="markdownIt-TOC">
+<li><a href="#%E8%AF%BE%E7%A8%8B%E6%A6%82%E8%BF%B0">课程概述</a></li>
+<li><a href="#%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0">设计实现</a>
+<ul>
+<li><a href="#rpc%E9%80%9A%E4%BF%A1">RPC通信</a></li>
+<li><a href="#master">Master</a>
+<ul>
+<li><a href="#%E8%BF%87%E6%9C%9F%E4%BB%BB%E5%8A%A1%E7%9A%84%E6%A3%80%E6%9F%A5">过期任务的检查</a></li>
+</ul>
+</li>
+<li><a href="#worker">worker</a></li>
+</ul>
+</li>
+<li><a href="#%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98">遇到的一些问题</a>
+<ul>
+<li><a href="#%E7%BC%96%E8%AF%91%E5%A4%B1%E8%B4%A51">编译失败1:</a></li>
+<li><a href="#%E7%BC%96%E8%AF%91%E5%A4%B1%E8%B4%A5%E6%83%85%E5%86%B52">编译失败情况2：</a></li>
+<li><a href="#test-mrsh-command-not-found">test-mr.sh: command not found</a></li>
+</ul>
+</li>
+</ul>
+
+      </div>
+    </div>
+
+    <!-- Back to top -->
+    <div class="fixed right-0 bottom-0 mb-4 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white hover:shadow-lg transition-all dark:bg-gray-500 dark:text-gray-200" @click="backToUp" v-show="scrolled">
+      <i class="ri-arrow-up-line"></i>
+    </div>
+  </div>
+
+  <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+        It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg">
+  </div>
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+    </div>
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+        <div class="pswp__counter">
+        </div>
+        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip">
+        </div>
+      </div>
+      <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+      </button>
+      <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+      </button>
+      <div class="pswp__caption">
+        <div class="pswp__caption__center">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+  
+  <!-- Code Highlight -->
+  
+    <script src="https://zexho994.github.io/blog.zexho.life/media/prism.js"></script>
+    <script>
+      Prism.highlightAll()
+    </script>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+  <script>
+    //拿到预览框架，也就是上面的html代码
+    var pswpElement = document.querySelectorAll('.pswp')[0];
+    //定义图片数组变量
+    var imgitems;
+    /**
+    * 用于显示预览界面
+    * @param index 图片数组下标
+    */
+    function viewImg(index) {
+      //其它选项这里不做过多阐述，详情见官网
+      var pswpoptions = {
+        index: parseInt(index, 10), // 开始幻灯片索引。0是第一张幻灯片。必须是整数，而不是字符串。
+        bgOpacity: 0.7, // 背景透明度，0-1
+        maxSpreadZoom: 3, // 缩放级别，不要太大
+      };
+      //初始化并打开PhotoSwipe，pswpElement对应上面预览框架，PhotoSwipeUI_Default为皮肤，imgitems为图片数组，pswpoptions为选项
+      var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, imgitems, pswpoptions);
+      gallery.init()
+    }
+    /**
+    * 用于添加图片点击事件
+    * @param img 图片元素
+    * @param index 所属下标（在imgitems中的位置）
+    */
+    function addImgClick(img, index) {
+      img.onclick = function() {
+        viewImg(index)
+      }
+    }
+    /**
+    * 轮询所有图片，获取src、width、height等数据，加入imgitems，并给图片元素添加事件
+    * 最好在onload中执行该方法，本站因放在最底部，所以直接初始化
+    * 异步加载图片可在图片元素创建完成后调用此方法
+    */
+    function initImg() {
+      //重置图片数组
+      imgitems = [];
+      //查找class:markdown 下的所有img元素并遍历
+      var imgs = document.querySelectorAll('.markdown img');
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        //本站相册初始为loading图片，真实图片放在data-src
+        var ds = img.getAttribute("data-src");
+        //创建image对象，用于获取图片宽高
+        var imgtemp = new Image();
+        //判断是否存在data-src
+        if (ds != null && ds.length > 0) {
+          imgtemp.src = ds
+        } else {
+          imgtemp.src = img.src
+        }
+        //判断是否存在缓存
+        if (imgtemp.complete) {
+          var imgobj = {
+            "src": imgtemp.src,
+            "w": imgtemp.width,
+            "h": imgtemp.height,
+          };
+          imgitems[i] = imgobj;
+          addImgClick(img, i);
+        } else {
+          console.log('进来了2')
+          imgtemp.index = i;
+          imgtemp.img = img;
+          imgtemp.onload = function() {
+            var imgobj = {
+              "src": this.src,
+              "w": this.width,
+              "h": this.height,
+            };
+            //不要使用push，因为onload前后顺序会不同
+            imgitems[this.index] = imgobj
+            //添加点击事件
+            addImgClick(this.img, this.index);
+          }
+        }
+      }
+    }
+    //初始化
+    initImg();
+  </script>
+  
+    <script type="application/javascript" src="https://unpkg.com/valine"></script>
+<script type="application/javascript">
+  new Valine({
+    el: '#vlaine-comment',
+    appId: 'SJ0Up6Xp18s3xWpfGN2tkFxN-MdYXbMMI',
+    appKey: 'SkHfrdnHUzK1f9ss0I5i3cxr',
+    pageSize: 10,
+    notify: true,
+    avatar: 'mp',
+    verify: false,
+    placeholder: '来都来了，不妨评论一下',
+    visitor: false,
+    highlight: true,
+    recordIP: false,
+  })
+</script>
+  
+  
+</body>
+
+</html>

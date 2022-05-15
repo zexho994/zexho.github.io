@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-04-27T03:14:20.098Z</updated>
+    <updated>2022-05-15T09:32:41.207Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,31 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Mit 6.824 lab1 MapReduce 设计]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/">
+        </link>
+        <updated>2022-05-15T09:22:02.000Z</updated>
+        <summary type="html"><![CDATA[<h1 id="课程概述">课程概述</h1>
+<p>这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：</p>
+<ul>
+<li>课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.html</li>
+<li>parper: https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf</li>
+<li>https://spongecaptain.cool/post/paper/mapreduce/</li>
+<li>https://www.bilibili.com/video/BV1Vb411m7go?spm_id_from=333.337.search-card.all.click</li>
+</ul>
+]]></summary>
+        <content type="html"><![CDATA[<h1 id="课程概述">课程概述</h1>
+<p>这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：</p>
+<ul>
+<li>课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.html</li>
+<li>parper: https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf</li>
+<li>https://spongecaptain.cool/post/paper/mapreduce/</li>
+<li>https://www.bilibili.com/video/BV1Vb411m7go?spm_id_from=333.337.search-card.all.click</li>
+</ul>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[几个有趣的概率问题]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/</id>
@@ -168,25 +193,6 @@
 <li>master启动</li>
 <li>slave的启动</li>
 <li>m/s 数据同步</li>
-</ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[RocketMQ4.9.1源码分析_(事务) Half半消息处理]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-_shi-wu-half-ban-xiao-xi-chu-li/">
-        </link>
-        <updated>2021-10-05T12:04:53.000Z</updated>
-        <summary type="html"><![CDATA[<p>half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：</p>
-<ol>
-<li>producer -&gt; broker 发送half消息</li>
-<li>broker 处理half消息</li>
-</ol>
-]]></summary>
-        <content type="html"><![CDATA[<p>half消息属于RocketMQ事务处理的第一个阶段，可以包括两部分：</p>
-<ol>
-<li>producer -&gt; broker 发送half消息</li>
-<li>broker 处理half消息</li>
 </ol>
 ]]></content>
     </entry>
