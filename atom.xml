@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-05-18T04:56:28.958Z</updated>
+    <updated>2022-06-14T15:07:26.801Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,27 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[[MIT6.824 lab2] Raft-Leader election 代码实现 & 踩坑记录]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/">
+        </link>
+        <updated>2022-06-14T11:16:36.000Z</updated>
+        <summary type="html"><![CDATA[<blockquote>
+<p>本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。</p>
+</blockquote>
+<p>课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html</p>
+<h2 id="目标">目标</h2>
+<p>实现raft算法中的领导人选举部分</p>
+]]></summary>
+        <content type="html"><![CDATA[<blockquote>
+<p>本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。</p>
+</blockquote>
+<p>课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html</p>
+<h2 id="目标">目标</h2>
+<p>实现raft算法中的领导人选举部分</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Mit 6.824 lab1 MapReduce 设计]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/</id>
@@ -172,27 +193,6 @@
 <li><code>slave</code>如何获取<code>master</code>的路由信息</li>
 <li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
 <li><code>slave</code>如何处理<code>master</code>同步的数据</li>
-</ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[RocketMQ4.9.1源码分析(HA模块) Master读写处理]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/">
-        </link>
-        <updated>2021-10-07T17:06:31.000Z</updated>
-        <summary type="html"><![CDATA[<p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
-<ol>
-<li>master启动</li>
-<li>slave的启动</li>
-<li>m/s 数据同步</li>
-</ol>
-]]></summary>
-        <content type="html"><![CDATA[<p>从最抽象的角度看，主从同步流程可以分为3个步骤:</p>
-<ol>
-<li>master启动</li>
-<li>slave的启动</li>
-<li>m/s 数据同步</li>
 </ol>
 ]]></content>
     </entry>

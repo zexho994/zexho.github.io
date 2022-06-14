@@ -1,0 +1,625 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录 - Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录 - Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+
+    
+
+  <meta name="description" content="
+本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。
+
+课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html
+目标
+..." />
+  <meta property="og:title" content="[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录 - Zexho&#39; blog">
+  <meta property="og:description" content="
+本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。
+
+课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html
+目标
+..." />
+  <meta property="og:type" content="articles">
+  <meta property="og:url" content="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/" />
+  <meta property="og:image" content="https://zexho994.github.io/blog.zexho.life/images/avatar.png">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1200">
+  <meta name="twitter:title" content="[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录 - Zexho&#39; blog">
+  <meta name="twitter:description" content="
+本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。
+
+课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html
+目标
+...">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+ 
+  
+    <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/prism-atom-dark.css">
+  
+
+  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+  
+</head>
+
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+    <a href="https://zexho994.github.io/blog.zexho.life" class="fixed top-0 left-0 mt-4 bg-black text-white dark:text-gray-700 dark:bg-yellow-50 dark:hover:bg-black dark:hover:text-white inline-flex p-2 pl-8 hover:text-gray-700 hover:bg-yellow-50 font-bold z-10 transition-fast animated fadeInLeft">
+      Zexho&#39; blog
+    </a>
+    <div class="max-w-4xl w-full mx-auto">
+      <div class="shadow-box bg-white dark:bg-gray-600 rounded-lg pt-32 md:pt-64 px-4 md:px-8 pb-8 animated fadeIn mb-8">
+        <h1 class="text-5xl font-semibold leading-normal pb-8 mb-8 border-b-8 border-gray-700">
+          [MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录
+        </h1>
+        
+        <div class="mb-8 flex flex-wrap">
+          <div class="text-gray-400 text-sm mr-4">2022-06-14 07:16:36 · 8 min read</div>
+          
+        </div>
+        <div class="markdown mb-8" v-pre>
+          <blockquote>
+<p>本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。</p>
+</blockquote>
+<p>课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html</p>
+<h2 id="目标">目标</h2>
+<p>实现raft算法中的领导人选举部分</p>
+<!-- more -->
+<h2 id="需要实现的部分">需要实现的部分</h2>
+<ol>
+<li>Make()</li>
+<li>Raft{}</li>
+<li>GetState()</li>
+<li>RequestVote()</li>
+<li>RequestVoteArgs{}</li>
+<li>RequestVoteReply{}</li>
+<li>AppendEntries()</li>
+<li>AppendEntriesArgs {}</li>
+<li>AppendEntriesReply {}</li>
+</ol>
+<h2 id="流程图">流程图</h2>
+<p>理解了流程图，要实现代码就比较简单了</p>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h37zphn2mhj21gr0k340k.jpg" alt="" loading="lazy"></figure>
+<h2 id="code">code</h2>
+<p>这里直接展示代码，代码的逻辑配合流程图可以理解清楚。</p>
+<h3 id="raft">Raft { }</h3>
+<pre><code class="language-go">const Leader int32 = 1
+const Follower int32 = 2
+const Candidate int32 = 3
+
+type Raft struct {
+	mu        sync.Mutex          // Lock to protect shared access to this Peer's state
+	peers     []*labrpc.ClientEnd // RPC end points of all peers
+	persister *Persister          // Object to hold this Peer's persisted state
+	me        int                 // this Peer's index into peers[]
+	dead      int32               // set by Kill()
+
+	//任期号
+	Term int32
+	//获得选票的服务器
+	VotedFor int
+	//角色类型
+	Role int32
+	//下一个超时时间
+	NextTimeout time.Time
+}
+</code></pre>
+<h3 id="make">Make()</h3>
+<p>最先要实现的部分是Make()方法，目的是要创建一个Raft对象、运行后台任务</p>
+<pre><code class="language-go">func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan ApplyMsg) *Raft {
+	//log.Printf(&quot;== Make() ==&quot;)
+	rf := &amp;Raft{}
+	rf.peers = peers
+	rf.persister = persister
+	rf.me = me
+	// Your initialization Code here (2A, 2B, 2C).
+	rf.Term = 0
+	rf.Role = Follower
+	rf.VotedFor = -1
+	// 设置下次心跳检查时间
+	rf.updateHeartbeatTime()
+	// 维持状态的协程
+	go rf.maintainStateLoop()
+	// initialize from state persisted before a crash
+	rf.readPersist(persister.ReadRaftState())
+
+	return rf
+}
+</code></pre>
+<p>goroutine 的方法 maintainStateLoop() 负责不停的执行各个角色对应的操作</p>
+<pre><code class="language-go">func (rf *Raft) maintainStateLoop() {
+	for !rf.killed() {
+		rf.mu.Lock()
+		if rf.isLeader() {
+			rf.maintainsLeader()
+		} else if rf.isFollower() {
+			rf.maintainsFollower()
+		} else if rf.isCandidate() {
+			rf.maintainsCandidate()
+		} else {
+			log.Fatalf(&quot;[raft-%v %v] Role type error : %v \n&quot;, rf.me, rf.getRole(), rf.Role)
+		}
+	}
+}
+</code></pre>
+<h3 id="follower-的职责">follower 的职责</h3>
+<p>判断心跳是否超时，如果超时就变成candidate</p>
+<pre><code class="language-go">func (rf *Raft) maintainsFollower() {
+	if rf.heartbeatTimeout() {
+		rf.changeToCandidate()
+		rf.mu.Unlock()
+	} else {
+		rf.mu.Unlock()
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+</code></pre>
+<h3 id="candidate-的职责">candidate 的职责</h3>
+<p>负责发起竞选的rpc，根据请求的reply进行处理不同的处理</p>
+<pre><code class="language-go">func (rf *Raft) maintainsCandidate() {
+	// 检查超时
+	if !rf.heartbeatTimeout() {
+		rf.mu.Unlock()
+		time.Sleep(10 * time.Millisecond)
+		return
+	}
+
+	// 发送投票RPC
+	log.Printf(&quot;[raft-%v %v %v] == 发起投票RPC == \n&quot;, rf.me, rf.getRole(), rf.Term)
+	rf.VotedFor = rf.me
+	rf.Term += 1
+	maxTerm, sumVotes := rf.Term, len(rf.peers)
+	voteReply := make(chan *RequestVoteReply)
+	args := RequestVoteArgs{Peer: rf.me, Term: rf.Term}
+	for idx := range rf.peers {
+		if rf.me == idx {
+			continue
+		}
+		go func(from int, to int, term int32) {
+			reply := RequestVoteReply{Peer: to, Term: term, VoteGranted: false}
+			_ = rf.sendRequestVote(to, &amp;args, &amp;reply)
+			voteReply &lt;- &amp;reply
+		}(rf.me, idx, rf.Term)
+	}
+	rf.mu.Unlock()
+
+	// 处理投票回复
+	validVotes, acceptVotes := 1, 1
+	select {
+	case reply := &lt;-voteReply:
+		validVotes++
+		if reply.VoteGranted {
+			acceptVotes++
+		} else if reply.Term &gt; maxTerm {
+			maxTerm = reply.Term
+		}
+		if validVotes &gt; sumVotes/2 {
+			goto VotedDone
+		}
+	}
+
+	//汇总投票结果
+VotedDone:
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if rf.killed() || !rf.isCandidate() {
+	} else if maxTerm &gt; rf.Term {
+		log.Printf(&quot;[raft-%v-%v-%v] 投票结果: 有更大的Term,放弃竞选: %v.\n&quot;, rf.me, rf.getRole(), rf.Term, maxTerm)
+		rf.changeToFollower(maxTerm)
+	} else if rf.isQuorum(acceptVotes) {
+		log.Printf(&quot;[raft-%v-%v-%v] == 投票通过: 总票数 = %v. 赞同票数 = %v == \n&quot;, rf.me, rf.getRole(), rf.Term, sumVotes, acceptVotes)
+		rf.changeToLeader()
+	} else {
+		log.Printf(&quot;[raft-%v-%v-%v] == 投票未通过: 总票数 = %v. 赞同票数 = %v == \n&quot;, rf.me, rf.getRole(), rf.Term, sumVotes, acceptVotes)
+		rf.updateHeartbeatTime()
+	}
+}
+
+func (rf *Raft) isQuorum(accept int) bool {
+	return accept &gt; len(rf.peers)/2
+}
+</code></pre>
+<h3 id="leader-的职责">Leader 的职责</h3>
+<p>负责向其他所有节点发送心跳</p>
+<pre><code class="language-go">func (rf *Raft) maintainsLeader() {
+	//log.Printf(&quot;[raft-%v %v %v] 发送心跳RPC. now = %v&quot;, rf.me, rf.getRole(), rf.Term, time.Now().Local())
+	args := AppendEntriesArgs{Peer: rf.me, Term: rf.Term}
+	for idx := range rf.peers {
+		if idx == rf.me {
+			continue
+		}
+		go func(from int, to int, term int32) {
+			reply := AppendEntriesReply{}
+			flag := rf.sendAppendEntries(to, &amp;args, &amp;reply)
+			rf.mu.Lock()
+			defer rf.mu.Unlock()
+			if !rf.killed() &amp;&amp; rf.isLeader() &amp;&amp; flag &amp;&amp; reply.Term &gt; rf.Term &amp;&amp; args.Term == rf.Term {
+				rf.changeToFollower(reply.Term)
+			}
+		}(rf.me, idx, rf.Term)
+	}
+	rf.mu.Unlock()
+	time.Sleep(100 * time.Millisecond)
+}
+</code></pre>
+<h3 id="竞选投票相关">竞选投票相关</h3>
+<pre><code class="language-go">type RequestVoteArgs struct {
+	// 竞选人id
+	Peer int
+	// 竞选人term
+	Term int32
+}
+</code></pre>
+<pre><code class="language-go">type RequestVoteReply struct {
+    // 发送回复的节点id
+	Peer        int
+    // 发送回复的节点term
+	Term        int32
+    // 如果为true表示赞同
+	VoteGranted bool
+}
+</code></pre>
+<pre><code class="language-go">func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if rf.killed() {
+		return
+	}
+
+	log.Printf(&quot;[raft-%v %v %v] 处理%v的投票RPC. T = %v \n&quot;, rf.me, rf.getRole(), rf.Term, args.Peer, args.Term)
+	reply.Term, reply.VoteGranted = rf.Term, false
+
+	// term太小，不理
+	if args.Term &lt; rf.Term {
+		return
+	}
+
+	// 更大的term
+	if args.Term &gt; rf.Term {
+		rf.changeToFollower(args.Term)
+	}
+
+	// 每个任期，只能投票一次
+	if rf.VotedFor == -1 || rf.VotedFor == args.Peer {
+		reply.VoteGranted = true
+		rf.VotedFor = args.Peer
+		rf.updateHeartbeatTime()
+	}
+}
+</code></pre>
+<h3 id="心跳相关">心跳相关</h3>
+<pre><code class="language-go">type AppendEntriesArgs struct {
+	Peer int
+	Term int32
+}
+</code></pre>
+<pre><code class="language-go">type AppendEntriesReply struct {
+	Term   int32
+	Result bool
+}
+
+</code></pre>
+<pre><code class="language-go">func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if rf.killed() {
+		return
+	}
+	//log.Printf(&quot;[raft-%v %v %v] 接收来自%v的心跳请求. T = %v.\n&quot;, rf.me, rf.getRole(), rf.Term, args.Peer, args.Term)
+	reply.Term, reply.Result = rf.Term, args.Term &gt;= rf.Term
+
+	if args.Term &lt; rf.Term {
+		return
+	} else if rf.isCandidate() {
+		rf.changeToFollower(args.Term)
+	} else {
+		rf.updateHeartbeatTime()
+	}
+
+	// 日志操作lab-2A不实现
+	rf.persist()
+}
+</code></pre>
+<h2 id="注意事项">注意事项</h2>
+<pre><code class="language-text">--- FAIL: TestReElection2A (8.51s)
+    config.go:330: expected one leader, got none
+</code></pre>
+<p>在这个test case中，先disconnect已经选出来的leader，然后给2s的时间选举出新的leader，这里的错误原因就是2s时间没有选举出新的leader。<br>
+要点在于如何提高选举的效率，保证更快的时间内（2s内）选举出leader，<br>
+出现这个情况的原因大概率和活锁有关，两个或多个candidate争夺竞选，这里注意一些要点：</p>
+<ol>
+<li>关于选举间隔时间：建议 150 ~ 300 之间
+<ul>
+<li>设置太高会浪费空闲时间</li>
+<li>设置太低又容易发生活锁，也存在一种情况就是leader选举出来了，但是又收到term更高的vote rp请求。</li>
+</ul>
+</li>
+<li>当选leader，应该尽快发送心跳rpc，防止follow过期</li>
+<li>leader 发送心跳的频率 ， 建议在100ms一次，官方也是建议1s不超过10次</li>
+</ol>
+<p>关于更新心跳时间的条件，首先本质上就是在收到有效的rpc请求时（知道有别人存活）或者自己发起选举时（知道自己存活），就要更新心跳时间，如下三个点：</p>
+<ul>
+<li>收到leader的心跳rpc时（leader.term &gt;= self.term 即算有效）</li>
+<li>收到candidate的投票请求，并投了赞同票时</li>
+<li>在进行新一轮的选举时</li>
+</ul>
+<h2 id="脚本测试">脚本测试</h2>
+<blockquote>
+<p>测试脚本: https://gist.github.com/jonhoo/</p>
+</blockquote>
+<p>250 次测试结果通过<br>
+<img src="https://tva1.sinaimg.cn/large/e6c9d24egy1h386800abjj20hi064q3q.jpg" alt="" loading="lazy"></p>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>
+<p>参考使用chan + select 的模式： https://yuerblog.cc/2020/08/13/mit-6-824-distributed-systems-%E5%AE%9E%E7%8E%B0raft-lab2a/</p>
+</li>
+<li>
+<p>raft论文(中文) :  https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf  [ 主要看5.2 leader 选举部分 ]</p>
+</li>
+<li>
+<p>https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-06-raft1/6.8-xuan-ju-ding-shi-qi-election-timer</p>
+</li>
+<li>
+<p>一些注意事项 : https://zhuanlan.zhihu.com/p/368433074</p>
+</li>
+</ul>
+
+        </div>
+        <!-- Share to Twitter, Weibo, Telegram -->
+        <div class="flex items-center">
+          <div class="mr-4 flex items-center">
+            <i class="ri-share-forward-line text-gray-500"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTwitter">
+            <i class="ri-twitter-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 inline-flex" @click="shareToWeibo">
+            <i class="ri-weibo-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-indigo-500 hover:bg-indigo-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTelegram">
+            <i class="ri-telegram-line"></i>
+          </div>
+        </div>
+      </div>
+
+      
+
+      
+        <div id="vlaine-comment"></div>
+      
+
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+    </div>
+
+    <!-- TOC Container -->
+    <div class="fixed right-0 bottom-0 mb-16 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white dark:bg-gray-500 dark:text-gray-200 hover:shadow-lg transition-all animated fadeInRight" @click="showToc = true">
+      <i class="ri-file-list-line"></i>
+    </div>
+
+    <div class="fixed right-0 top-0 bottom-0 overflow-y-auto w-64 bg-white dark:bg-gray-800 p-4 border-l border-gray-100 dark:border-gray-600 z-10 transition-fast" :class="{ '-mr-64': !showToc }">
+      <div class="flex mb-4 justify-end">
+        <div class="w-8 h-8 inline-flex justify-center items-center rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast" @click="showToc = false">
+          <i class="ri-close-line text-lg"></i>
+        </div>
+      </div>
+      <div class="post-toc-container">
+        <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E7%9B%AE%E6%A0%87">目标</a></li>
+<li><a href="#%E9%9C%80%E8%A6%81%E5%AE%9E%E7%8E%B0%E7%9A%84%E9%83%A8%E5%88%86">需要实现的部分</a></li>
+<li><a href="#%E6%B5%81%E7%A8%8B%E5%9B%BE">流程图</a></li>
+<li><a href="#code">code</a>
+<ul>
+<li><a href="#raft">Raft { }</a></li>
+<li><a href="#make">Make()</a></li>
+<li><a href="#follower-%E7%9A%84%E8%81%8C%E8%B4%A3">follower 的职责</a></li>
+<li><a href="#candidate-%E7%9A%84%E8%81%8C%E8%B4%A3">candidate 的职责</a></li>
+<li><a href="#leader-%E7%9A%84%E8%81%8C%E8%B4%A3">Leader 的职责</a></li>
+<li><a href="#%E7%AB%9E%E9%80%89%E6%8A%95%E7%A5%A8%E7%9B%B8%E5%85%B3">竞选投票相关</a></li>
+<li><a href="#%E5%BF%83%E8%B7%B3%E7%9B%B8%E5%85%B3">心跳相关</a></li>
+</ul>
+</li>
+<li><a href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">注意事项</a></li>
+<li><a href="#%E8%84%9A%E6%9C%AC%E6%B5%8B%E8%AF%95">脚本测试</a></li>
+<li><a href="#reference">Reference</a></li>
+</ul>
+</li>
+</ul>
+
+      </div>
+    </div>
+
+    <!-- Back to top -->
+    <div class="fixed right-0 bottom-0 mb-4 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white hover:shadow-lg transition-all dark:bg-gray-500 dark:text-gray-200" @click="backToUp" v-show="scrolled">
+      <i class="ri-arrow-up-line"></i>
+    </div>
+  </div>
+
+  <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+        It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg">
+  </div>
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+    </div>
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+        <div class="pswp__counter">
+        </div>
+        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip">
+        </div>
+      </div>
+      <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+      </button>
+      <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+      </button>
+      <div class="pswp__caption">
+        <div class="pswp__caption__center">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+  
+  <!-- Code Highlight -->
+  
+    <script src="https://zexho994.github.io/blog.zexho.life/media/prism.js"></script>
+    <script>
+      Prism.highlightAll()
+    </script>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+  <script>
+    //拿到预览框架，也就是上面的html代码
+    var pswpElement = document.querySelectorAll('.pswp')[0];
+    //定义图片数组变量
+    var imgitems;
+    /**
+    * 用于显示预览界面
+    * @param index 图片数组下标
+    */
+    function viewImg(index) {
+      //其它选项这里不做过多阐述，详情见官网
+      var pswpoptions = {
+        index: parseInt(index, 10), // 开始幻灯片索引。0是第一张幻灯片。必须是整数，而不是字符串。
+        bgOpacity: 0.7, // 背景透明度，0-1
+        maxSpreadZoom: 3, // 缩放级别，不要太大
+      };
+      //初始化并打开PhotoSwipe，pswpElement对应上面预览框架，PhotoSwipeUI_Default为皮肤，imgitems为图片数组，pswpoptions为选项
+      var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, imgitems, pswpoptions);
+      gallery.init()
+    }
+    /**
+    * 用于添加图片点击事件
+    * @param img 图片元素
+    * @param index 所属下标（在imgitems中的位置）
+    */
+    function addImgClick(img, index) {
+      img.onclick = function() {
+        viewImg(index)
+      }
+    }
+    /**
+    * 轮询所有图片，获取src、width、height等数据，加入imgitems，并给图片元素添加事件
+    * 最好在onload中执行该方法，本站因放在最底部，所以直接初始化
+    * 异步加载图片可在图片元素创建完成后调用此方法
+    */
+    function initImg() {
+      //重置图片数组
+      imgitems = [];
+      //查找class:markdown 下的所有img元素并遍历
+      var imgs = document.querySelectorAll('.markdown img');
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        //本站相册初始为loading图片，真实图片放在data-src
+        var ds = img.getAttribute("data-src");
+        //创建image对象，用于获取图片宽高
+        var imgtemp = new Image();
+        //判断是否存在data-src
+        if (ds != null && ds.length > 0) {
+          imgtemp.src = ds
+        } else {
+          imgtemp.src = img.src
+        }
+        //判断是否存在缓存
+        if (imgtemp.complete) {
+          var imgobj = {
+            "src": imgtemp.src,
+            "w": imgtemp.width,
+            "h": imgtemp.height,
+          };
+          imgitems[i] = imgobj;
+          addImgClick(img, i);
+        } else {
+          console.log('进来了2')
+          imgtemp.index = i;
+          imgtemp.img = img;
+          imgtemp.onload = function() {
+            var imgobj = {
+              "src": this.src,
+              "w": this.width,
+              "h": this.height,
+            };
+            //不要使用push，因为onload前后顺序会不同
+            imgitems[this.index] = imgobj
+            //添加点击事件
+            addImgClick(this.img, this.index);
+          }
+        }
+      }
+    }
+    //初始化
+    initImg();
+  </script>
+  
+    <script type="application/javascript" src="https://unpkg.com/valine"></script>
+<script type="application/javascript">
+  new Valine({
+    el: '#vlaine-comment',
+    appId: 'SJ0Up6Xp18s3xWpfGN2tkFxN-MdYXbMMI',
+    appKey: 'SkHfrdnHUzK1f9ss0I5i3cxr',
+    pageSize: 10,
+    notify: true,
+    avatar: 'mp',
+    verify: false,
+    placeholder: '来都来了，不妨评论一下',
+    visitor: false,
+    highlight: true,
+    recordIP: false,
+  })
+</script>
+  
+  
+</body>
+
+</html>
