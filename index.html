@@ -111,13 +111,39 @@
     
   </div>
   <div class="md:mx-8 flex-shrink-0 self-start rounded-full border-4 border-dotted border-transparent hover:border-yellow-50 p-2 w-32 h-32 order-1 md:order-2 mx-auto s3-dotted">
-    <img class="rounded-full object-cover" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1655286872991" alt="Zexho&#39; blog" width="100%" height="100%">
+    <img class="rounded-full object-cover" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1655891925962" alt="Zexho&#39; blog" width="100%" height="100%">
   </div>
 </header>
       
 
       <div class="shadow-box bg-white dark:bg-gray-600 border-gray-300 rounded-none md:rounded-lg -mx-1 md:mx-0 md:px-0">
         
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          [MIT6.824 lab2] Raft2B-日志同步 实现要点 &amp; 踩坑记录
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2022-06-22 05:57:19</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
+        <blockquote>
+<p>课程地址：http://nil.csail.mit.edu/6.824/2021/labs/lab-raft.html<br>
+Raft中文论文：https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf<br>
+Raft动画：http://www.kailing.pub/raft/index.html</p>
+</blockquote>
+<h1 id="目标">目标</h1>
+<p>在2A课程的基础上，服务器添加储<code>log</code>数据的要求，需要保证在各种故障环境下，保证<code>log</code>数据的强一致性。</p>
+
+      </div>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="btn">
+        Read more
+      </a>
+    </div>
+    
+  </div>
+
   <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
     
     <div class="flex-1 order-2 md:order-1">
@@ -326,32 +352,6 @@
 
       </div>
       <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-namesrv-fu-wu-zhu-ce-andlu-you-fa-xian/" class="btn">
-        Read more
-      </a>
-    </div>
-    
-  </div>
-
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理
-        </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2021-10-14 11:07:58</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <p>接着上一篇 [RocketMQv4.9.1源码分析-HA主从 Master读写处理] 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
-<p>对于slave，我们有如下一些疑惑：</p>
-<ol>
-<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
-<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
-<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
-</ol>
-
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/" class="btn">
         Read more
       </a>
     </div>

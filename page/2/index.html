@@ -54,6 +54,32 @@
     
     <div class="flex-1 order-2 md:order-1">
       <h2 class="text-2xl font-semibold mb-4">
+        <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
+          RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理
+        </a>
+      </h2>
+      <div class="mb-4 text-xs text-gray-500">2021-10-14 11:07:58</div>
+      <div class="mb-4 text-gray-500 dark:text-gray-300">
+        <p>接着上一篇 [RocketMQv4.9.1源码分析-HA主从 Master读写处理] 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
+<p>对于slave，我们有如下一些疑惑：</p>
+<ol>
+<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
+<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
+<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
+</ol>
+
+      </div>
+      <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/" class="btn">
+        Read more
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
+    
+    <div class="flex-1 order-2 md:order-1">
+      <h2 class="text-2xl font-semibold mb-4">
         <a href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-ha-mo-kuai-master-du-xie-chu-li/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
           RocketMQ4.9.1源码分析(HA模块) Master读写处理
         </a>
@@ -254,26 +280,6 @@
 
       </div>
       <a href="https://zexho994.github.io/blog.zexho.life/post/nL7teffDj/" class="btn">
-        Read more
-      </a>
-    </div>
-    
-  </div>
-
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          JVM 指令运行 解析
-        </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2021-02-17 11:19:49</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <p>在jvm中，定义了有205条指令，从0x00 -&gt; 0xCA , 0xFE -&gt; 0xFF。我们在方法中写的所有逻辑，最终都会转换成这些指令，而虚拟机的最重要的一个任务就是解释执行这些指令。</p>
-
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/l7YU2lRvP/" class="btn">
         Read more
       </a>
     </div>

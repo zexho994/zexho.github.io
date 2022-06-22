@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-06-15T09:54:41.976Z</updated>
+    <updated>2022-06-22T09:59:13.535Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,29 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[[MIT6.824 lab2] Raft2B-日志同步 实现要点 & 踩坑记录]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/">
+        </link>
+        <updated>2022-06-22T09:57:19.000Z</updated>
+        <summary type="html"><![CDATA[<blockquote>
+<p>课程地址：http://nil.csail.mit.edu/6.824/2021/labs/lab-raft.html<br>
+Raft中文论文：https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf<br>
+Raft动画：http://www.kailing.pub/raft/index.html</p>
+</blockquote>
+<h1 id="目标">目标</h1>
+<p>在2A课程的基础上，服务器添加储<code>log</code>数据的要求，需要保证在各种故障环境下，保证<code>log</code>数据的强一致性。</p>
+]]></summary>
+        <content type="html"><![CDATA[<blockquote>
+<p>课程地址：http://nil.csail.mit.edu/6.824/2021/labs/lab-raft.html<br>
+Raft中文论文：https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf<br>
+Raft动画：http://www.kailing.pub/raft/index.html</p>
+</blockquote>
+<h1 id="目标">目标</h1>
+<p>在2A课程的基础上，服务器添加储<code>log</code>数据的要求，需要保证在各种故障环境下，保证<code>log</code>数据的强一致性。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[[MIT6.824 lab2] Raft-Leader election 代码实现 & 踩坑记录]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/</id>
@@ -171,29 +194,6 @@
 ]]></summary>
         <content type="html"><![CDATA[<p>何为路由中心？<br>
 在通常的理解中，提到消息队列，最简单的模型如下图：</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[RocketMQ4.9.1源码解析-(HA模块)主从Slave上报与消息处理]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-jie-xi-ha-mo-kuai-zhu-cong-slave-shang-bao-yu-xiao-xi-chu-li/">
-        </link>
-        <updated>2021-10-14T15:07:58.000Z</updated>
-        <summary type="html"><![CDATA[<p>接着上一篇 [RocketMQv4.9.1源码分析-HA主从 Master读写处理] 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
-<p>对于slave，我们有如下一些疑惑：</p>
-<ol>
-<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
-<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
-<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
-</ol>
-]]></summary>
-        <content type="html"><![CDATA[<p>接着上一篇 [RocketMQv4.9.1源码分析-HA主从 Master读写处理] 解答了Master相关的问题，这篇文章围绕Slave相关的一些问题继续看代码。</p>
-<p>对于slave，我们有如下一些疑惑：</p>
-<ol>
-<li><code>slave</code>如何获取<code>master</code>的路由信息</li>
-<li><code>slave</code>如何向<code>master</code>报告<code>offset</code>的</li>
-<li><code>slave</code>如何处理<code>master</code>同步的数据</li>
-</ol>
 ]]></content>
     </entry>
 </feed>
