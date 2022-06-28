@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-06-22T11:33:33.900Z</updated>
+    <updated>2022-06-28T08:21:29.697Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,25 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[[MIT6.824 lab2] Raft2C-持久化 实现要点 & 踩坑记录]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/">
+        </link>
+        <updated>2022-06-28T08:02:41.000Z</updated>
+        <summary type="html"><![CDATA[<h1 id="目标">目标</h1>
+<blockquote>
+<p>persistence state to disk each time it changed, but there won't persisted to disk, instead, it will save and restore persistent state from a Persister object.<br>
+Complete the functions persist() and readPersist() in raft.go by adding code to save and restore persistent state. You will need to encode (or &quot;serialize&quot;) the state as an array of bytes in order to pass it to the Persister. Use the labgob encoder; see the comments in persist() and readPersist(). labgob is like Go's gob encoder but prints error messages if you try to encode structures with lower-case field names.</p>
+</blockquote>
+]]></summary>
+        <content type="html"><![CDATA[<h1 id="目标">目标</h1>
+<blockquote>
+<p>persistence state to disk each time it changed, but there won't persisted to disk, instead, it will save and restore persistent state from a Persister object.<br>
+Complete the functions persist() and readPersist() in raft.go by adding code to save and restore persistent state. You will need to encode (or &quot;serialize&quot;) the state as an array of bytes in order to pass it to the Persister. Use the labgob encoder; see the comments in persist() and readPersist(). labgob is like Go's gob encoder but prints error messages if you try to encode structures with lower-case field names.</p>
+</blockquote>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[[MIT6.824 lab2] Raft2B-日志同步 实现要点 & 踩坑记录]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/</id>
@@ -181,19 +200,6 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 ]]></summary>
         <content type="html"><![CDATA[<p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
 项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[RocketMQ4.9.1源码分析-Namesrv服务注册&路由发现]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-namesrv-fu-wu-zhu-ce-andlu-you-fa-xian/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/rocketmq491-yuan-ma-fen-xi-namesrv-fu-wu-zhu-ce-andlu-you-fa-xian/">
-        </link>
-        <updated>2021-10-27T14:09:19.000Z</updated>
-        <summary type="html"><![CDATA[<p>何为路由中心？<br>
-在通常的理解中，提到消息队列，最简单的模型如下图：</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>何为路由中心？<br>
-在通常的理解中，提到消息队列，最简单的模型如下图：</p>
 ]]></content>
     </entry>
 </feed>
