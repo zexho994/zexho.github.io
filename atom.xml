@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-07-01T05:08:26.369Z</updated>
+    <updated>2022-07-07T01:23:40.550Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,21 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[深入浅出 Raft 协议]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">
+        </link>
+        <updated>2022-07-07T01:21:05.000Z</updated>
+        <summary type="html"><![CDATA[<p>在学习Raft之前，应该先了解Paxos，可以看 <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox">通俗的理解 Basic Paxos</a></p>
+<h1 id="背景">背景</h1>
+<p>Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>在学习Raft之前，应该先了解Paxos，可以看 <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox">通俗的理解 Basic Paxos</a></p>
+<h1 id="背景">背景</h1>
+<p>Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[[MIT6.824 lab2] Raft2C-持久化 实现要点 & 踩坑记录]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/</id>
@@ -187,19 +202,6 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 代码地址：<a href="https://github.com/zexho994/ConsistentHash">https://github.com/zexho994/ConsistentHash</a></p>
 </blockquote>
 <p>我们知道一致性hash的核心思想是对2^32进行取模，然后保存到一个Hash环上:</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[利用Cglib和JDK动态代理实现AOP]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/li-yong-cglib-he-jdk-dong-tai-dai-li-shi-xian-aop/">
-        </link>
-        <updated>2021-11-11T11:11:07.000Z</updated>
-        <summary type="html"><![CDATA[<p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
-项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
-]]></summary>
-        <content type="html"><![CDATA[<p>前提：本文假设你已经了解AOP切面编程的基础概念<br>
-项目地址：<a href="https://github.com/zexho994/IOC-AOP">https://github.com/zexho994/IOC-AOP</a></p>
 ]]></content>
     </entry>
 </feed>

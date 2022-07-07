@@ -1,0 +1,438 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>深入浅出 Raft 协议 - Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="深入浅出 Raft 协议 - Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+
+    
+
+  <meta name="description" content="在学习Raft之前，应该先了解Paxos，可以看 通俗的理解 Basic Paxos
+背景
+Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图
+
+假..." />
+  <meta property="og:title" content="深入浅出 Raft 协议 - Zexho&#39; blog">
+  <meta property="og:description" content="在学习Raft之前，应该先了解Paxos，可以看 通俗的理解 Basic Paxos
+背景
+Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图
+
+假..." />
+  <meta property="og:type" content="articles">
+  <meta property="og:url" content="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/" />
+  <meta property="og:image" content="https://zexho994.github.io/blog.zexho.life/post-images/shen-ru-qian-chu-raft-xie-yi.webp">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1200">
+  <meta name="twitter:title" content="深入浅出 Raft 协议 - Zexho&#39; blog">
+  <meta name="twitter:description" content="在学习Raft之前，应该先了解Paxos，可以看 通俗的理解 Basic Paxos
+背景
+Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图
+
+假...">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+ 
+  
+    <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/prism-atom-dark.css">
+  
+
+  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+  
+</head>
+
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+    <a href="https://zexho994.github.io/blog.zexho.life" class="fixed top-0 left-0 mt-4 bg-black text-white dark:text-gray-700 dark:bg-yellow-50 dark:hover:bg-black dark:hover:text-white inline-flex p-2 pl-8 hover:text-gray-700 hover:bg-yellow-50 font-bold z-10 transition-fast animated fadeInLeft">
+      Zexho&#39; blog
+    </a>
+    <div class="max-w-4xl w-full mx-auto">
+      <div class="shadow-box bg-white dark:bg-gray-600 rounded-lg pt-32 md:pt-64 px-4 md:px-8 pb-8 animated fadeIn mb-8">
+        <h1 class="text-5xl font-semibold leading-normal pb-8 mb-8 border-b-8 border-gray-700">
+          深入浅出 Raft 协议
+        </h1>
+        
+          <img src="https://zexho994.github.io/blog.zexho.life/post-images/shen-ru-qian-chu-raft-xie-yi.webp" alt="深入浅出 Raft 协议" class="block w-full mb-8">
+        
+        <div class="mb-8 flex flex-wrap">
+          <div class="text-gray-400 text-sm mr-4">2022-07-07 09:21:05 · 8 min read</div>
+          
+            <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="text-gray-700 text-sm border-b-2 border-dotted border-gray-200 hover:border-gray-600 transition-all duration-100 inline-flex mr-2">
+              <i class="ri-hashtag"></i>
+              分布式
+            </a>
+          
+            <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="text-gray-700 text-sm border-b-2 border-dotted border-gray-200 hover:border-gray-600 transition-all duration-100 inline-flex mr-2">
+              <i class="ri-hashtag"></i>
+              知识分享
+            </a>
+          
+        </div>
+        <div class="markdown mb-8" v-pre>
+          <p>在学习Raft之前，应该先了解Paxos，可以看 <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox">通俗的理解 Basic Paxos</a></p>
+<h1 id="背景">背景</h1>
+<p>Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图</p>
+<!-- more -->
+<p>假设我们服务有3个节点，分别为S1,S2,S3, 节点可以存储数据,以日志的方式存储，下图中表示都存储了x=1的日志。每个服务器都可以接口客户端的请求，然后修改数据，修改后会同步给其他节点。</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/433fe359df8b49f3b790757c7630f6e4~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>这种方式有什么问题？ 可以分为两类，无法满足线性一致性，也无法满足最终一致性。</p>
+<p>先看下线性一致性的异常情况，存在一种情况，如下：</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2accae4a44c84c5a87b8567cc241a6a2~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<ul>
+<li>t1时刻写完数据后，数据修改成功，客户端知道x=2了.</li>
+<li>在t3数据进行复制操作前的t2时刻，有客户端来读数据，发现x=1.</li>
+</ul>
+<p>假如这两个客户端是同一个人，知道x更新为2后，再次请求发现x又变成1，这十分奇怪</p>
+<p>另一种情况，最终一致性:</p>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/230e03792374439ca1b094fb8a0918b6~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<ul>
+<li>t1时刻对s1写数据，s1追加<code>x=2</code>的日志.</li>
+<li>t2时刻对s2写数据，s2追加<code>x=3</code>的日志.</li>
+</ul>
+<p>然后s1,s2 开始同步数据，这会导致两者的数据不一致，s1的<code>x=3</code>，s2的<code>x=2</code>。并且对于s3来说，<code>x=2 or 3</code> 都有可能。</p>
+<p>这是分布式第二个要解决的问题：数据一致性（最终一致性）。</p>
+<p>在目前，有许多的成熟手段可以选用，例如：</p>
+<ul>
+<li>2pc、3pc</li>
+<li>Paxos</li>
+<li>ZAB</li>
+<li>Raft</li>
+<li>POW、POS （Bitcoin 领域）</li>
+</ul>
+<p>其中Raft可以算是运用最广泛和成熟的之一，RocketMQ、Etcd、Nacos、Tidb/TiKv、Consul ，接下来看看Raft是如何解决这个问题的。</p>
+<p>回到这个图，首先做的第一件事，就是修改请求的规则，在3个服务中选出一个领导人leader，<strong>所有的请求都由leader进行处理</strong>，其他非领导人的节点就成为follower（后面还会引入一个候选人角色，这里先不管）.</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/15ba38a6819a43639c1de6c437181e33~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>leader的任务是处理客户端请求，当有请求时，s1先将数据写入到本地，然后同步给其他节点。这里的核心点是不需要所有节点都成功同步才表示成功，而是只要超过一半的节点同步数据成功，就可以返回给客户端成功响应。</p>
+<p>图中有3个节点，<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bb5187024ea84b21911249ac149db60e~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy">,意味着2个以上节点同步了<code>x=2</code>的日志时，s1即可返回给客户端。</p>
+<figure data-type="image" tabindex="5"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d431cc00a3c44e0180d765fb927dcd08~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>这里注意，同步到节点数量包含s1自己的，也就是说，其实只要其他任意一个节点同步成功就可以了。</p>
+<p>这种过半提交的机制专业术语叫做<strong>Quorum（仲裁）</strong> 。这个机制的好处是什么呢？</p>
+<ol>
+<li>leader不必要等待所有follower节点的确认，提高了响应速度。</li>
+<li>即使有一半的服务发生故障，集群依然可以正常运行。</li>
+</ol>
+<p>上面提到了两个步骤，leader选举和请求处理，下面就这两个点详细说明：</p>
+<h1 id="ledaer-选举">ledaer 选举</h1>
+<p>那假如是leader挂了呢，如何保证服务的可用性？这里就牵扯出Raft第一个概念，<strong>Leader选举</strong>。leader选举会发生于两个时间点：</p>
+<ol>
+<li>整个集群启动时，没有leader，需要选举出来。</li>
+<li>当follower认为leader发生故障时，会发起选举投票。</li>
+</ol>
+<p>假设我们有3个节点为a,b,c，他们的身份启动时都为follower, term是一个自增值，表示每个节点当前的任期编号，如下图：</p>
+<figure data-type="image" tabindex="6"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/86ca8d91a0a64ec8946a8018f35a4105~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>每个follower都会有一个心跳等待时间，这个时间是随机的，在150~300 ms 范围内。如下图，用这个白圈表示心跳倒计时。</p>
+<figure data-type="image" tabindex="7"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/869f567208ee4364af3ac9f7ddf772c5~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>当超过这个心跳等待时间后，follower就认为leader发生故障了，这时follower就会改变身份，变成候选人candidate。</p>
+<p>下图中B的心跳倒计时已经到了，A和C还没到，B会最先变成候选人。</p>
+<p>B会先给自己投一票，然后Term+1，向其他节点发送请求，开始竞选。</p>
+<figure data-type="image" tabindex="8"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/88d5a0641410484ba3e4cca0a7601374~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>其他节点收到竞选请求时，如果发现term大于自己的term，就会同意这次投票，反之投拒绝票。图中A和C因为term=0 &lt; 1 ，所以会投同意票。在投了同意票之后，A，C更新自己的Term的值为1，心跳倒计时也会重新计时。</p>
+<figure data-type="image" tabindex="9"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0f70881497b54572bd5ab17d96c258bb~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>B节点收到响应后，此次选举的赞同票数超过了半数，B会晋升为leader，leader要做的事情就是定时向其他节点发送心跳包，例如50ms一次。这样选举的过程就完成了。</p>
+<figure data-type="image" tabindex="10"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c34b225cc63b48048944dfa2bdd9da63~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>无论是集群初始化的leader选举还是leader超时后的选举，都是follower发现心跳超时后，变成candidate进行选举的过程，两者没有任何区别。</p>
+<p>关键词总结：</p>
+<ul>
+<li>follower随机心跳等待时间</li>
+<li>candidate过半晋升</li>
+<li>leader定时心跳</li>
+</ul>
+<h1 id="日志同步">日志同步</h1>
+<p>当前的leader是C。现在有一个客户端准备发送请求</p>
+<figure data-type="image" tabindex="11"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4915f857d7464b8ab13e4e8004a76ee3~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>客户端发送了一个请求给leader，内容是<code>set 5</code></p>
+<figure data-type="image" tabindex="12"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3bc5809bac5446a3a03d039524acb734~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>leader不能马上对客户端的写请求进行响应，因为raft要保证强一致性，leader会按照下面的步骤进行：</p>
+<ol>
+<li>将<code>set 5</code>的请求发送给其他节点</li>
+<li>其他节点收到leader的请求后，将数据写入到本地，然后响应给leader</li>
+<li>leader收到超过半数的写入成功响应后，commit这个日志，然后响应给客户端成功。</li>
+</ol>
+<p>什么时候通知给其他节点这个日志可以commit呢？一种常见的做法是在leader的下次心跳中携带相关信息，通知所有节点进行commit。</p>
+<p>这里也采用了<code>Quorum</code>的机制，为什么凭借这种方式可以保证日志的一致性呢？下面是一些设计细节。</p>
+<p>首先，日志的存储有携带索引+当前leader的term，下图中最新的一条日志是在索引10位置，term=6。</p>
+<figure data-type="image" tabindex="13"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ce436fb6625b4423b5030441b7059363~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>follow节点的日志是可能和leader存在不同的，下面a~f的情况都有可能</p>
+<figure data-type="image" tabindex="14"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4a7ac1cd96b5469aaf0e8dfc428d752e~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>raft采用了以leader的日志为标准的方式，所有follower必须无条件接受leader的日志，这里可能有一个疑惑，leader的日志就可以保证是最新的、最全的吗？结合选举和日志提交的规则再思考下，这里可能要画画图花一些时间理解下：</p>
+<ul>
+<li>选举
+<ul>
+<li>节点只会给term大于自己，日志不落后自己的候选人投票</li>
+<li>同时候选人需要有一半以上的节点同意，才可以当选为leader。</li>
+</ul>
+</li>
+</ul>
+<!---->
+<ul>
+<li>日志提交
+<ul>
+<li>需要有一半的节点同意，日志才可以提交。</li>
+<li>日志以leader的为准，如果存在不同，进行覆盖。</li>
+</ul>
+</li>
+</ul>
+<p>主要要理解的一点是，无论如何，过半的机制，总会保证至少有一个log完整的节点参与到leader选举中，然后并当选为leader。</p>
+<p>以上图中d的情况来说，可能有疑惑这个下标11,12位置的日志不是最新的吗，发生这个情况的原因大概率是这样：</p>
+<ol>
+<li>term=7的leader在收到客户端请求后，先将日志写入本地索引11，12。</li>
+<li>leader还未将新日志发送给其他节点，就宕机了。</li>
+<li>然后其他节点竞选leader，这个日志就没了。</li>
+</ol>
+<p>怎么推动出会是这种情况的，这里进行反推：</p>
+<ol>
+<li>假如leader本地写入索引11,12后，向任何节点其一发送了成功了请求</li>
+<li>那么当leader宕机后，新选举的leader要求是日志最新的，那么就一定是这个收到的请求的节点，因为他的日志最新。</li>
+</ol>
+<p>可能有疑惑，这个日志没了？这合理吗。这个日志并未commit，就没有给客户端响应，仅仅属于消息丢失的问题，客户端可以使用重试机制重发。</p>
+<p>其他一些细节点：</p>
+<ol>
+<li>为什么节点推荐奇数个？<br>
+当发生节点网络分区时，一分为二时，可以保证有一边可以正常选举出leader。</li>
+</ol>
+<h1 id="引用参考">引用参考</h1>
+<ul>
+<li>要搞懂，还是要看10遍以上论文：<a href="https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf">https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf</a></li>
+<li>动画来源，非常好的可视化网站：<a href="http://www.kailing.pub/raft/index.html#overview">http://www.kailing.pub/raft/index.html#overview</a></li>
+<li>mit课程大纲：<a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-06-raft1">https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-06-raft1</a></li>
+</ul>
+
+        </div>
+        <!-- Share to Twitter, Weibo, Telegram -->
+        <div class="flex items-center">
+          <div class="mr-4 flex items-center">
+            <i class="ri-share-forward-line text-gray-500"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTwitter">
+            <i class="ri-twitter-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 inline-flex" @click="shareToWeibo">
+            <i class="ri-weibo-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-indigo-500 hover:bg-indigo-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTelegram">
+            <i class="ri-telegram-line"></i>
+          </div>
+        </div>
+      </div>
+
+      
+
+      
+        <div id="vlaine-comment"></div>
+      
+
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+    </div>
+
+    <!-- TOC Container -->
+    <div class="fixed right-0 bottom-0 mb-16 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white dark:bg-gray-500 dark:text-gray-200 hover:shadow-lg transition-all animated fadeInRight" @click="showToc = true">
+      <i class="ri-file-list-line"></i>
+    </div>
+
+    <div class="fixed right-0 top-0 bottom-0 overflow-y-auto w-64 bg-white dark:bg-gray-800 p-4 border-l border-gray-100 dark:border-gray-600 z-10 transition-fast" :class="{ '-mr-64': !showToc }">
+      <div class="flex mb-4 justify-end">
+        <div class="w-8 h-8 inline-flex justify-center items-center rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast" @click="showToc = false">
+          <i class="ri-close-line text-lg"></i>
+        </div>
+      </div>
+      <div class="post-toc-container">
+        <ul class="markdownIt-TOC">
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#ledaer-%E9%80%89%E4%B8%BE">ledaer 选举</a></li>
+<li><a href="#%E6%97%A5%E5%BF%97%E5%90%8C%E6%AD%A5">日志同步</a></li>
+<li><a href="#%E5%BC%95%E7%94%A8%E5%8F%82%E8%80%83">引用参考</a></li>
+</ul>
+
+      </div>
+    </div>
+
+    <!-- Back to top -->
+    <div class="fixed right-0 bottom-0 mb-4 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white hover:shadow-lg transition-all dark:bg-gray-500 dark:text-gray-200" @click="backToUp" v-show="scrolled">
+      <i class="ri-arrow-up-line"></i>
+    </div>
+  </div>
+
+  <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+        It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg">
+  </div>
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+    </div>
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+        <div class="pswp__counter">
+        </div>
+        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip">
+        </div>
+      </div>
+      <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+      </button>
+      <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+      </button>
+      <div class="pswp__caption">
+        <div class="pswp__caption__center">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+  
+  <!-- Code Highlight -->
+  
+    <script src="https://zexho994.github.io/blog.zexho.life/media/prism.js"></script>
+    <script>
+      Prism.highlightAll()
+    </script>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+  <script>
+    //拿到预览框架，也就是上面的html代码
+    var pswpElement = document.querySelectorAll('.pswp')[0];
+    //定义图片数组变量
+    var imgitems;
+    /**
+    * 用于显示预览界面
+    * @param index 图片数组下标
+    */
+    function viewImg(index) {
+      //其它选项这里不做过多阐述，详情见官网
+      var pswpoptions = {
+        index: parseInt(index, 10), // 开始幻灯片索引。0是第一张幻灯片。必须是整数，而不是字符串。
+        bgOpacity: 0.7, // 背景透明度，0-1
+        maxSpreadZoom: 3, // 缩放级别，不要太大
+      };
+      //初始化并打开PhotoSwipe，pswpElement对应上面预览框架，PhotoSwipeUI_Default为皮肤，imgitems为图片数组，pswpoptions为选项
+      var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, imgitems, pswpoptions);
+      gallery.init()
+    }
+    /**
+    * 用于添加图片点击事件
+    * @param img 图片元素
+    * @param index 所属下标（在imgitems中的位置）
+    */
+    function addImgClick(img, index) {
+      img.onclick = function() {
+        viewImg(index)
+      }
+    }
+    /**
+    * 轮询所有图片，获取src、width、height等数据，加入imgitems，并给图片元素添加事件
+    * 最好在onload中执行该方法，本站因放在最底部，所以直接初始化
+    * 异步加载图片可在图片元素创建完成后调用此方法
+    */
+    function initImg() {
+      //重置图片数组
+      imgitems = [];
+      //查找class:markdown 下的所有img元素并遍历
+      var imgs = document.querySelectorAll('.markdown img');
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        //本站相册初始为loading图片，真实图片放在data-src
+        var ds = img.getAttribute("data-src");
+        //创建image对象，用于获取图片宽高
+        var imgtemp = new Image();
+        //判断是否存在data-src
+        if (ds != null && ds.length > 0) {
+          imgtemp.src = ds
+        } else {
+          imgtemp.src = img.src
+        }
+        //判断是否存在缓存
+        if (imgtemp.complete) {
+          var imgobj = {
+            "src": imgtemp.src,
+            "w": imgtemp.width,
+            "h": imgtemp.height,
+          };
+          imgitems[i] = imgobj;
+          addImgClick(img, i);
+        } else {
+          console.log('进来了2')
+          imgtemp.index = i;
+          imgtemp.img = img;
+          imgtemp.onload = function() {
+            var imgobj = {
+              "src": this.src,
+              "w": this.width,
+              "h": this.height,
+            };
+            //不要使用push，因为onload前后顺序会不同
+            imgitems[this.index] = imgobj
+            //添加点击事件
+            addImgClick(this.img, this.index);
+          }
+        }
+      }
+    }
+    //初始化
+    initImg();
+  </script>
+  
+    <script type="application/javascript" src="https://unpkg.com/valine"></script>
+<script type="application/javascript">
+  new Valine({
+    el: '#vlaine-comment',
+    appId: 'JdktVdP9QtgXAYGegPllMId8-MdYXbMMI',
+    appKey: 'ikmyXPkFSwc9sfos34kXgx6p',
+    pageSize: 10,
+    notify: false,
+    avatar: 'mp',
+    verify: true,
+    placeholder: '来都来了，不妨评论一下',
+    visitor: true,
+    highlight: true,
+    recordIP: false,
+  })
+</script>
+  
+  
+</body>
+
+</html>
