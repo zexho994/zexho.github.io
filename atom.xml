@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-07-07T01:23:40.550Z</updated>
+    <updated>2022-07-12T12:22:18.890Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[MIT6.830 数据库实现：lab1 记录]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/">
+        </link>
+        <updated>2022-07-12T12:17:21.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[深入浅出 Raft 协议]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/</id>
@@ -183,25 +190,6 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
         <summary type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
 ]]></summary>
         <content type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[实现一致性Hash算法]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/">
-        </link>
-        <updated>2022-02-02T07:12:22.000Z</updated>
-        <summary type="html"><![CDATA[<blockquote>
-<p>假设已经了解一致性Hash的相关知识，如果不了解可以先看<a href="https://www.zsythink.net/archives/1182">https://www.zsythink.net/archives/1182</a><br>
-代码地址：<a href="https://github.com/zexho994/ConsistentHash">https://github.com/zexho994/ConsistentHash</a></p>
-</blockquote>
-<p>我们知道一致性hash的核心思想是对2^32进行取模，然后保存到一个Hash环上:</p>
-]]></summary>
-        <content type="html"><![CDATA[<blockquote>
-<p>假设已经了解一致性Hash的相关知识，如果不了解可以先看<a href="https://www.zsythink.net/archives/1182">https://www.zsythink.net/archives/1182</a><br>
-代码地址：<a href="https://github.com/zexho994/ConsistentHash">https://github.com/zexho994/ConsistentHash</a></p>
-</blockquote>
-<p>我们知道一致性hash的核心思想是对2^32进行取模，然后保存到一个Hash环上:</p>
 ]]></content>
     </entry>
 </feed>

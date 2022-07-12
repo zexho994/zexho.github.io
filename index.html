@@ -1,190 +1,172 @@
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
 <title>Zexho&#39; blog</title>
-<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
-<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
-<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
+<meta name="description" content="芝兰生于幽谷，不因无人而不芳">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1657628531424">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://unpkg.com/papercss@1.6.1/dist/paper.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
 
-    
 
-  <meta name="description" content="芝兰生于幽谷，不因无人而不芳" />
-</head>
-<body>
-  <div class="antialiased flex flex-col min-h-screen" id="app">
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
-    <div class="nav py-3 md:py-8 fixed w-full z-10 bg-gray-50 dark:bg-gray-700 transition-all duration-300" :class="{ 'scroll': scrolled }">
-  <div class="flex justify-end px-4">
-    <div class="w-8 h-8 flex justify-center items-center rounded-full md:hidden" @click="showMenu = !showMenu">
-      <i class="ri-close-line" v-show="showMenu"></i>
-      <i class="ri-menu-3-line" v-show="!showMenu"></i>
-    </div>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+  </head>
+  <body>
+    <nav class="navbar border fixed split-nav">
+  <div class="nav-brand">
+    <h3><a href="https://zexho994.github.io/blog.zexho.life">Zexho&#39; blog</a></h3>
   </div>
-  <nav class="max-w-4xl w-full mx-auto text-center flex flex-col md:flex-row justify-center md:block" :class="`${ showMenu ? 'block' : 'hidden' }`">
-    
-      <a href="https://zexho994.github.io/blog.zexho.life" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
-        首页
-      </a>
-    
-      <a href="https://zexho994.github.io/blog.zexho.life/archives" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
-        时间线
-      </a>
-    
-      <a href="https://zexho994.github.io/blog.zexho.life/tags" target="" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
-        标签集
-      </a>
-    
-    <a href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank" class="py-2 md:py-1 px-4 mx-4 inline-flex transition font-semibold rounded dark:hover:bg-gray-600 hover:bg-gray-200">
-      RSS
-    </a>
-  </nav>
-</div>
-
-    <div class="max-w-4xl w-full mx-auto ">
-      
-        <header class="flex py-16 md:py-32 mt-12 flex-col md:flex-row px-4 md:px-0 animated fadeIn">
-  <div class="flex-1 order-2 md:order-1 md:pr-16">
-    <div class="text-4xl font-bold text-center md:text-left">
-      Zexho&#39; blog
-    </div>
-    <div class="text-xl text-gray-500 mt-4 text-center md:text-left">
-      芝兰生于幽谷，不因无人而不芳
-    </div>
-    
-      <div class="mt-8 text-center md:text-left">
-        <a
-          href="/post/about" 
-          arget="_blank"
-          class="text-sm bg-yellow-50 dark:bg-indigo-500 dark:text-gray-700 font-semibold px-4 py-2 inline-block yellow-btn transition-fast rounded"
-        >LET&#39;S TALK!</a>
-      </div>
-    
-    
-      <div class="mt-8 flex items-center">
+  <div class="collapsible">
+    <input id="collapsible1" type="checkbox" name="collapsible1">
+    <button>
+      <label for="collapsible1">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+      </label>
+    </button>
+    <div class="collapsible-body">
+      <ul class="inline">
         
-          <div class="text-gray-500 mr-2">
-            Follow me 👉
-          </div>
-        
-        
-          
+          <li>
             
-              <div class="relative mr-2 w-8 h-8 inline-flex items-center justify-center text-xl hover:bg-gray-200 transition-fast dark:hover:bg-gray-600 wechat">
-                <i class="ri-wechat-line"></i>
-                <img src="/media/images/custom-wechat.jpeg" alt="" class="absolute left-0 w-32" style="max-width: initial; top: 100%;" >
-              </div>
-            
-          
-        
-          
-            
-              <a href="mailto:zouzhihao994@gmail.com" target="_blank" class="mr-2 w-8 h-8 inline-flex items-center justify-center text-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast">
-                <i class="ri-mail-line"></i>
+              <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
+                首页
               </a>
             
-          
+          </li>
         
-          
+          <li>
             
-              <a href="https://github.com/zexho994" target="_blank" class="mr-2 w-8 h-8 inline-flex items-center justify-center text-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast">
-                <i class="ri-github-line"></i>
+              <a href="https://zexho994.github.io/blog.zexho.life/archives" class="menu">
+                时间线
               </a>
             
-          
+          </li>
         
-          
+          <li>
+            
+              <a href="https://zexho994.github.io/blog.zexho.life/tags" class="menu">
+                标签集
+              </a>
+            
+          </li>
         
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      </div>
-    
+      </ul>
+    </div>
   </div>
-  <div class="md:mx-8 flex-shrink-0 self-start rounded-full border-4 border-dotted border-transparent hover:border-yellow-50 p-2 w-32 h-32 order-1 md:order-2 mx-auto s3-dotted">
-    <img class="rounded-full object-cover" src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1657157015726" alt="Zexho&#39; blog" width="100%" height="100%">
-  </div>
-</header>
-      
+</nav>
 
-      <div class="shadow-box bg-white dark:bg-gray-600 border-gray-300 rounded-none md:rounded-lg -mx-1 md:mx-0 md:px-0">
-        
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          深入浅出 Raft 协议
+
+    <div id="top" class="row site">
+      <div class="sm-12 md-8 col">
+        <div class="paper">
+          
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/">MIT6.830 数据库实现：lab1 记录</a>
+    </h2>
+    <p class="article-meta">
+      2022-07-12 08:17:21
+      
+    </p>
+    <p class="text-lead">
+      
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/" class="readmore-link">
+        <button>
+          Read More
+        </button>
+      </a>
+    </div>
+  </article>
+
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">深入浅出 Raft 协议</a>
+    </h2>
+    <p class="article-meta">
+      2022-07-07 09:21:05
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge ">
+          分布式
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-07-07 09:21:05</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <p>在学习Raft之前，应该先了解Paxos，可以看 <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox">通俗的理解 Basic Paxos</a></p>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge ">
+          知识分享
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <p>在学习Raft之前，应该先了解Paxos，可以看 <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox">通俗的理解 Basic Paxos</a></p>
 <h1 id="背景">背景</h1>
 <p>Raft 属于分布式共识算法，先明白什么是分布式共识，用一句话说就是“保证多节点下数据一致”，Raft的一致性是强一致性（线性一致性），看下图</p>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-      <img class="flex-shrink-0 self-start md:ml-4 mb-4 md:mb-0 rounded-sm object-cover featured-img order-1 md:order-2 w-full h-40 md:w-56 md:h-32" loading="lazy" src="https://zexho994.github.io/blog.zexho.life/post-images/shen-ru-qian-chu-raft-xie-yi.webp" alt="深入浅出 Raft 协议">
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          [MIT6.824 lab2] Raft2C-持久化 实现要点 &amp; 踩坑记录
-        </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-06-28 04:02:41</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <h1 id="目标">目标</h1>
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2C-持久化 实现要点 &amp; 踩坑记录</a>
+    </h2>
+    <p class="article-meta">
+      2022-06-28 04:02:41
+      
+    </p>
+    <p class="text-lead">
+      <h1 id="目标">目标</h1>
 <blockquote>
 <p>persistence state to disk each time it changed, but there won't persisted to disk, instead, it will save and restore persistent state from a Persister object.<br>
 Complete the functions persist() and readPersist() in raft.go by adding code to save and restore persistent state. You will need to encode (or &quot;serialize&quot;) the state as an array of bytes in order to pass it to the Persister. Use the labgob encoder; see the comments in persist() and readPersist(). labgob is like Go's gob encoder but prints error messages if you try to encode structures with lower-case field names.</p>
 </blockquote>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          [MIT6.824 lab2] Raft2B-日志同步 实现要点 &amp; 踩坑记录
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2B-日志同步 实现要点 &amp; 踩坑记录</a>
+    </h2>
+    <p class="article-meta">
+      2022-06-22 05:57:19
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge warning">
+          分布式
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-06-22 05:57:19</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <blockquote>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge warning">
+          知识分享
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <blockquote>
 <p>课程地址：http://nil.csail.mit.edu/6.824/2021/labs/lab-raft.html<br>
 Raft中文论文：https://yuerblog.cc/wp-content/uploads/raft-zh_cn.pdf<br>
 Raft动画：http://www.kailing.pub/raft/index.html</p>
@@ -192,50 +174,68 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 <h1 id="目标">目标</h1>
 <p>在2A课程的基础上，服务器添加储<code>log</code>数据的要求，需要保证在各种故障环境下，保证<code>log</code>数据的强一致性。</p>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          [MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录</a>
+    </h2>
+    <p class="article-meta">
+      2022-06-14 07:16:36
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge success">
+          分布式
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-06-14 07:16:36</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <blockquote>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge warning">
+          知识分享
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <blockquote>
 <p>本文假设你已经对课程进行了部分了解，所以不对课程的要求进行过多描述，重点在代码的分析和一些踩坑记录和理解。</p>
 </blockquote>
 <p>课程链接： http://nil.csail.mit.edu/6.824/2020/labs/lab-raft.html</p>
 <h2 id="目标">目标</h2>
 <p>实现raft算法中的领导人选举部分</p>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          Mit 6.824 lab1 MapReduce 设计
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/">Mit 6.824 lab1 MapReduce 设计</a>
+    </h2>
+    <p class="article-meta">
+      2022-05-15 05:22:02
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge secondary">
+          分布式
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-05-15 05:22:02</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <h1 id="课程概述">课程概述</h1>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="badge warning">
+          造轮子
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <h1 id="课程概述">课程概述</h1>
 <p>这个课程的目的是让我们实现一个MapReduce，如果对MapReduce的基础概念不清楚，建议先看一下：</p>
 <ul>
 <li>课程官网网页 : http://nil.csail.mit.edu/6.824/2020/labs/lab-mr.html</li>
@@ -244,25 +244,34 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 <li>https://www.bilibili.com/video/BV1Vb411m7go?spm_id_from=333.337.search-card.all.click</li>
 </ul>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          几个有趣的概率问题
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/">几个有趣的概率问题</a>
+    </h2>
+    <p class="article-meta">
+      2022-04-22 03:58:18
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="badge secondary">
+          学习归纳
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-04-22 03:58:18</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <blockquote>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge success">
+          知识分享
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <blockquote>
 <p>例子来源于《悖论-破解科学史上最复杂的9大谜团》第一章</p>
 </blockquote>
 <ol>
@@ -272,127 +281,341 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 <li>生日悖论</li>
 </ol>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          通俗理解 Basic Paxos
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/">通俗理解 Basic Paxos</a>
+    </h2>
+    <p class="article-meta">
+      2022-04-09 08:45:33
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="badge secondary">
+          学习归纳
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-04-09 08:45:33</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <h1 id="一个简单的分布式场景">一个简单的分布式场景</h1>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge success">
+          分布式
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <h1 id="一个简单的分布式场景">一个简单的分布式场景</h1>
 <p>角色说明<br>
 ● 客户端Client，负责发起请求<br>
 ● 服务端Server，接收客户端的请求，并保存请求的数据</p>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-      <img class="flex-shrink-0 self-start md:ml-4 mb-4 md:mb-0 rounded-sm object-cover featured-img order-1 md:order-2 w-full h-40 md:w-56 md:h-32" loading="lazy" src="https://mma.prnewswire.com/media/789948/Paxos_logo_Fnl_RGB_Logo.jpg?p=facebook" alt="通俗理解 Basic Paxos">
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          我理解的CAP
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/">我理解的CAP</a>
+    </h2>
+    <p class="article-meta">
+      2022-03-20 05:50:28
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="badge secondary">
+          学习归纳
         </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-03-20 05:50:28</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <p>最近在梳理我们系统架构的时候，想从分布式领域的角度来分析架构设计，但是由于之前没系统性接触过分布式相关的知识，正好借此机会来学习分布式相关的知识，并进行自己的总结。本文的目的是搞清楚什么是CAP。</p>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge secondary">
+          分布式
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <p>最近在梳理我们系统架构的时候，想从分布式领域的角度来分析架构设计，但是由于之前没系统性接触过分布式相关的知识，正好借此机会来学习分布式相关的知识，并进行自己的总结。本文的目的是搞清楚什么是CAP。</p>
 <blockquote>
 <p>分布式系统的最大难点，就是各个节点的状态如何同步</p>
 </blockquote>
 
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/" class="btn">
-        Read more
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
     </div>
-    
-  </div>
+  </article>
 
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          快速看清lambda的本质
-        </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-02-11 07:13:57</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
-
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/" class="btn">
-        Read more
-      </a>
-    </div>
-    
-  </div>
-
-  <div class="p-8 border-b border-gray-200 dark:border-gray-700 flex relative overflow-hidden flex-col md:flex-row animated fadeIn">
-    
-    <div class="flex-1 order-2 md:order-1">
-      <h2 class="text-2xl font-semibold mb-4">
-        <a href="https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/" class="text-gray-700 dark:text-gray-200 border-b-2 border-dotted border-gray-200 dark:border-gray-400 dark:hover:border-gray-200 hover:border-gray-600 transition-all duration-100">
-          实现一致性Hash算法
-        </a>
-      </h2>
-      <div class="mb-4 text-xs text-gray-500">2022-02-02 03:12:22</div>
-      <div class="mb-4 text-gray-500 dark:text-gray-300">
-        <blockquote>
-<p>假设已经了解一致性Hash的相关知识，如果不了解可以先看<a href="https://www.zsythink.net/archives/1182">https://www.zsythink.net/archives/1182</a><br>
-代码地址：<a href="https://github.com/zexho994/ConsistentHash">https://github.com/zexho994/ConsistentHash</a></p>
-</blockquote>
-<p>我们知道一致性hash的核心思想是对2^32进行取模，然后保存到一个Hash环上:</p>
-
-      </div>
-      <a href="https://zexho994.github.io/blog.zexho.life/post/shi-xian-yi-zhi-xing-hash-suan-fa/" class="btn">
-        Read more
-      </a>
-    </div>
-    
-  </div>
-  
-      </div>
-
+  <article class="article">
+    <h2 class="article-title">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">快速看清lambda的本质</a>
+    </h2>
+    <p class="article-meta">
+      2022-02-11 07:13:57
       
-  <div class="my-4 flex justify-between px-4 md:px-0">
-    
-    
-      <a href="https://zexho994.github.io/blog.zexho.life/page/2" class="btn btn-white">
-        下一页
-        <i class="ri-arrow-right-line ml-4"></i>
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="badge success">
+          Java
+        </a>
+      
+    </p>
+    <p class="text-lead">
+      <p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
+
+    </p>
+    <div class="row">
+      <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/" class="readmore-link">
+        <button>
+          Read More
+        </button>
       </a>
-    
-  </div>
+    </div>
+  </article>
 
-      <footer class="py-12 text-center px-4 md:px-0" v-pre>
-  Life & Coding
-</footer>
 
+        </div>
+        
+        <div class="row flex-edges">
+  
+  
+    <a href="https://zexho994.github.io/blog.zexho.life/page/2" class="paper-btn">
+      下一页
+    </a>
+  
+</div>
+
+      </div>
+      
+      <div class="sm-12 md-4 col sidebar">
+  <div class="paper info-container">
+    <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1657628531424" class="no-responsive avatar">
+    <div class="text-muted">芝兰生于幽谷，不因无人而不芳</div>
+    <div class="social-container">
+      
+        
+          <a href="https://github.com/zexho994" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
-</body>
+  <div class="paper">
+    <div class="sidebar-title">
+      最新文章
+    </div>
+    <div class="row">
+      <ul>
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/">MIT6.830 数据库实现：lab1 记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">深入浅出 Raft 协议</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2C-持久化 实现要点 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2B-日志同步 实现要点 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/">Mit 6.824 lab1 MapReduce 设计</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/">几个有趣的概率问题</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/">通俗理解 Basic Paxos</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/">我理解的CAP</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">快速看清lambda的本质</a>
+            </li>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </ul>
+    </div>
+  </div>
+  <div class="paper">
+    <div class="sidebar-title">
+      标签列表
+    </div>
+    <div class="row">
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge secondary">
+          分布式
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge success">
+          知识分享
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="badge secondary">
+          造轮子
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="badge ">
+          学习归纳
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="badge warning">
+          Java
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="badge ">
+          RocketMQ
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="badge warning">
+          源码
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/" class="badge success">
+          JVM
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/P-ZT7Pj1-8/" class="badge success">
+          Spring
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/docker/" class="badge secondary">
+          docker
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/tu-shu-ju-ku/" class="badge secondary">
+          图数据库
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/THZXOECNJ/" class="badge warning">
+          Git
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="badge success">
+          微信小程序
+        </a>
+      
+    </div>
+  </div>
+  <div class="paper">
+    Life & Coding | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+  </div>
+</div>
 
+    </div>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+</script>
+
+
+
+
+  </body>
 </html>

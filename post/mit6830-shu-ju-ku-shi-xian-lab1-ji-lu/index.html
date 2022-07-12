@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>MIT6.830 数据库实现：lab1 记录 | Zexho&#39; blog</title>
+<meta name="description" content="芝兰生于幽谷，不因无人而不芳">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico?v=1657628531424">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://unpkg.com/papercss@1.6.1/dist/paper.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+  </head>
+  <body>
+  
+    <nav class="navbar border fixed split-nav">
+  <div class="nav-brand">
+    <h3><a href="https://zexho994.github.io/blog.zexho.life">Zexho&#39; blog</a></h3>
+  </div>
+  <div class="collapsible">
+    <input id="collapsible1" type="checkbox" name="collapsible1">
+    <button>
+      <label for="collapsible1">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+      </label>
+    </button>
+    <div class="collapsible-body">
+      <ul class="inline">
+        
+          <li>
+            
+              <a href="https://zexho994.github.io/blog.zexho.life" class="menu">
+                首页
+              </a>
+            
+          </li>
+        
+          <li>
+            
+              <a href="https://zexho994.github.io/blog.zexho.life/archives" class="menu">
+                时间线
+              </a>
+            
+          </li>
+        
+          <li>
+            
+              <a href="https://zexho994.github.io/blog.zexho.life/tags" class="menu">
+                标签集
+              </a>
+            
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div id="top" class="row site">
+      <div class="sm-12 md-8 col">
+        <div class="paper">
+          <article class="article">
+            <h1>MIT6.830 数据库实现：lab1 记录</h1>
+            <p class="article-meta">
+              2022-07-12 08:17:21
+              
+            </p>
+            
+            <div class="post-content">
+              <blockquote>
+<p>github 地址 ： <a href="https://github.com/zexho994/lowdb/tree/lab1">https://github.com/zexho994/lowdb/tree/lab1</a></p>
+</blockquote>
+<p>在lab1中，总共提到了以下一个数据结构：</p>
+<ul>
+<li>Tuple , TupleDesc</li>
+<li>Catalog</li>
+<li>BufferPoll</li>
+<li>HeapFile</li>
+<li>HeapPage</li>
+</ul>
+<p>看下这些数据结构的关系，首先是TupleDesc 和 Tuple，以数据表为例：</p>
+<ul>
+<li>TupleDesc描述这个Table的字段集合，集合的每个元素包含每个字段的名称和类型</li>
+<li>Tuple是Table的实际数据，一个Tuple对象对应一行数据。</li>
+</ul>
+<p>比如下面这个表, 字段有3个，TupleDesc中包含3个字段 ： name(string), age(int)，email(string)，数据有两行，所以就有两个Tuple对象，对应alice和bob的。</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8088308af669454a9a370a232b473297~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>catalog 的介绍是这样：</p>
+<p>The catalog (class Catalog in SimpleDB) consists of a list of the tables and schemas of the tables that are currently in the database. (一个列表，存储simpleDB下所有的table和schema信息)</p>
+<p>You will need to support the ability to add a new table, as well as getting information about a particular table. （通过add方法添加table到catolog中，也可以指定获取数据）</p>
+<p>Associated with each table is a TupleDesc object that allows operators to determine the types and number of fields in a table. 通过每个Table的tupleDesc可以知道Table中字段的数量和类型</p>
+<p>The global catalog is a single instance of Catalog that is allocated for the entire SimpleDB process. The global catalog can be retrieved via the method Database.getCatalog(), and the same goes for the global buffer pool ( using Database.getBufferPool()). 是单例类型，通过Database.getCatalog()获取，同理，BufferPool也一样。</p>
+<p>所以catalog中存储的是table和scheam信息，我们可以通过Catalog获取Table和scheam。</p>
+<p>目前还不清楚scheam有哪些，以后lab应该会提到这个，table就是数据表。</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/58f6a361d6ff4aeabe6d0979a2e3bfa6~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>BufferPool</p>
+<p>The buffer pool (class <code>BufferPool</code> in SimpleDB) is responsible for caching pages in memory that have been recently read from disk. (它是存储在内存中的一个数据结构)</p>
+<p>All operators read and write pages from various files on disk through the buffer pool. （可以通过buffer pool 读写页数据）</p>
+<p>It consists of a fixed number of pages, defined by the <code>numPages</code> parameter to the <code>BufferPool</code> constructor. （创建的时候指定pool的最大存储容量）</p>
+<p>In later labs, you will implement an eviction policy. （以后会需要实现置换策略，现在不用）</p>
+<p>For this lab, you only need to implement the constructor and the <code>BufferPool.getPage()</code> method used by the SeqScan operator. （这个lab需要实现构造方法和getPage()两个地方，）</p>
+<p>The BufferPool should store up to <code>numPages</code> pages. For this lab, if more than <code>numPages</code> requests are made for different pages, then instead of implementing an eviction policy, you may throw a DbException. In future labs you will be required to implement an eviction policy.（现在出现超过最大限制时，抛出异常即可）</p>
+<p>BufferPool将磁盘中的数据缓存在内容中，目的是为了提高数据的读取速度。由于磁盘中的数据是按page块（4kb）方式存储 ，所以内存中存储也是按照page的方式存储。BufferPool中存储容量也不是无限的，例如lab中给的默认数量是50个，意味着50个之后要进行页面替换等操作，不过这是以后的lab要做的，现在不用实现，只管直接添加到bufferpool中。</p>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e1e5a4200bd945cf88c71e0a2ff1f3f7~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>BufferPool 没有提供直接的单元测试代码， 在后面的HeapFile中的测试用会对BufferPoll进行相应的测试。</p>
+<p>对于HeapFile的理解要难一点，一个HeapFile对应一个File，在数据库中，一个File对应就是一张表，所以一个HeapFile要表示的就是一张表，这样我们通过HeapFile进行insertTuple，遍历tuple，获取Page()等操作就很合理了。</p>
+<p>HeapPage对应的就是上面提到的Page，一个HeapPage对象存储一个byte[]数组，长度为4096KB，对应就是磁盘上一块4k的Page。</p>
+<p>所以整体上，lab1中各个对象的关系是这样</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5561b27054754c47b81f8d80413b8863~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h1 id="lab1-测试">lab1 测试</h1>
+<p>在根路径下创建一个文件 &quot;some_data_file.txt&quot;</p>
+<pre><code>1,1,1
+2,2,2 
+3,4,4
+</code></pre>
+<p>这里有一个天坑，在最后一行要自己多加一行空行，不然会输出不了最下面一行。</p>
+<p>执行命令</p>
+<pre><code>java -jar dist/simpledb.jar convert some_data_file.txt 3
+</code></pre>
+<p>创建一个类在 <code>test.java</code> 在 <code>src/java/simpledb</code> 下</p>
+<pre><code class="language-java">package simpledb;
+import java.io.*;
+
+public class test {
+
+    public static void main(String[] argv) {
+
+        // construct a 3-column table schema
+        Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
+        String names[] = new String[]{ &quot;field0&quot;, &quot;field1&quot;, &quot;field2&quot; };
+        TupleDesc descriptor = new TupleDesc(types, names);
+
+        // create the table, associate it with some_data_file.dat
+        // and tell the catalog about the schema of this table.
+        HeapFile table1 = new HeapFile(new File(&quot;some_data_file.dat&quot;), descriptor);
+        Database.getCatalog().addTable(table1, &quot;test&quot;);
+
+        // construct the query: we use a simple SeqScan, which spoonfeeds
+        // tuples via its iterator.
+        TransactionId tid = new TransactionId();
+        SeqScan f = new SeqScan(tid, table1.getId());
+
+        try {
+            // and run it
+            f.open();
+            while (f.hasNext()) {
+                Tuple tup = f.next();
+                System.out.println(tup);
+            }
+            f.close();
+            Database.getBufferPool().transactionComplete(tid);
+        } catch (Exception e) {
+            System.out.println (&quot;Exception : &quot; + e);
+        }
+    }
+
+}
+</code></pre>
+<p>依次执行下面两个命令:</p>
+<pre><code>ant
+
+java -classpath dist/simpledb.jar simpledb.test
+</code></pre>
+<p>如果代码没有错误，控制台就会输出</p>
+<figure data-type="image" tabindex="5"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b708dd5bc83241628f3a3992a85dcb49~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+
+            </div>
+          </article>
+        </div>
+        <div class="paper" data-aos="fade-in">
+          
+            <div class="next-post">
+              <div class="next">
+                下一篇
+              </div>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">
+                <h3 class="post-title">
+                  深入浅出 Raft 协议
+                </h3>
+              </a>
+            </div>
+          
+        </div>
+        
+      </div>
+
+      <div class="sm-12 md-4 col sidebar">
+  <div class="paper info-container">
+    <img src="https://zexho994.github.io/blog.zexho.life/images/avatar.png?v=1657628531424" class="no-responsive avatar">
+    <div class="text-muted">芝兰生于幽谷，不因无人而不芳</div>
+    <div class="social-container">
+      
+        
+          <a href="https://github.com/zexho994" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+  </div>
+  <div class="paper">
+    <div class="sidebar-title">
+      最新文章
+    </div>
+    <div class="row">
+      <ul>
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/">MIT6.830 数据库实现：lab1 记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/shen-ru-qian-chu-raft-xie-yi/">深入浅出 Raft 协议</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2c-chi-jiu-hua-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2C-持久化 实现要点 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft2b-ri-zhi-tong-bu-shi-xian-yao-dian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft2B-日志同步 实现要点 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit6824-lab2-raft-leader-election-dai-ma-shi-xian-and-cai-keng-ji-lu/">[MIT6.824 lab2] Raft-Leader election 代码实现 &amp; 踩坑记录</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/mit-6824-lab1-mapreduce-she-ji/">Mit 6.824 lab1 MapReduce 设计</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/ji-ge-you-qu-de-gai-lu-wen-ti/">几个有趣的概率问题</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/tong-su-li-jie-basic-pasox/">通俗理解 Basic Paxos</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/wo-li-jie-de-cap/">我理解的CAP</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">快速看清lambda的本质</a>
+            </li>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </ul>
+    </div>
+  </div>
+  <div class="paper">
+    <div class="sidebar-title">
+      标签列表
+    </div>
+    <div class="row">
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/fen-bu-shi/" class="badge success">
+          分布式
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="badge success">
+          知识分享
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/KrLfgh9WlS/" class="badge success">
+          造轮子
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/xue-xi-gui-na/" class="badge secondary">
+          学习归纳
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/6j9B3b2nb/" class="badge ">
+          Java
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/_Ywd8fi71/" class="badge secondary">
+          RocketMQ
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/yuan-ma/" class="badge warning">
+          源码
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/jjLsZt3QW/" class="badge success">
+          JVM
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/P-ZT7Pj1-8/" class="badge ">
+          Spring
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/docker/" class="badge warning">
+          docker
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/tu-shu-ju-ku/" class="badge success">
+          图数据库
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/THZXOECNJ/" class="badge success">
+          Git
+        </a>
+      
+        <a href="https://zexho994.github.io/blog.zexho.life/tag/59D97ArOs/" class="badge ">
+          微信小程序
+        </a>
+      
+    </div>
+  </div>
+  <div class="paper">
+    Life & Coding | <a class="rss" href="https://zexho994.github.io/blog.zexho.life/atom.xml" target="_blank">RSS</a>
+  </div>
+</div>
+
+
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+</script>
+
+
+
+
+  </body>
+</html>
