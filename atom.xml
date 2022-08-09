@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://zexho994.github.io/blog.zexho.life</id>
     <title>Zexho&apos; blog</title>
-    <updated>2022-07-12T12:24:28.161Z</updated>
+    <updated>2022-08-09T09:53:59.880Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://zexho994.github.io/blog.zexho.life"/>
     <link rel="self" href="https://zexho994.github.io/blog.zexho.life/atom.xml"/>
@@ -10,6 +10,21 @@
     <logo>https://zexho994.github.io/blog.zexho.life/images/avatar.png</logo>
     <icon>https://zexho994.github.io/blog.zexho.life/favicon.ico</icon>
     <rights>All rights reserved 2022, Zexho&apos; blog</rights>
+    <entry>
+        <title type="html"><![CDATA[如何设计 B+ Tree ？]]></title>
+        <id>https://zexho994.github.io/blog.zexho.life/post/ru-he-she-ji-b-tree/</id>
+        <link href="https://zexho994.github.io/blog.zexho.life/post/ru-he-she-ji-b-tree/">
+        </link>
+        <updated>2022-08-09T09:51:50.000Z</updated>
+        <summary type="html"><![CDATA[<h2 id="b树的形状">B+树的形状</h2>
+<p>二叉搜索树的形状应该都知道长什么样，如下：</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0430ad5df97f4c65a00ae36c556ee5cd~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+]]></summary>
+        <content type="html"><![CDATA[<h2 id="b树的形状">B+树的形状</h2>
+<p>二叉搜索树的形状应该都知道长什么样，如下：</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0430ad5df97f4c65a00ae36c556ee5cd~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[MIT6.830 数据库实现：lab1 记录]]></title>
         <id>https://zexho994.github.io/blog.zexho.life/post/mit6830-shu-ju-ku-shi-xian-lab1-ji-lu/</id>
@@ -203,17 +218,6 @@ Raft动画：http://www.kailing.pub/raft/index.html</p>
 <blockquote>
 <p>分布式系统的最大难点，就是各个节点的状态如何同步</p>
 </blockquote>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[快速看清lambda的本质]]></title>
-        <id>https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/</id>
-        <link href="https://zexho994.github.io/blog.zexho.life/post/kuai-su-kan-qing-lambda-de-ben-zhi/">
-        </link>
-        <updated>2022-02-11T11:13:57.000Z</updated>
-        <summary type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>在JDK8之后，Lambda表达式的功能为日常开发提供了很多便捷的操作，但是没接触过的人会对这种表达式有很大的疑惑，为什么要这样表示？我要怎么写出Lambda风格的代码？本文旨在快速理解lambda。</p>
 ]]></content>
     </entry>
 </feed>

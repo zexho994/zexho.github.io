@@ -1,0 +1,411 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>如何设计 B+ Tree ？ - Zexho&#39; blog</title>
+<link rel="shortcut icon" href="https://zexho994.github.io/blog.zexho.life/favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/tailwind.css">
+<link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="如何设计 B+ Tree ？ - Zexho&#39; blog - Atom Feed" href="https://zexho994.github.io/blog.zexho.life/atom.xml">
+
+    
+
+  <meta name="description" content="B+树的形状
+二叉搜索树的形状应该都知道长什么样，如下：
+
+
+在操作系统中，文件的最小单位，如下，我们创建一个txt文本，内容只有一个 1
+
+查看一下它的大小，占用了4kb的大小，这也就是常说的page，这样设计的好处是一次读取4kb的数据..." />
+  <meta property="og:title" content="如何设计 B+ Tree ？ - Zexho&#39; blog">
+  <meta property="og:description" content="B+树的形状
+二叉搜索树的形状应该都知道长什么样，如下：
+
+
+在操作系统中，文件的最小单位，如下，我们创建一个txt文本，内容只有一个 1
+
+查看一下它的大小，占用了4kb的大小，这也就是常说的page，这样设计的好处是一次读取4kb的数据..." />
+  <meta property="og:type" content="articles">
+  <meta property="og:url" content="https://zexho994.github.io/blog.zexho.life/post/ru-he-she-ji-b-tree/" />
+  <meta property="og:image" content="https://zexho994.github.io/blog.zexho.life/images/avatar.png">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1200">
+  <meta name="twitter:title" content="如何设计 B+ Tree ？ - Zexho&#39; blog">
+  <meta name="twitter:description" content="B+树的形状
+二叉搜索树的形状应该都知道长什么样，如下：
+
+
+在操作系统中，文件的最小单位，如下，我们创建一个txt文本，内容只有一个 1
+
+查看一下它的大小，占用了4kb的大小，这也就是常说的page，这样设计的好处是一次读取4kb的数据...">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://zexho994.github.io/blog.zexho.life/post/ru-he-she-ji-b-tree/">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+ 
+  
+    <link rel="stylesheet" href="https://zexho994.github.io/blog.zexho.life/media/css/prism-atom-dark.css">
+  
+
+  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+  
+</head>
+
+<body>
+  <div class="antialiased flex flex-col min-h-screen" id="app">
+    <a href="https://zexho994.github.io/blog.zexho.life" class="fixed top-0 left-0 mt-4 bg-black text-white dark:text-gray-700 dark:bg-yellow-50 dark:hover:bg-black dark:hover:text-white inline-flex p-2 pl-8 hover:text-gray-700 hover:bg-yellow-50 font-bold z-10 transition-fast animated fadeInLeft">
+      Zexho&#39; blog
+    </a>
+    <div class="max-w-4xl w-full mx-auto">
+      <div class="shadow-box bg-white dark:bg-gray-600 rounded-lg pt-32 md:pt-64 px-4 md:px-8 pb-8 animated fadeIn mb-8">
+        <h1 class="text-5xl font-semibold leading-normal pb-8 mb-8 border-b-8 border-gray-700">
+          如何设计 B+ Tree ？
+        </h1>
+        
+        <div class="mb-8 flex flex-wrap">
+          <div class="text-gray-400 text-sm mr-4">2022-08-09 05:51:50 · 5 min read</div>
+          
+            <a href="https://zexho994.github.io/blog.zexho.life/tag/shu-ju-ku/" class="text-gray-700 text-sm border-b-2 border-dotted border-gray-200 hover:border-gray-600 transition-all duration-100 inline-flex mr-2">
+              <i class="ri-hashtag"></i>
+              数据库
+            </a>
+          
+            <a href="https://zexho994.github.io/blog.zexho.life/tag/Yh19JUBym/" class="text-gray-700 text-sm border-b-2 border-dotted border-gray-200 hover:border-gray-600 transition-all duration-100 inline-flex mr-2">
+              <i class="ri-hashtag"></i>
+              知识分享
+            </a>
+          
+        </div>
+        <div class="markdown mb-8" v-pre>
+          <h2 id="b树的形状">B+树的形状</h2>
+<p>二叉搜索树的形状应该都知道长什么样，如下：</p>
+<figure data-type="image" tabindex="1"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0430ad5df97f4c65a00ae36c556ee5cd~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<!-- more -->
+<p>在操作系统中，文件的最小单位，如下，我们创建一个txt文本，内容只有一个 1</p>
+<figure data-type="image" tabindex="2"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a5c9ed743a714a3daae83eb47715ce4f~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>查看一下它的大小，占用了4kb的大小，这也就是常说的page，这样设计的好处是一次读取4kb的数据，可以有效减少磁盘IO的次数。</p>
+<figure data-type="image" tabindex="3"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ff4fd4d5c6a341ccac4fec29aec1e67b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>在数据库中，也是基于page进行存储的，二叉所有树中的节点的类型即使page</p>
+<figure data-type="image" tabindex="4"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/01fafa401edd444f8dbfe4aba9ffb57b~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>page中的主要内容是什么呢？这个对于不同的数据库设计可能不同，本文以MySql为参考目标，在MySql中，节点分为两类，inner node 和 leaf node</p>
+<ul>
+<li>inner node 主要存储索引值</li>
+<li>leaf node 存储实际的数据行，可以称为 Tuple</li>
+</ul>
+<p>一个4k page 可以存储很多的key，但是为了便于展示，我们假设一个page里最多存储3个key，</p>
+<p>那么数据 [1,2,3,4,5,6,7,8] 的存储方式可以这样表示：</p>
+<figure data-type="image" tabindex="5"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5adb3f169c9f4935b36fdd2a3016a044~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h2 id="树的的重平衡">树的的重平衡</h2>
+<p>涉及到两个关键点，页分裂和页合并</p>
+<ul>
+<li>页分裂：当要插入的node已经满了，需要将一个node拆分成两个page，并将数据平均分配，这样可以保持数据的平衡分配，维持查询复杂度在log(n)</li>
+<li>页合并：当删除数据后，page的数据量过少，当两个兄弟节点的数据总和可以存储到一个page中时，就进行合并, 这样可以减少内存的占用。</li>
+</ul>
+<h3 id="页分裂">页分裂</h3>
+<p>依然沿用上面一个node存储3个数据的规定，假设此时树的结构如下图：</p>
+<figure data-type="image" tabindex="6"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/68e5037a1fb64e47a551e16bec4852fa~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>这时我们要插入一个数据6，数据将会存储到最右边的leaf中，但是leaf已经有了3个值，无法存下6，就会发生页分裂</p>
+<figure data-type="image" tabindex="7"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/71a8c76286e448a59318f2e95fbe0c39~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>最后我们看到的结构就如下，</p>
+<ul>
+<li>inner node中新增了一个索引5</li>
+<li>新增了leaf node，[3,4,5,6] 数据平均分配在了两个leaf node中</li>
+</ul>
+<figure data-type="image" tabindex="8"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e3840f99e72d40288fc5f80a9d25ec42~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="页合并">页合并</h3>
+<p>对于不同的数据库实现页合并的规则可能有一些不同，以MySQL为例，MySQL 提供了一个<strong>数据页合并临界值</strong>（MERGE_THRESHOLD），在 InnoDB 表里，默认 MERGE_THRESHOLD 值为 50，取值范围从 1 到 50，默认值即是最大值。也就是当页面记录数占比小于 50% 时，MySQL 会把这页和相邻的页面进行合并，保证数据页的紧凑，避免太多浪费。</p>
+<p>现在假设一个page可以存储6个值，</p>
+<p>首先，页合并可能发生在inner node和leaf node中，这两者的合并规则本质上是一样的，将一个chind的数据拷贝到兄弟节点中，然后删除。</p>
+<figure data-type="image" tabindex="9"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/95707b615d0e43758f2c05757aa26a07~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="10"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b27a9b79ad98495482079f903541b838~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>针对这两个点，尤其是页merge，这时可能引发向上递归的，性能消耗非常大，所以在设计索引的时候，要尽量减少这两个步骤的次数，有一些点：</p>
+<ul>
+<li>使用逻辑删除，可以有效减少merge的次数</li>
+<li>索引如果不是递增的，像UUID这类随机值，导致页稀疏的同时也增加了merge的次数</li>
+</ul>
+<h2 id="树的前缀匹配的原理">树的前缀匹配的原理</h2>
+<p>这主要时针对联合索引，tree node 的中索引的存储方式是按照联合索引中字段的顺序构建的。</p>
+<p>有序的规则时先按照联合索引的第一个字段全局排序，然后按照第二个字段局部排序，后续字段同理</p>
+<figure data-type="image" tabindex="11"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8c15d5aab77446b1bd2a1c3230b41cfe~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<p>那么，平时所谓的最左匹配规则，其实本质上就是查询时，没有按照索引排序的构建方式，这就导致树的索引有序性失效了</p>
+<ul>
+<li>当我们使用(A,*) 这样的方式查询时，我们可以在树中找到对应的路径。</li>
+<li>但是当我们使用(*,B)这类的方式，我们无法在树中找到对应的路径，需要遍历所有树。</li>
+</ul>
+<p>从另一个角度看，树的本质和二分查找一样，而二分查找的使用条件之一就是数据有序。</p>
+<h2 id="如何估算节点中的数据量">如何估算节点中的数据量</h2>
+<p>一个inner node中的数据主要有,两部分组成：</p>
+<ul>
+<li>索引值：例如long类型，一个就占8字节</li>
+<li>指针：32位机器=4字节，64位机器=8字节</li>
+</ul>
+<p>指针数量 = 索引值数量+1</p>
+<p>num = 4kb / (索引长度+指针长度) ≈ 2KB / 索引长度</p>
+<p>mysql中一个node是由4个page组成的，也就是16kb</p>
+<h2 id="空间优化措施">空间优化措施</h2>
+<p>这里只是提一下，因为细节我也还没去了解</p>
+<h3 id="前缀压缩">前缀压缩</h3>
+<p>索引的前缀都包含rob，那么node保存一个公共的前缀遍历，存储的时候每一个值就可以省略掉这个前缀了，这在数据量大的时候，可以有效的增加一个node中保存的数据量，也就意味着可以使用更少的内存存储更多的数据。</p>
+<figure data-type="image" tabindex="12"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1f480c2a69cd403e9d87184492b4876e~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h3 id="后缀截断">后缀截断</h3>
+<p>因为查询的规则时从前到后匹配时，当两个key的差异比较大，可以省略索引掉后面用不到部分，进行一个截断，也可以有效的减少内存消耗。</p>
+<figure data-type="image" tabindex="13"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3b9da0b0efd747118bec529cbe932e86~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="14"><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4fa570c6c19b44c281bf1d34afc6e7d7~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy"></figure>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html">https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/98818611">https://zhuanlan.zhihu.com/p/98818611</a>a</li>
+<li><a href="https://github.com/MIT-DB-Class/simple-db-hw-2021/blob/master/lab5.md">https://github.com/MIT-DB-Class/simple-db-hw-2021/blo b/master/lab5.md</a></li>
+</ul>
+
+        </div>
+        <!-- Share to Twitter, Weibo, Telegram -->
+        <div class="flex items-center">
+          <div class="mr-4 flex items-center">
+            <i class="ri-share-forward-line text-gray-500"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTwitter">
+            <i class="ri-twitter-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 inline-flex" @click="shareToWeibo">
+            <i class="ri-weibo-line"></i>
+          </div>
+          <div class="px-4 cursor-pointer text-indigo-500 hover:bg-indigo-100 dark:hover:bg-gray-600 inline-flex" @click="shareToTelegram">
+            <i class="ri-telegram-line"></i>
+          </div>
+        </div>
+      </div>
+
+      
+
+      
+        <div id="vlaine-comment"></div>
+      
+
+      <footer class="py-12 text-center px-4 md:px-0" v-pre>
+  Life & Coding
+</footer>
+    </div>
+
+    <!-- TOC Container -->
+    <div class="fixed right-0 bottom-0 mb-16 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white dark:bg-gray-500 dark:text-gray-200 hover:shadow-lg transition-all animated fadeInRight" @click="showToc = true">
+      <i class="ri-file-list-line"></i>
+    </div>
+
+    <div class="fixed right-0 top-0 bottom-0 overflow-y-auto w-64 bg-white dark:bg-gray-800 p-4 border-l border-gray-100 dark:border-gray-600 z-10 transition-fast" :class="{ '-mr-64': !showToc }">
+      <div class="flex mb-4 justify-end">
+        <div class="w-8 h-8 inline-flex justify-center items-center rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-fast" @click="showToc = false">
+          <i class="ri-close-line text-lg"></i>
+        </div>
+      </div>
+      <div class="post-toc-container">
+        <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#b%E6%A0%91%E7%9A%84%E5%BD%A2%E7%8A%B6">B+树的形状</a></li>
+<li><a href="#%E6%A0%91%E7%9A%84%E7%9A%84%E9%87%8D%E5%B9%B3%E8%A1%A1">树的的重平衡</a>
+<ul>
+<li><a href="#%E9%A1%B5%E5%88%86%E8%A3%82">页分裂</a></li>
+<li><a href="#%E9%A1%B5%E5%90%88%E5%B9%B6">页合并</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A0%91%E7%9A%84%E5%89%8D%E7%BC%80%E5%8C%B9%E9%85%8D%E7%9A%84%E5%8E%9F%E7%90%86">树的前缀匹配的原理</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BC%B0%E7%AE%97%E8%8A%82%E7%82%B9%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E9%87%8F">如何估算节点中的数据量</a></li>
+<li><a href="#%E7%A9%BA%E9%97%B4%E4%BC%98%E5%8C%96%E6%8E%AA%E6%96%BD">空间优化措施</a>
+<ul>
+<li><a href="#%E5%89%8D%E7%BC%80%E5%8E%8B%E7%BC%A9">前缀压缩</a></li>
+<li><a href="#%E5%90%8E%E7%BC%80%E6%88%AA%E6%96%AD">后缀截断</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+
+      </div>
+    </div>
+
+    <!-- Back to top -->
+    <div class="fixed right-0 bottom-0 mb-4 mr-4 shadow w-8 h-8 rounded-full flex justify-center items-center z-10 cursor-pointer bg-white hover:shadow-lg transition-all dark:bg-gray-500 dark:text-gray-200" @click="backToUp" v-show="scrolled">
+      <i class="ri-arrow-up-line"></i>
+    </div>
+  </div>
+
+  <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+        It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg">
+  </div>
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+      <div class="pswp__item">
+      </div>
+    </div>
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+        <div class="pswp__counter">
+        </div>
+        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip">
+        </div>
+      </div>
+      <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+      </button>
+      <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+      </button>
+      <div class="pswp__caption">
+        <div class="pswp__caption__center">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://zexho994.github.io/blog.zexho.life/media/scripts/main.js"></script>
+  
+  <!-- Code Highlight -->
+  
+    <script src="https://zexho994.github.io/blog.zexho.life/media/prism.js"></script>
+    <script>
+      Prism.highlightAll()
+    </script>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+  <script>
+    //拿到预览框架，也就是上面的html代码
+    var pswpElement = document.querySelectorAll('.pswp')[0];
+    //定义图片数组变量
+    var imgitems;
+    /**
+    * 用于显示预览界面
+    * @param index 图片数组下标
+    */
+    function viewImg(index) {
+      //其它选项这里不做过多阐述，详情见官网
+      var pswpoptions = {
+        index: parseInt(index, 10), // 开始幻灯片索引。0是第一张幻灯片。必须是整数，而不是字符串。
+        bgOpacity: 0.7, // 背景透明度，0-1
+        maxSpreadZoom: 3, // 缩放级别，不要太大
+      };
+      //初始化并打开PhotoSwipe，pswpElement对应上面预览框架，PhotoSwipeUI_Default为皮肤，imgitems为图片数组，pswpoptions为选项
+      var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, imgitems, pswpoptions);
+      gallery.init()
+    }
+    /**
+    * 用于添加图片点击事件
+    * @param img 图片元素
+    * @param index 所属下标（在imgitems中的位置）
+    */
+    function addImgClick(img, index) {
+      img.onclick = function() {
+        viewImg(index)
+      }
+    }
+    /**
+    * 轮询所有图片，获取src、width、height等数据，加入imgitems，并给图片元素添加事件
+    * 最好在onload中执行该方法，本站因放在最底部，所以直接初始化
+    * 异步加载图片可在图片元素创建完成后调用此方法
+    */
+    function initImg() {
+      //重置图片数组
+      imgitems = [];
+      //查找class:markdown 下的所有img元素并遍历
+      var imgs = document.querySelectorAll('.markdown img');
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        //本站相册初始为loading图片，真实图片放在data-src
+        var ds = img.getAttribute("data-src");
+        //创建image对象，用于获取图片宽高
+        var imgtemp = new Image();
+        //判断是否存在data-src
+        if (ds != null && ds.length > 0) {
+          imgtemp.src = ds
+        } else {
+          imgtemp.src = img.src
+        }
+        //判断是否存在缓存
+        if (imgtemp.complete) {
+          var imgobj = {
+            "src": imgtemp.src,
+            "w": imgtemp.width,
+            "h": imgtemp.height,
+          };
+          imgitems[i] = imgobj;
+          addImgClick(img, i);
+        } else {
+          console.log('进来了2')
+          imgtemp.index = i;
+          imgtemp.img = img;
+          imgtemp.onload = function() {
+            var imgobj = {
+              "src": this.src,
+              "w": this.width,
+              "h": this.height,
+            };
+            //不要使用push，因为onload前后顺序会不同
+            imgitems[this.index] = imgobj
+            //添加点击事件
+            addImgClick(this.img, this.index);
+          }
+        }
+      }
+    }
+    //初始化
+    initImg();
+  </script>
+  
+    <script type="application/javascript" src="https://unpkg.com/valine"></script>
+<script type="application/javascript">
+  new Valine({
+    el: '#vlaine-comment',
+    appId: 'JdktVdP9QtgXAYGegPllMId8-MdYXbMMI',
+    appKey: 'ikmyXPkFSwc9sfos34kXgx6p',
+    pageSize: 10,
+    notify: false,
+    avatar: 'mp',
+    verify: true,
+    placeholder: '来都来了，不妨评论一下',
+    visitor: true,
+    highlight: true,
+    recordIP: false,
+  })
+</script>
+  
+  
+</body>
+
+</html>
